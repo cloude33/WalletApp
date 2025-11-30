@@ -63,22 +63,22 @@ class HelpScreen extends StatelessWidget {
                       children: [
                         const Icon(Icons.support_agent, size: 48, color: Color(0xFF00BFA5)),
                         const SizedBox(height: 16),
-                        const Text(
+                        Text(
                           'Daha fazla yardıma mı ihtiyacınız var?',
                           textAlign: TextAlign.center,
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
-                            color: Color(0xFF1C1C1E),
+                            color: Theme.of(context).textTheme.bodyLarge?.color,
                           ),
                         ),
                         const SizedBox(height: 8),
-                        const Text(
+                        Text(
                           'Bizimle iletişime geçmekten çekinmeyin.',
                           textAlign: TextAlign.center,
                           style: TextStyle(
                             fontSize: 14,
-                            color: Color(0xFF8E8E93),
+                            color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.7),
                           ),
                         ),
                         const SizedBox(height: 16),
