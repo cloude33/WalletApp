@@ -603,8 +603,11 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
             
             if (parts.length > 1) {
               final integerPart = parts[0];
-              // Değişiklik: Ondalık kısmı olduğu gibi bırak, yuvarlama
-              final decimalPart = parts[1];
+              // Ondalık kısmı maksimum 2 haneyle sınırla
+              String decimalPart = parts[1];
+              if (decimalPart.length > 2) {
+                decimalPart = decimalPart.substring(0, 2);
+              }
               
               // Handle empty integer part (e.g. ",50")
               final parsedInteger = integerPart.isEmpty ? 0 : (int.tryParse(integerPart) ?? 0);

@@ -8,6 +8,7 @@ import '../models/budget.dart';
 import '../models/loan.dart';
 import '../models/credit_card_transaction.dart';
 import '../services/data_service.dart';
+import '../utils/currency_formatter.dart';
 
 class StatisticsScreen extends StatefulWidget {
   final List<Transaction> transactions;
@@ -2173,18 +2174,18 @@ class _StatisticsScreenState extends State<StatisticsScreen>
             ),
             _buildTableRow(
               'Günlük Ort.',
-              '₺${(income / 30).toStringAsFixed(0)}',
-              '₺${(expense / 30).toStringAsFixed(0)}',
+              CurrencyFormatter.formatWithSymbol(income / 30),
+              CurrencyFormatter.formatWithSymbol(expense / 30),
             ),
             _buildTableRow(
               'Genel Ort.',
-              '₺${(income / 1).toStringAsFixed(0)}',
-              '₺${(expense / 1).toStringAsFixed(0)}',
+              CurrencyFormatter.formatWithSymbol(income),
+              CurrencyFormatter.formatWithSymbol(expense),
             ),
             _buildTableRow(
               'Toplam',
-              '₺${income.toStringAsFixed(0)}',
-              '₺${expense.toStringAsFixed(0)}',
+              CurrencyFormatter.formatWithSymbol(income),
+              CurrencyFormatter.formatWithSymbol(expense),
             ),
             const SizedBox(height: 16),
             Row(
@@ -2193,7 +2194,7 @@ class _StatisticsScreenState extends State<StatisticsScreen>
                 const Text('Nakit akışı', style: TextStyle(fontSize: 16)),
                 const SizedBox(width: 8),
                 Text(
-                  '₺${cashFlow.toStringAsFixed(0)}',
+                  CurrencyFormatter.formatWithSymbol(cashFlow),
                   style: const TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,

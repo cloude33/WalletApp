@@ -11,6 +11,7 @@ import '../services/data_service.dart';
 import '../services/budget_alert_service.dart';
 import '../services/notification_service.dart';
 import '../utils/currency_helper.dart';
+import '../utils/currency_formatter.dart';
 import 'notification_history_screen.dart';
 import 'add_transaction_screen.dart';
 import 'add_wallet_screen.dart';
