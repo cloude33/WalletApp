@@ -64,6 +64,9 @@ class _AddUserScreenState extends State<AddUserScreen> {
       final users = await _dataService.getAllUsers();
       users.add(user);
       await _dataService.saveAllUsers(users);
+      
+      // Yeni oluşturulan kullanıcıyı aktif kullanıcı olarak ayarla
+      await _dataService.saveUser(user);
 
       if (mounted) {
         Navigator.pop(context, true);

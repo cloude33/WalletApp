@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import '../services/user_service.dart';
 import '../services/auth_service.dart';
+import '../services/data_service.dart';
+import '../models/user.dart';
+import '../models/currency.dart';
 import 'package:uuid/uuid.dart';
 import 'home_screen.dart';
 
@@ -18,6 +21,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
   final UserService _userService = UserService();
+  final DataService _dataService = DataService();
   final AuthService _authService = AuthService();
 
   bool _showPassword = false;
@@ -39,9 +43,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
     setState(() => _isLoading = true);
 
     try {
-      // Create user profile
+      final uuid = const Uuid().v4();
+      
+      // Create user profile for authentication
       final profile = UserProfile(
-        id: const Uuid().v4(),
+        id: uuid,
         name: _nameController.text.trim(),
         email: _emailController.text.trim(),
         createdAt: DateTime.now(),
@@ -56,6 +62,22 @@ class _RegisterScreenState extends State<RegisterScreen> {
         _emailController.text.trim(),
         _passwordController.text,
       );
+
+      // Create User for app data
+      final user = User(
+        id: uuid,
+        name: _nameController.text.trim(),
+        email: _emailController.text.trim(),
+        avatar: null,
+        currencyCode: defaultCurrency.code,
+        currencySymbol: defaultCurrency.symbol,
+      );
+
+      // Save as current user and add to users list
+      await _dataService.saveUser(user);
+      final users = await _dataService.getAllUsers();
+      users.add(user);
+      await _dataService.saveAllUsers(users);
 
       if (mounted) {
         // Navigate to home screen
@@ -86,9 +108,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
     try {
       final account = await _authService.signInWithGoogle();
       if (account != null) {
+        final uuid = const Uuid().v4();
+        
         // Create user profile from Google account
         final profile = UserProfile(
-          id: const Uuid().v4(),
+          id: uuid,
           name: account.displayName ?? '',
           email: account.email,
           photoUrl: account.photoUrl,
@@ -97,6 +121,22 @@ class _RegisterScreenState extends State<RegisterScreen> {
         );
 
         await _userService.saveUserProfile(profile);
+
+        // Create User for app data
+        final user = User(
+          id: uuid,
+          name: account.displayName ?? '',
+          email: account.email,
+          avatar: null, // Google photo URL'i base64'e çevrilebilir
+          currencyCode: defaultCurrency.code,
+          currencySymbol: defaultCurrency.symbol,
+        );
+
+        // Save as current user and add to users list
+        await _dataService.saveUser(user);
+        final users = await _dataService.getAllUsers();
+        users.add(user);
+        await _dataService.saveAllUsers(users);
 
         if (mounted) {
           Navigator.pushReplacement(
