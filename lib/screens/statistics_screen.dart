@@ -188,8 +188,9 @@ class _StatisticsScreenState extends State<StatisticsScreen>
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
-      backgroundColor: const Color(0xFFF2F2F7),
+      backgroundColor: isDark ? const Color(0xFF000000) : const Color(0xFFF2F2F7),
       body: SafeArea(
         child: Column(
           children: [
@@ -210,19 +211,13 @@ class _StatisticsScreenState extends State<StatisticsScreen>
                     padding: const EdgeInsets.all(16.0),
                     child: Row(
                       children: [
-                        IconButton(
-                          icon: const Icon(
-                            Icons.menu,
-                            color: Color(0xFF1C1C1E),
-                          ),
-                          onPressed: () {},
-                        ),
-                        const Expanded(
+                        const SizedBox(width: 48), // Spacing for alignment
+                        Expanded(
                           child: Text(
                             'İstatistikler',
                             textAlign: TextAlign.center,
                             style: TextStyle(
-                              color: Color(0xFF1C1C1E),
+                              color: Theme.of(context).textTheme.bodyLarge?.color,
                               fontSize: 20,
                               fontWeight: FontWeight.w500,
                             ),
@@ -1161,8 +1156,6 @@ class _StatisticsScreenState extends State<StatisticsScreen>
         _buildRecurringEventsCard(),
         const SizedBox(height: 16),
         _buildFinancialAssetsCard(),
-        const SizedBox(height: 16),
-        _buildTopSpendingCategoriesCard(),
       ],
     );
   }
@@ -1556,17 +1549,24 @@ class _StatisticsScreenState extends State<StatisticsScreen>
     required double amount,
     required bool isDebt,
   }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final color = isDebt ? Colors.red : Colors.green;
+
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: isDebt
-            ? Colors.red.withOpacity(0.1)
-            : Colors.green.withOpacity(0.1),
+        color: isDark
+            ? const Color(0xFF1C1C1E)
+            : (isDebt
+                ? Colors.red.withOpacity(0.1)
+                : Colors.green.withOpacity(0.1)),
         borderRadius: BorderRadius.circular(8),
         border: Border.all(
-          color: isDebt
-              ? Colors.red.withOpacity(0.3)
-              : Colors.green.withOpacity(0.3),
+          color: isDark
+              ? color.withOpacity(0.5)
+              : (isDebt
+                  ? Colors.red.withOpacity(0.3)
+                  : Colors.green.withOpacity(0.3)),
         ),
       ),
       child: Column(
@@ -1576,7 +1576,7 @@ class _StatisticsScreenState extends State<StatisticsScreen>
             title,
             style: TextStyle(
               fontSize: 12,
-              color: isDebt ? Colors.red : Colors.green,
+              color: color,
               fontWeight: FontWeight.w500,
             ),
           ),
@@ -1586,7 +1586,7 @@ class _StatisticsScreenState extends State<StatisticsScreen>
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.bold,
-              color: isDebt ? Colors.red : Colors.green,
+              color: color,
             ),
           ),
         ],
@@ -1606,7 +1606,12 @@ class _StatisticsScreenState extends State<StatisticsScreen>
         children: [
           Icon(icon, size: 16, color: color),
           const SizedBox(width: 8),
-          Expanded(child: Text(title, style: const TextStyle(fontSize: 14))),
+          Expanded(
+            child: Text(
+              title,
+              style: const TextStyle(fontSize: 14),
+            ),
+          ),
           Text(
             '₺${NumberFormat('#,##0', 'tr_TR').format(amount)}',
             style: TextStyle(fontWeight: FontWeight.bold, color: color),
@@ -1912,12 +1917,15 @@ class _StatisticsScreenState extends State<StatisticsScreen>
     IconData icon = Icons.info,
     String? subtitle,
   }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: isDark ? const Color(0xFF1C1C1E) : color.withOpacity(0.1),
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: color.withOpacity(0.3)),
+        border: Border.all(
+          color: isDark ? color.withOpacity(0.5) : color.withOpacity(0.3),
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1925,7 +1933,7 @@ class _StatisticsScreenState extends State<StatisticsScreen>
           Row(
             children: [
               Icon(icon, color: color, size: 16),
-              const SizedBox(width: 4),
+              const SizedBox(width: 8),
               Expanded(
                 child: Text(
                   title,
@@ -1934,6 +1942,8 @@ class _StatisticsScreenState extends State<StatisticsScreen>
                     color: color,
                     fontWeight: FontWeight.w500,
                   ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
             ],
@@ -1950,105 +1960,13 @@ class _StatisticsScreenState extends State<StatisticsScreen>
           if (subtitle != null)
             Text(
               subtitle,
-              style: TextStyle(fontSize: 12, color: color.withOpacity(0.8)),
+              style: TextStyle(
+                fontSize: 12,
+                color: isDark ? Colors.grey[400] : color.withOpacity(0.8),
+              ),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildTopSpendingCategoriesCard() {
-    final expenseCategories = <String, double>{};
-
-    // Process expense categories for both transaction types
-    for (var item in _filteredTransactions) {
-      // Handle regular transactions
-      if (item is Transaction && item.type == 'expense') {
-        expenseCategories[item.category] =
-            (expenseCategories[item.category] ?? 0) + item.amount;
-      }
-      // Handle credit card transactions (always expenses)
-      else if (item is CreditCardTransaction) {
-        expenseCategories[item.category] =
-            (expenseCategories[item.category] ?? 0) + item.amount;
-      }
-    }
-
-    final sortedCategories = expenseCategories.entries.toList()
-      ..sort((a, b) => b.value.compareTo(a.value));
-
-    final totalExpense = expenseCategories.values.fold(
-      0.0,
-      (sum, amount) => sum + amount,
-    );
-
-    return _buildCard(
-      title: 'En Çok Harcanan Kategoriler',
-      subtitle: 'Kategori bazlı harcama dağılımı',
-      content: Column(
-        children: [
-          if (sortedCategories.isEmpty)
-            const Padding(
-              padding: EdgeInsets.all(16),
-              child: Text('Bu dönemde harcama bulunmamaktadır.'),
-            )
-          else
-            ...sortedCategories.take(5).map((entry) {
-              final percentage = totalExpense > 0
-                  ? (entry.value / totalExpense) * 100
-                  : 0;
-              final color = Colors
-                  .primaries[entry.key.hashCode % Colors.primaries.length];
-
-              return Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 8,
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          entry.key,
-                          style: const TextStyle(fontWeight: FontWeight.w500),
-                        ),
-                        Text(
-                          '₺${NumberFormat('#,##0', 'tr_TR').format(entry.value)}',
-                          style: const TextStyle(fontWeight: FontWeight.bold),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 4),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: LinearProgressIndicator(
-                            value: percentage / 100,
-                            backgroundColor: Colors.grey[200],
-                            color: color,
-                            minHeight: 6,
-                            borderRadius: BorderRadius.circular(3),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          '${percentage.toStringAsFixed(1)}%',
-                          style: const TextStyle(
-                            fontSize: 12,
-                            color: Colors.grey,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              );
-            }),
         ],
       ),
     );
@@ -2060,9 +1978,10 @@ class _StatisticsScreenState extends State<StatisticsScreen>
     required Widget content,
     Widget? headerAction,
   }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       decoration: BoxDecoration(
-        color: Theme.of(context).cardColor,
+        color: isDark ? const Color(0xFF1C1C1E) : Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
@@ -2107,12 +2026,12 @@ class _StatisticsScreenState extends State<StatisticsScreen>
                   ),
                 ),
                 const SizedBox(height: 12),
-                const Text(
+                Text(
                   'SON 12 AY',
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w500,
-                    color: Colors.grey,
+                    color: isDark ? Colors.grey[400] : Colors.grey,
                   ),
                 ),
               ],
@@ -2235,19 +2154,28 @@ class _StatisticsScreenState extends State<StatisticsScreen>
   }
 
   Widget _buildTableRow(String label, String col1, String col2) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
         children: [
           Expanded(
             flex: 2,
-            child: Text(label, style: TextStyle(color: Colors.grey[700])),
+            child: Text(
+              label,
+              style: TextStyle(
+                color: isDark ? Colors.grey[400] : Colors.grey[700],
+              ),
+            ),
           ),
           Expanded(
             child: Text(
               col1,
               textAlign: TextAlign.end,
-              style: const TextStyle(fontWeight: FontWeight.w500),
+              style: TextStyle(
+                fontWeight: FontWeight.w500,
+                color: isDark ? Colors.grey[300] : Colors.black87,
+              ),
             ),
           ),
           Expanded(
@@ -2375,26 +2303,36 @@ class _StatisticsScreenState extends State<StatisticsScreen>
   }
 
   Widget _buildLedgerSection(String title, double total, List<Widget> items) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Column(
       children: [
         Container(
-          color: Colors.grey[100],
+          color: isDark ? const Color(0xFF2C2C2E) : Colors.grey[100],
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
                 title,
-                style: const TextStyle(
+                style: TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 16,
+                  color: isDark ? Colors.grey[200] : Colors.black87,
                 ),
               ),
               Text(
                 total.toStringAsFixed(0),
-                style: const TextStyle(fontWeight: FontWeight.bold),
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: isDark ? Colors.grey[200] : Colors.black87,
+                ),
               ),
-              const Text('---', style: TextStyle(color: Colors.grey)),
+              Text(
+                '---',
+                style: TextStyle(
+                  color: isDark ? Colors.grey[600] : Colors.grey,
+                ),
+              ),
             ],
           ),
         ),
@@ -2719,8 +2657,11 @@ class _StatisticsScreenState extends State<StatisticsScreen>
     String percentage, {
     bool isSubItem = false,
   }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
-      color: isSubItem ? Colors.white : Colors.grey[100],
+      color: isSubItem
+          ? (isDark ? const Color(0xFF1C1C1E) : Colors.white)
+          : (isDark ? const Color(0xFF2C2C2E) : Colors.grey[100]),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       child: Row(
         children: [
@@ -2730,20 +2671,30 @@ class _StatisticsScreenState extends State<StatisticsScreen>
               style: TextStyle(
                 fontWeight: isSubItem ? FontWeight.normal : FontWeight.bold,
                 fontSize: isSubItem ? 16 : 14,
+                color: isDark ? Colors.grey[200] : Colors.black87,
               ),
             ),
           ),
-          Text(amount, style: const TextStyle(fontWeight: FontWeight.bold)),
+          Text(
+            amount,
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              color: isDark ? Colors.grey[200] : Colors.black87,
+            ),
+          ),
           const SizedBox(width: 12),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
             decoration: BoxDecoration(
-              color: Theme.of(context).brightness == Brightness.dark
-                  ? Colors.grey[700]
-                  : Colors.grey[300],
+              color: isDark ? Colors.grey[700] : Colors.grey[300],
               borderRadius: BorderRadius.circular(4),
             ),
-            child: Text(percentage),
+            child: Text(
+              percentage,
+              style: TextStyle(
+                color: isDark ? Colors.grey[300] : Colors.black87,
+              ),
+            ),
           ),
         ],
       ),
