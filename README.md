@@ -1,27 +1,61 @@
-# Para Yönetimi Uygulaması
+# 💰 Wallet App - Para Yönetimi Uygulaması
 
 Kişisel bütçe, kredi kartı ve kredi takibi yapabileceğiniz modern bir Flutter uygulaması.
 
+[![Download APK](https://img.shields.io/badge/Download-APK-green.svg)](https://github.com/cloude33/WalletApp/releases/latest)
+[![Flutter](https://img.shields.io/badge/Flutter-3.10+-blue.svg)](https://flutter.dev/)
+[![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
+## 📥 İndir
+
+[**APK İndir (v1.0.0)**](https://github.com/cloude33/WalletApp/releases/download/v1.0.0/WalletApp-v1.0.0.apk)
+
+> **Not:** Android 5.0 (API 21) veya üzeri gereklidir.
+
 ## Özellikler
 
-### ✅ Tamamlanan Özellikler
+### ✨ Özellikler
 
-- **Kullanıcı Yönetimi**: Çoklu kullanıcı desteği, kullanıcı ekleme ve seçme, para birimi seçimi
-- **Para Birimi Desteği**: 12 farklı para birimi (TRY, USD, EUR, GBP, vb.), varsayılan Türk Lirası
-- **Cüzdan Yönetimi**: Nakit, kredi kartı ve banka hesaplarınızı ekleyin, silin ve yönetin
-- **Taksit Sistemi**: Kredi kartı ile 2-12 ay arası taksitli alışveriş
-- **Gelir/Gider/Transfer İşlemleri**: Tüm finansal hareketlerinizi kaydedin ve cüzdan bakiyesi otomatik güncellensin
-- **Kategori Bazlı Takip**: 10+ hazır kategori ile harcamalarınızı sınıflandırın
-- **İstatistikler ve Grafikler**: Pasta grafikleri ile harcama dağılımınızı görün, aylık gelir-gider analizi
-- **Takvim Görünümü**: Günlük bazda gelir ve giderlerinizi takip edin
-- **Hedef Belirleme**: Finansal hedeflerinizi belirleyin, ilerlemenizi izleyin ve yönetin
-- **Tekrarlayan İşlemler**: Düzenli ödemeleri otomatikleştirin (kira, faturalar, maaş, abonelikler)
-  - Günlük, haftalık, aylık, yıllık tekrar seçenekleri
-  - Hazır şablonlar (kira, elektrik, su, internet, maaş, vb.)
+#### 💳 Finansal Yönetim
+- **Gelir/Gider Takibi**: Tüm finansal hareketlerinizi kaydedin
+- **Cüzdan Yönetimi**: Nakit, kredi kartı ve banka hesaplarınızı yönetin
+- **Kredi Kartı Yönetimi**: Kredi kartı ekstreleri, taksitler, ödemeler
+- **Borç/Alacak Takibi**: Borç ve alacaklarınızı takip edin, hatırlatıcılar ayarlayın
+- **Taksit Sistemi**: 2-12 ay arası taksitli alışveriş takibi
+
+#### 🔄 Otomasyon
+- **Tekrarlayan İşlemler**: Düzenli ödemeleri otomatikleştirin
+  - Günlük, haftalık, aylık, yıllık tekrar
+  - Hazır şablonlar (kira, faturalar, maaş, abonelikler)
   - Otomatik işlem oluşturma
-  - Bildirim desteği
-- **Veri Saklama**: SharedPreferences ve Hive ile yerel veri saklama
-- **Dinamik Veriler**: Tüm veriler gerçek zamanlı olarak güncellenir
+- **Bildirimler**: Ödeme hatırlatıcıları ve bütçe uyarıları
+
+#### 📊 Analiz ve Raporlama
+- **İstatistikler**: Pasta grafikleri ile harcama analizi
+- **Takvim Görünümü**: Günlük bazda gelir-gider takibi
+- **Kategori Bazlı Takip**: 10+ hazır kategori
+- **Export**: Excel, PDF, CSV formatında dışa aktarma
+
+#### 🔒 Güvenlik
+- **PIN Koruması**: 4 haneli PIN ile uygulama kilidi
+- **Biyometrik Kimlik**: Parmak izi ile giriş
+- **Otomatik Kilit**: Belirlenen süre sonra otomatik kilitleme
+
+#### 👥 Kullanıcı Yönetimi
+- **Çoklu Kullanıcı**: Aile üyeleri için ayrı profiller
+- **Para Birimi Desteği**: 12 farklı para birimi (TRY, USD, EUR, GBP, vb.)
+- **Profil Özelleştirme**: Avatar, isim, e-posta
+
+#### 💾 Veri Yönetimi
+- **Yedekleme**: Verilerinizi yedekleyin
+- **Geri Yükleme**: Yedekten geri yükleyin
+- **Otomatik Yedekleme**: Günlük/haftalık otomatik yedekleme
+- **Yerel Depolama**: SharedPreferences ve Hive ile güvenli saklama
+
+#### 🎨 Kullanıcı Deneyimi
+- **Karanlık Mod**: Göz dostu karanlık tema
+- **Modern Tasarım**: Kullanıcı dostu arayüz
+- **Türkçe Dil Desteği**: Tam Türkçe arayüz
 
 ### 📱 Ekranlar
 
