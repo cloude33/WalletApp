@@ -59,13 +59,13 @@ class AboutScreen extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 40),
-                  _buildSection('Geliştirici', [
+                  _buildSection(context, 'Geliştirici', [
                     _buildInfoItem('Geliştirici', 'WalletApp Team'),
                     _buildInfoItem('Web Sitesi', 'www.walletapp.com'),
                     _buildInfoItem('İletişim', 'contact@walletapp.com'),
                   ]),
                   const SizedBox(height: 20),
-                  _buildSection('Yasal', [
+                  _buildSection(context, 'Yasal', [
                     _buildActionItem(context, 'Gizlilik Politikası'),
                     _buildActionItem(context, 'Kullanım Koşulları'),
                     _buildActionItem(context, 'Lisanslar'),
@@ -118,7 +118,7 @@ class AboutScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildSection(String title, List<Widget> items) {
+  Widget _buildSection(BuildContext context, String title, List<Widget> items) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -136,7 +136,7 @@ class AboutScreen extends StatelessWidget {
         ),
         Container(
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: Theme.of(context).cardColor,
             borderRadius: BorderRadius.circular(16),
             boxShadow: [
               BoxShadow(

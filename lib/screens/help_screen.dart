@@ -16,26 +16,32 @@ class HelpScreen extends StatelessWidget {
                 padding: const EdgeInsets.all(20),
                 children: [
                   _buildFaqItem(
+                    context,
                     'Nasıl işlem eklerim?',
                     'Ana sayfadaki veya alt menüdeki "+" butonuna tıklayarak yeni bir gelir veya gider işlemi ekleyebilirsiniz.',
                   ),
                   _buildFaqItem(
+                    context,
                     'Bütçe nasıl oluşturulur?',
                     'Ana sayfada "Bütçeler" bölümündeki "+" butonuna tıklayarak aylık harcama limitlerinizi belirleyebilirsiniz.',
                   ),
                   _buildFaqItem(
+                    context,
                     'Verilerim nerede saklanıyor?',
                     'Tüm verileriniz cihazınızda güvenli bir şekilde saklanmaktadır. Ayarlar menüsünden yedekleme yapabilirsiniz.',
                   ),
                   _buildFaqItem(
+                    context,
                     'Para birimini değiştirebilir miyim?',
                     'Evet, Ayarlar > Para Birimi menüsünden istediğiniz para birimini seçebilirsiniz.',
                   ),
                   _buildFaqItem(
+                    context,
                     'Kategorileri düzenleyebilir miyim?',
                     'Alt menüden "Kategori" sekmesine giderek yeni kategoriler ekleyebilir veya mevcutları düzenleyebilirsiniz.',
                   ),
                   _buildFaqItem(
+                    context,
                     'Karanlık mod var mı?',
                     'Evet, Ayarlar > Tema menüsünden Açık, Koyu veya Sistem temasını seçebilirsiniz.',
                   ),
@@ -43,7 +49,7 @@ class HelpScreen extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.all(20),
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: Theme.of(context).cardColor,
                       borderRadius: BorderRadius.circular(16),
                       boxShadow: [
                         BoxShadow(
@@ -136,11 +142,11 @@ class HelpScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildFaqItem(String question, String answer) {
+  Widget _buildFaqItem(BuildContext context, String question, String answer) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(

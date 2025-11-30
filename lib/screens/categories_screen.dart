@@ -238,7 +238,9 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                     decoration: BoxDecoration(
                       color: !_showIncome
                           ? const Color(0xFF00BFA5)
-                          : Colors.grey.shade100,
+                          : (Theme.of(context).brightness == Brightness.dark
+                              ? Colors.grey.shade800
+                              : Colors.grey.shade100),
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Text(
@@ -261,7 +263,9 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                     decoration: BoxDecoration(
                       color: _showIncome
                           ? const Color(0xFF00BFA5)
-                          : Colors.grey.shade100,
+                          : (Theme.of(context).brightness == Brightness.dark
+                              ? Colors.grey.shade800
+                              : Colors.grey.shade100),
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Text(
