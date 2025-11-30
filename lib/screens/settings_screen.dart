@@ -12,6 +12,7 @@ import '../services/auth_service.dart';
 import '../services/app_lock_service.dart';
 import 'currency_settings_screen.dart';
 import 'user_selection_screen.dart';
+import 'add_user_screen.dart';
 import 'debt_list_screen.dart';
 import 'categories_screen.dart';
 import 'help_screen.dart';
@@ -301,6 +302,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
             onSave: _saveEmail,
             onCancel: _cancelEmailEdit,
             onEdit: _startEmailEdit,
+          ),
+          _buildSettingItem(
+            icon: Icons.person_add,
+            title: 'Kullanıcı Ekle',
+            subtitle: 'Yeni kullanıcı profili oluştur',
+            trailing: const Icon(
+              Icons.arrow_forward_ios,
+              size: 16,
+              color: Color(0xFF8E8E93),
+            ),
+            onTap: _addNewUser,
           ),
         ]),
         const SizedBox(height: 20),
@@ -1076,5 +1088,27 @@ class _SettingsScreenState extends State<SettingsScreen> {
         );
       },
     );
+  }
+
+  Future<void> _addNewUser() async {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const AddUserScreen(),
+      ),
+    );
+    
+    if (result == true) {
+      // Kullanıcı başarıyla eklendi, listeyi yenile
+      await _loadUser();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Kullanıcı başarıyla eklendi'),
+            backgroundColor: Color(0xFF00BFA5),
+          ),
+        );
+      }
+    }
   }
 }

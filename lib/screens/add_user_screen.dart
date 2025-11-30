@@ -162,6 +162,7 @@ class _AddUserScreenState extends State<AddUserScreen> {
                             borderRadius: BorderRadius.circular(15),
                           ),
                         ),
+                        textInputAction: TextInputAction.next,
                         validator: (value) {
                           if (value == null || value.isEmpty) {
                             return 'Lütfen adınızı girin';
@@ -173,6 +174,7 @@ class _AddUserScreenState extends State<AddUserScreen> {
                       TextFormField(
                         controller: _emailController,
                         keyboardType: TextInputType.emailAddress,
+                        textInputAction: TextInputAction.done,
                         decoration: InputDecoration(
                           labelText: 'E-posta (Opsiyonel)',
                           prefixIcon: const Icon(Icons.email),
