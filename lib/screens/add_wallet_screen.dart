@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:uuid/uuid.dart';
 import '../models/wallet.dart';
 import '../services/data_service.dart';
+import 'add_credit_card_screen.dart';
 
 // Custom formatter for thousand separators
 class ThousandsSeparatorInputFormatter extends TextInputFormatter {
@@ -106,9 +107,6 @@ class _AddWalletScreenState extends State<AddWalletScreen> {
 
   Future<void> _saveWallet() async {
     if (_formKey.currentState!.validate()) {
-      // Prevent credit card creation
-      if (_selectedType == 'credit_card') return;
-
       String walletName = _nameController.text.trim();
 
       // Handle bank name selection
@@ -644,9 +642,20 @@ class _AddWalletScreenState extends State<AddWalletScreen> {
     bool isSelected = _selectedType == type;
     return Expanded(
       child: GestureDetector(
-        onTap: () {
-          // Prevent credit card selection
-          if (type == 'credit_card') return;
+        onTap: () async {
+          // Navigate to credit card screen if credit card is selected
+          if (type == 'credit_card') {
+            final result = await Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const AddCreditCardScreen(),
+              ),
+            );
+            if (result == true && mounted) {
+              Navigator.pop(context, true);
+            }
+            return;
+          }
 
           setState(() {
             _selectedType = type;
