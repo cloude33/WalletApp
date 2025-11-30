@@ -1,7 +1,6 @@
 import 'package:uuid/uuid.dart';
 import '../models/credit_card.dart';
 import '../models/credit_card_statement.dart';
-import '../models/credit_card_transaction.dart';
 import '../repositories/credit_card_repository.dart';
 import '../repositories/credit_card_statement_repository.dart';
 import '../repositories/credit_card_transaction_repository.dart';

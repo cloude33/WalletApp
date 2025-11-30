@@ -2,12 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:intl/intl.dart';
 import 'package:uuid/uuid.dart';
-import 'dart:io';
 import 'dart:convert';
 import '../models/wallet.dart';
 import '../models/category.dart';
 import '../models/transaction.dart';
-import '../models/credit_card.dart';
 import '../models/credit_card_transaction.dart';
 import '../services/data_service.dart';
 import '../services/smart_category_service.dart';
@@ -1209,37 +1207,6 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildImagePlaceholder(String path) {
-    return Stack(
-      children: [
-        Container(
-          width: 120,
-          height: 150,
-          decoration: BoxDecoration(
-            color: Colors.grey.shade300,
-            borderRadius: BorderRadius.circular(10),
-          ),
-          child: const Icon(Icons.image, size: 50, color: Colors.grey),
-        ),
-        Positioned(
-          top: 5,
-          right: 5,
-          child: GestureDetector(
-            onTap: () {},
-            child: Container(
-              padding: const EdgeInsets.all(4),
-              decoration: const BoxDecoration(
-                color: Colors.black54,
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(Icons.close, color: Colors.white, size: 16),
-            ),
-          ),
-        ),
-      ],
     );
   }
 

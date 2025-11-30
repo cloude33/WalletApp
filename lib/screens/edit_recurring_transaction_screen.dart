@@ -30,6 +30,7 @@ class _EditRecurringTransactionScreenState
   late RecurrenceFrequency _frequency;
   late DateTime _startDate;
   DateTime? _endDate;
+  // ignore: unused_field
   int? _occurrenceCount;
   late bool _isIncome;
   late bool _notificationEnabled;

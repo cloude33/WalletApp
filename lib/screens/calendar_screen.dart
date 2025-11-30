@@ -166,7 +166,6 @@ class _CalendarScreenState extends State<CalendarScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final screenWidth = MediaQuery.of(context).size.width;
     final screenHeight = MediaQuery.of(context).size.height;
     
     return Scaffold(
@@ -200,7 +199,6 @@ class _CalendarScreenState extends State<CalendarScreen> {
     final dayTransactions = _getTransactionsForDay(_selectedDate);
     final dayIncome = _getDayIncome(_selectedDate);
     final dayExpense = _getDayExpense(_selectedDate);
-    final dayTotal = _getDayTotal(_selectedDate);
 
     return Container(
       color: Theme.of(context).scaffoldBackgroundColor,
@@ -238,10 +236,12 @@ class _CalendarScreenState extends State<CalendarScreen> {
                     const SizedBox(width: 12),
                     Text(
                       DateFormat('EEEE', 'tr_TR').format(_selectedDate),
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
-                        color: Color(0xFF1C1C1E),
+                        color: Theme.of(context).brightness == Brightness.dark
+                            ? Colors.grey[200]
+                            : const Color(0xFF1C1C1E),
                       ),
                     ),
                   ],
@@ -358,7 +358,9 @@ class _CalendarScreenState extends State<CalendarScreen> {
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: const Color(0xFFF2F2F7),
+        color: Theme.of(context).brightness == Brightness.dark
+            ? const Color(0xFF2C2C2E)
+            : const Color(0xFFF2F2F7),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
@@ -378,10 +380,12 @@ class _CalendarScreenState extends State<CalendarScreen> {
               children: [
                 Text(
                   transaction.description,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
-                    color: Color(0xFF1C1C1E),
+                    color: Theme.of(context).brightness == Brightness.dark
+                        ? Colors.grey[200]
+                        : const Color(0xFF1C1C1E),
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
@@ -419,7 +423,9 @@ class _CalendarScreenState extends State<CalendarScreen> {
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: const Color(0xFFF2F2F7),
+        color: Theme.of(context).brightness == Brightness.dark
+            ? const Color(0xFF2C2C2E)
+            : const Color(0xFFF2F2F7),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color: card?.color ?? Colors.blue,
@@ -447,10 +453,12 @@ class _CalendarScreenState extends State<CalendarScreen> {
               children: [
                 Text(
                   transaction.description,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
-                    color: Color(0xFF1C1C1E),
+                    color: Theme.of(context).brightness == Brightness.dark
+                        ? Colors.grey[200]
+                        : const Color(0xFF1C1C1E),
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
@@ -525,9 +533,11 @@ class _CalendarScreenState extends State<CalendarScreen> {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           IconButton(
-            icon: const Icon(
+            icon: Icon(
               Icons.arrow_back_ios,
-              color: Color(0xFF1C1C1E),
+              color: Theme.of(context).brightness == Brightness.dark
+                  ? Colors.grey[200]
+                  : const Color(0xFF1C1C1E),
               size: 20,
             ),
             onPressed: () {
@@ -541,16 +551,20 @@ class _CalendarScreenState extends State<CalendarScreen> {
           ),
           Text(
             DateFormat('MMMM yyyy', 'tr_TR').format(_selectedMonth),
-            style: const TextStyle(
-              color: Color(0xFF1C1C1E),
+            style: TextStyle(
+              color: Theme.of(context).brightness == Brightness.dark
+                  ? Colors.grey[200]
+                  : const Color(0xFF1C1C1E),
               fontSize: 20,
               fontWeight: FontWeight.w500,
             ),
           ),
           IconButton(
-            icon: const Icon(
+            icon: Icon(
               Icons.arrow_forward_ios,
-              color: Color(0xFF1C1C1E),
+              color: Theme.of(context).brightness == Brightness.dark
+                  ? Colors.grey[200]
+                  : const Color(0xFF1C1C1E),
               size: 20,
             ),
             onPressed: () {
@@ -620,13 +634,15 @@ class _CalendarScreenState extends State<CalendarScreen> {
   }
 
   Widget _buildCalendarHeader() {
-    final days = ['Paz', 'Pzt', 'Sal', 'Çar', 'Per', 'Cuma', 'Cmt'];
+    final days = ['Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt', 'Paz'];
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: days.map((day) {
-          final isSunday = day == 'Paz';
+        children: days.asMap().entries.map((entry) {
+          final day = entry.value;
+          final isWeekend = day == 'Cmt' || day == 'Paz';
           return Expanded(
             child: Center(
               child: Text(
@@ -634,7 +650,9 @@ class _CalendarScreenState extends State<CalendarScreen> {
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.bold,
-                  color: isSunday ? Colors.red : Theme.of(context).textTheme.bodyMedium?.color,
+                  color: isWeekend 
+                      ? Colors.red 
+                      : (isDark ? Colors.grey[300] : const Color(0xFF1C1C1E)),
                 ),
               ),
             ),
@@ -650,8 +668,10 @@ class _CalendarScreenState extends State<CalendarScreen> {
       _selectedMonth.month + 1,
       0,
     ).day;
-    final firstDayOfWeek =
-        DateTime(_selectedMonth.year, _selectedMonth.month, 1).weekday % 7;
+    // Adjust for Monday start (weekday: 1=Mon, 7=Sun)
+    // We want: Mon=0, Tue=1, ..., Sun=6
+    final firstDayWeekday = DateTime(_selectedMonth.year, _selectedMonth.month, 1).weekday;
+    final firstDayOfWeek = firstDayWeekday == 7 ? 6 : firstDayWeekday - 1;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 5),
@@ -668,7 +688,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
               }
 
               final day = cellIndex - firstDayOfWeek + 1;
-              return Expanded(child: _buildDayCell(day));
+              return Expanded(child: _buildDayCell(day, dayIndex));
             }),
           );
         }),
@@ -676,7 +696,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
     );
   }
 
-  Widget _buildDayCell(int day) {
+  Widget _buildDayCell(int day, int dayOfWeek) {
     final date = DateTime(_selectedMonth.year, _selectedMonth.month, day);
     final isSelected = date.year == _selectedDate.year &&
         date.month == _selectedDate.month &&
@@ -689,6 +709,10 @@ class _CalendarScreenState extends State<CalendarScreen> {
     final expense = _getDayExpense(date);
     final total = _getDayTotal(date);
     final hasTransactions = income > 0 || expense > 0;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
+    // dayOfWeek: 0=Mon, 1=Tue, ..., 5=Sat, 6=Sun
+    final isWeekend = dayOfWeek == 5 || dayOfWeek == 6;
 
     return GestureDetector(
       onTap: () => setState(() => _selectedDate = date),
@@ -717,9 +741,9 @@ class _CalendarScreenState extends State<CalendarScreen> {
                     fontWeight: isSelected || isToday
                         ? FontWeight.bold
                         : FontWeight.normal,
-                    color: day % 7 == 0
-                        ? const Color(0xFFFF3B30)
-                        : const Color(0xFF1C1C1E),
+                    color: isWeekend
+                        ? Colors.red
+                        : (isDark ? Colors.grey[300] : const Color(0xFF1C1C1E)),
                   ),
                 ),
                 if (hasTransactions) ...[

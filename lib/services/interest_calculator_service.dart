@@ -3,6 +3,7 @@ import '../repositories/credit_card_payment_repository.dart';
 
 class InterestCalculatorService {
   final CreditCardStatementRepository _statementRepo = CreditCardStatementRepository();
+  // ignore: unused_field
   final CreditCardPaymentRepository _paymentRepo = CreditCardPaymentRepository();
 
   // ==================== INTEREST CALCULATIONS ====================

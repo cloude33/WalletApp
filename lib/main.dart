@@ -92,7 +92,6 @@ class MoneyApp extends StatefulWidget {
 
 class _MoneyAppState extends State<MoneyApp> with WidgetsBindingObserver {
   final ThemeService _themeService = ThemeService();
-  final UserService _userService = UserService();
   final AppLockService _lockService = AppLockService();
   ThemeMode _themeMode = ThemeMode.system;
   bool _isFirstLaunch = true;
@@ -115,9 +114,13 @@ class _MoneyAppState extends State<MoneyApp> with WidgetsBindingObserver {
   }
 
   Future<void> _checkFirstLaunch() async {
-    final isFirst = await _userService.isFirstLaunch();
+    // Check if any users exist in the system
+    final dataService = DataService();
+    final users = await dataService.getAllUsers();
+    
     setState(() {
-      _isFirstLaunch = isFirst;
+      // If users exist, go to login screen, otherwise go to welcome screen
+      _isFirstLaunch = users.isEmpty;
     });
   }
 

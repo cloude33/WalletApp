@@ -1,9 +1,9 @@
+// ignore_for_file: unnecessary_null_comparison, dead_code, dead_null_aware_expression
+
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
 import '../models/app_notification.dart';
-import '../models/budget.dart';
-import '../models/transaction.dart';
 import 'data_service.dart';
 
 class NotificationService {

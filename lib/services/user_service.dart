@@ -115,4 +115,29 @@ class UserService {
 
     await saveUserProfile(updatedProfile);
   }
+
+  // Remember email
+  Future<void> saveRememberedEmail(String email) async {
+    await _prefs?.setString('remembered_email', email);
+  }
+
+  // Get remembered email
+  Future<String?> getRememberedEmail() async {
+    return _prefs?.getString('remembered_email');
+  }
+
+  // Clear remembered email
+  Future<void> clearRememberedEmail() async {
+    await _prefs?.remove('remembered_email');
+  }
+
+  // Check if email should be remembered
+  Future<bool> shouldRememberEmail() async {
+    return _prefs?.getBool('remember_email') ?? false;
+  }
+
+  // Set remember email preference
+  Future<void> setRememberEmail(bool remember) async {
+    await _prefs?.setBool('remember_email', remember);
+  }
 }

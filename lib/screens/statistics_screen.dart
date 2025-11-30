@@ -2804,6 +2804,7 @@ class _StatisticsScreenState extends State<StatisticsScreen>
   }
 
   // Enhanced filter bar with additional filters
+  // ignore: unused_element
   Widget _buildAdvancedFilters() {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),

@@ -68,6 +68,7 @@ class QifService {
     final transactions = <Transaction>[];
     final errors = <ImportError>[];
     int lineNumber = 0;
+    // ignore: unused_local_variable
     String? currentAccountType;
 
     Transaction? currentTransaction;

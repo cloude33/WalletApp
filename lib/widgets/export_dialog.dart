@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:share_plus/share_plus.dart';
 import '../models/export_filter.dart';
-import '../models/transaction.dart';
 import '../services/excel_export_service.dart';
 import '../services/csv_export_service.dart';
 import '../services/pdf_export_service.dart';
@@ -272,6 +271,7 @@ class _ExportDialogState extends State<ExportDialog> {
     }
   }
 
+  // ignore: unused_element
   static Future<void> show(BuildContext context) async {
     return showDialog(
       context: context,

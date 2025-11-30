@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'dart:convert';
 
 import '../models/wallet.dart';
 import '../models/transaction.dart';
@@ -11,19 +10,15 @@ import '../services/data_service.dart';
 import '../services/budget_alert_service.dart';
 import '../services/notification_service.dart';
 import '../utils/currency_helper.dart';
-import '../utils/currency_formatter.dart';
 import 'notification_history_screen.dart';
 import 'add_transaction_screen.dart';
 import 'add_wallet_screen.dart';
 import 'add_budget_screen.dart';
 import 'edit_transaction_screen.dart';
-import 'edit_wallet_screen.dart';
-import 'manage_wallets_screen.dart';
 import 'manage_goals_screen.dart';
 import 'manage_budgets_screen.dart';
 import 'calendar_screen.dart';
 import 'statistics_screen.dart';
-import 'categories_screen.dart';
 import 'settings_screen.dart';
 import 'recurring_transaction_list_screen.dart';
 import '../services/recurring_transaction_service.dart';
@@ -898,24 +893,18 @@ class _HomeScreenState extends State<HomeScreen> {
     final usagePercentage = totalBudget > 0 ? (totalSpent / totalBudget) : 0.0;
     final clampedPercentage = usagePercentage.clamp(0.0, 1.0);
 
-    // Determine status color and message
-    Color statusColor;
+    // Determine status message
     String statusMessage;
 
     if (totalBudget == 0) {
-      statusColor = const Color(0xFF8E8E93); // Grey
       statusMessage = 'Bütçe Tanımlanmadı';
     } else if (usagePercentage >= 1.0) {
-      statusColor = const Color(0xFFFF3B30);
       statusMessage = 'Bütçe Aşıldı!';
     } else if (usagePercentage >= 0.9) {
-      statusColor = const Color(0xFFFF9500);
       statusMessage = 'Dikkat: Bütçe Dolmak Üzere';
     } else if (usagePercentage >= 0.75) {
-      statusColor = const Color(0xFFFDB32A);
       statusMessage = 'İyi Gidiyorsunuz';
     } else {
-      statusColor = const Color(0xFF34C759);
       statusMessage = 'Harika! Bütçe Kontrolünde';
     }
 
@@ -1644,6 +1633,8 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  // Unused - kept for future use
+  // ignore: unused_element
   Widget _buildRecurringTransactionsSection() {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -1764,6 +1755,8 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  // Unused - kept for future use
+  // ignore: unused_element
   Widget _buildCreditCardsSection() {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -1871,6 +1864,8 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  // Unused - kept for future use
+  // ignore: unused_element
   Widget _buildDebtTrackingSection() {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),

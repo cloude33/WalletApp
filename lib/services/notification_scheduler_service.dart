@@ -256,8 +256,6 @@ class NotificationSchedulerService {
         return Importance.high;
       case NotificationPriority.urgent:
         return Importance.max;
-      default:
-        return Importance.defaultImportance;
     }
   }
 

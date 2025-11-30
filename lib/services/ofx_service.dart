@@ -1,6 +1,5 @@
 import 'dart:io';
 import 'package:xml/xml.dart';
-import 'package:intl/intl.dart';
 import '../models/transaction.dart';
 import '../models/import_result.dart';
 

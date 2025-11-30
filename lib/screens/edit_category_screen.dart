@@ -21,6 +21,7 @@ class _EditCategoryScreenState extends State<EditCategoryScreen> {
   late Color _selectedColor;
   final DataService _dataService = DataService();
 
+  // ignore: unused_field
   final List<IconData> _iconOptions = [
     Icons.category,
     Icons.shopping_cart,

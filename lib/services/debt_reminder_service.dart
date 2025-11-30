@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import '../models/debt.dart';
 import '../models/debt_reminder.dart';
 import '../services/debt_service.dart';
-import '../services/enhanced_notification_service.dart';
-import '../utils/notification_id_manager.dart';
 
 class DebtReminderService {
   static final DebtReminderService _instance = DebtReminderService._internal();
@@ -11,8 +9,6 @@ class DebtReminderService {
   DebtReminderService._internal();
 
   final DebtService _debtService = DebtService();
-  final EnhancedNotificationService _notificationService =
-      EnhancedNotificationService();
 
   /// Tüm aktif borç/alacaklar için vade tarihi hatırlatmaları oluştur
   Future<void> scheduleAllDueDateReminders() async {

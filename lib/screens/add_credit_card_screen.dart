@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:intl/intl.dart';
 import 'package:uuid/uuid.dart';
 import '../models/credit_card.dart';
 import '../services/credit_card_service.dart';
@@ -17,11 +16,6 @@ class AddCreditCardScreen extends StatefulWidget {
 class _AddCreditCardScreenState extends State<AddCreditCardScreen> {
   final _formKey = GlobalKey<FormState>();
   final CreditCardService _cardService = CreditCardService();
-  final NumberFormat _currencyFormat = NumberFormat.currency(
-    locale: 'tr_TR',
-    symbol: '',
-    decimalDigits: 0,
-  );
 
   // Form controllers
   late TextEditingController _bankNameController;

@@ -10,6 +10,8 @@ import '../models/category.dart';
 import '../models/recurring_transaction.dart';
 import 'cache_service.dart';
 import 'credit_card_service.dart';
+import '../repositories/recurring_transaction_repository.dart';
+import '../repositories/scheduled_notification_repository.dart';
 
 class DataService {
   static final DataService _instance = DataService._internal();
@@ -627,7 +629,36 @@ class DataService {
   }
 
   Future<void> clearAllData() async {
+    // Clear SharedPreferences
     await _prefs?.clear();
+    
+    // Clear cache
+    _cache.clear();
+    
+    // Clear credit card data
+    try {
+      final creditCardService = CreditCardService();
+      await creditCardService.clearAllData();
+    } catch (e) {
+      print('Error clearing credit card data: $e');
+    }
+    
+    // Clear recurring transactions
+    try {
+      final recurringRepo = RecurringTransactionRepository();
+      await recurringRepo.init();
+      await recurringRepo.clear();
+    } catch (e) {
+      print('Error clearing recurring transactions: $e');
+    }
+    
+    // Clear scheduled notifications
+    try {
+      final notificationRepo = ScheduledNotificationRepository();
+      await notificationRepo.clearAll();
+    } catch (e) {
+      print('Error clearing notifications: $e');
+    }
   }
 
   // Backup/Restore methods

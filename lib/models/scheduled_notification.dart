@@ -1,5 +1,3 @@
-import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-
 class ScheduledNotification {
   final String id;
   final int platformId; // Platform-specific notification ID

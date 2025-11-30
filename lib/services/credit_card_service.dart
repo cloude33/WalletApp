@@ -1,4 +1,3 @@
-import 'package:uuid/uuid.dart';
 import '../models/credit_card.dart';
 import '../models/credit_card_transaction.dart';
 import '../models/credit_card_payment.dart';
@@ -430,5 +429,13 @@ class CreditCardService {
       'nextDueDate': nextDueDate,
       'activeInstallmentCount': activeInstallments.length,
     };
+  }
+
+  /// Clear all credit card data
+  Future<void> clearAllData() async {
+    await _cardRepo.clear();
+    await _transactionRepo.clear();
+    await _paymentRepo.clear();
+    await _statementRepo.clear();
   }
 }

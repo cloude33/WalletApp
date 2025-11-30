@@ -165,7 +165,6 @@ class _RecurringStatisticsScreenState
                 PieChartData(
                   sections: breakdown.entries.toList().asMap().entries.map((entry) {
                     final index = entry.key;
-                    final category = entry.value.key;
                     final amount = entry.value.value;
                     final percentage = (amount / total * 100);
 

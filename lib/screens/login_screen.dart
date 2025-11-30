@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
 import '../services/auth_service.dart';
 import '../services/data_service.dart';
-import 'pin_setup_screen.dart';
+import '../services/user_service.dart';
 import 'home_screen.dart';
 import 'register_screen.dart';
 
@@ -24,9 +23,9 @@ class _LoginScreenState extends State<LoginScreen>
 
   bool _isBiometricAvailable = false;
   bool _hasPinCode = false;
-  bool _hasExistingData = false;
   bool _isLoading = false;
   bool _showPassword = false;
+  bool _rememberMe = false;
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
 
@@ -34,7 +33,7 @@ class _LoginScreenState extends State<LoginScreen>
   void initState() {
     super.initState();
     _checkBiometricAndPin();
-    _checkExistingData();
+    _loadRememberedEmail();
 
     _animationController = AnimationController(
       vsync: this,
@@ -46,6 +45,19 @@ class _LoginScreenState extends State<LoginScreen>
     );
 
     _animationController.forward();
+  }
+
+  Future<void> _loadRememberedEmail() async {
+    final userService = UserService();
+    final rememberedEmail = await userService.getRememberedEmail();
+    final shouldRemember = await userService.shouldRememberEmail();
+    
+    if (rememberedEmail != null && shouldRemember) {
+      setState(() {
+        _emailController.text = rememberedEmail;
+        _rememberMe = true;
+      });
+    }
   }
 
   @override
@@ -64,25 +76,6 @@ class _LoginScreenState extends State<LoginScreen>
         _isBiometricAvailable = available;
         _hasPinCode = hasPin;
       });
-    }
-  }
-
-  Future<void> _checkExistingData() async {
-    try {
-      final users = await _dataService.getAllUsers();
-      final hasPin = await _authService.hasPinCode();
-      final authMethod = await _authService.getCurrentAuthMethod();
-      final hasGoogle = authMethod == 'google';
-      final hasFacebook = authMethod == 'facebook';
-
-      if (mounted) {
-        setState(() {
-          _hasExistingData =
-              users.isNotEmpty || hasPin || hasGoogle || hasFacebook;
-        });
-      }
-    } catch (e) {
-      debugPrint('Error checking existing data: $e');
     }
   }
 
@@ -106,10 +99,20 @@ class _LoginScreenState extends State<LoginScreen>
 
     try {
       final users = await _dataService.getAllUsers();
-      final user = users.firstWhere(
+      users.firstWhere(
         (u) => u.email == _emailController.text.trim(),
         orElse: () => throw Exception('Kullanıcı bulunamadı'),
       );
+
+      // Save or clear remembered email based on checkbox
+      final userService = UserService();
+      if (_rememberMe) {
+        await userService.saveRememberedEmail(_emailController.text.trim());
+        await userService.setRememberEmail(true);
+      } else {
+        await userService.clearRememberedEmail();
+        await userService.setRememberEmail(false);
+      }
 
       // Verify password (in production, use proper password hashing)
       // For now, we'll just navigate to app
@@ -252,17 +255,36 @@ class _LoginScreenState extends State<LoginScreen>
             },
           ),
           const SizedBox(height: 8),
-          Align(
-            alignment: Alignment.centerRight,
-            child: TextButton(
-              onPressed: () {
-                // TODO: Implement password reset
-              },
-              child: const Text(
-                'Şifremi Unuttum',
-                style: TextStyle(color: Color(0xFFFDB32A)),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  Checkbox(
+                    value: _rememberMe,
+                    onChanged: (value) {
+                      setState(() {
+                        _rememberMe = value ?? false;
+                      });
+                    },
+                    activeColor: const Color(0xFFFDB32A),
+                  ),
+                  const Text(
+                    'Beni Hatırla',
+                    style: TextStyle(color: Color(0xFF8E8E93)),
+                  ),
+                ],
               ),
-            ),
+              TextButton(
+                onPressed: () {
+                  // TODO: Implement password reset
+                },
+                child: const Text(
+                  'Şifremi Unuttum',
+                  style: TextStyle(color: Color(0xFFFDB32A)),
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 16),
           SizedBox(

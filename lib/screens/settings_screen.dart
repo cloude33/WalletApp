@@ -596,6 +596,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
             },
           ),
         ]),
+        const SizedBox(height: 20),
+        _buildSection('Tehlikeli Bölge', [
+          _buildSettingItem(
+            icon: Icons.delete_forever,
+            title: 'Uygulamayı Sıfırla',
+            subtitle: 'Tüm verileri sil ve baştan başla',
+            titleColor: const Color(0xFFFF3B30),
+            onTap: _resetApp,
+          ),
+        ]),
       ],
     );
   }
@@ -927,6 +937,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     super.dispose();
   }
 
+  // ignore: unused_element
   Future<void> _showThemeDialog() async {
     return showDialog(
       context: context,
@@ -1103,6 +1114,132 @@ class _SettingsScreenState extends State<SettingsScreen> {
           const SnackBar(
             content: Text('Kullanıcı başarıyla eklendi'),
             backgroundColor: Color(0xFF00BFA5),
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _resetApp() async {
+    // İlk onay dialogu
+    final firstConfirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('⚠️ Uyarı'),
+        content: const Text(
+          'Uygulamayı sıfırlamak üzeresiniz. Bu işlem:\n\n'
+          '• Tüm kullanıcıları\n'
+          '• Tüm cüzdanları\n'
+          '• Tüm işlemleri\n'
+          '• Tüm kredi kartlarını\n'
+          '• Tüm borçları\n'
+          '• Tüm ayarları\n\n'
+          'kalıcı olarak silecektir. Bu işlem geri alınamaz!\n\n'
+          'Devam etmek istediğinizden emin misiniz?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('İptal'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text(
+              'Devam Et',
+              style: TextStyle(color: Colors.orange),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (firstConfirm != true) return;
+
+    // İkinci onay dialogu (daha ciddi)
+    final secondConfirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: const Color(0xFFFF3B30),
+        title: const Text(
+          '🚨 Son Uyarı',
+          style: TextStyle(color: Colors.white),
+        ),
+        content: const Text(
+          'Bu işlem GERİ ALINAMAZ!\n\n'
+          'Tüm verileriniz kalıcı olarak silinecek.\n\n'
+          'Yedek almadıysanız, verilerinizi geri getiremezsiniz.\n\n'
+          'Uygulamayı sıfırlamak istediğinizden kesinlikle emin misiniz?',
+          style: TextStyle(color: Colors.white),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text(
+              'İptal',
+              style: TextStyle(color: Colors.white),
+            ),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: TextButton.styleFrom(
+              backgroundColor: Colors.white,
+            ),
+            child: const Text(
+              'Evet, Sıfırla',
+              style: TextStyle(color: Color(0xFFFF3B30), fontWeight: FontWeight.bold),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (secondConfirm != true) return;
+
+    // Yükleme göstergesi
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const Center(
+        child: CircularProgressIndicator(),
+      ),
+    );
+
+    try {
+      // Tüm verileri sil
+      await _dataService.clearAllData();
+
+      if (mounted) {
+        Navigator.pop(context); // Loading dialog'u kapat
+
+        // Başarı mesajı
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Uygulama başarıyla sıfırlandı'),
+            backgroundColor: Colors.green,
+            duration: Duration(seconds: 2),
+          ),
+        );
+
+        // Kullanıcı seçim ekranına yönlendir
+        await Future.delayed(const Duration(milliseconds: 500));
+        if (mounted) {
+          Navigator.pushAndRemoveUntil(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const UserSelectionScreen(),
+            ),
+            (route) => false,
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        Navigator.pop(context); // Loading dialog'u kapat
+        
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Sıfırlama başarısız: $e'),
+            backgroundColor: Colors.red,
           ),
         );
       }

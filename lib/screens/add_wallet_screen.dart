@@ -4,8 +4,8 @@ import 'package:uuid/uuid.dart';
 import '../models/wallet.dart';
 import '../services/data_service.dart';
 
-// Custom formatter for thousand separators
-class ThousandsSeparatorInputFormatter extends TextInputFormatter {
+// Custom formatter for decimal numbers with thousand separators
+class DecimalInputFormatter extends TextInputFormatter {
   @override
   TextEditingValue formatEditUpdate(
     TextEditingValue oldValue,
@@ -15,27 +15,30 @@ class ThousandsSeparatorInputFormatter extends TextInputFormatter {
       return newValue;
     }
 
-    // Remove all non-digit characters
-    String newText = newValue.text.replaceAll(RegExp(r'[^0-9]'), '');
+    // Allow digits, comma, and dot
+    String newText = newValue.text.replaceAll(RegExp(r'[^0-9,.]'), '');
 
     if (newText.isEmpty) {
       return const TextEditingValue();
     }
 
-    // Add thousand separators
-    String formatted = '';
-    int count = 0;
-    for (int i = newText.length - 1; i >= 0; i--) {
-      if (count > 0 && count % 3 == 0) {
-        formatted = '.$formatted';
-      }
-      formatted = newText[i] + formatted;
-      count++;
+    // Replace comma with dot for decimal separator
+    newText = newText.replaceAll(',', '.');
+
+    // Ensure only one decimal point
+    final parts = newText.split('.');
+    if (parts.length > 2) {
+      newText = '${parts[0]}.${parts.sublist(1).join('')}';
+    }
+
+    // Limit decimal places to 2
+    if (parts.length == 2 && parts[1].length > 2) {
+      newText = '${parts[0]}.${parts[1].substring(0, 2)}';
     }
 
     return TextEditingValue(
-      text: formatted,
-      selection: TextSelection.collapsed(offset: formatted.length),
+      text: newText,
+      selection: TextSelection.collapsed(offset: newText.length),
     );
   }
 }
@@ -119,7 +122,8 @@ class _AddWalletScreenState extends State<AddWalletScreen> {
       // Parse balance
       double initialBalance = 0.0;
       if (_balanceController.text.isNotEmpty) {
-        String cleanBalance = _balanceController.text.replaceAll('.', '');
+        // Replace comma with dot and parse
+        String cleanBalance = _balanceController.text.replaceAll(',', '.');
         initialBalance = double.tryParse(cleanBalance) ?? 0.0;
 
         // For credit cards and overdraft, make it negative
@@ -131,7 +135,8 @@ class _AddWalletScreenState extends State<AddWalletScreen> {
       // Parse limit for overdraft
       double limit = 0.0;
       if (_selectedType == 'overdraft' && _limitController.text.isNotEmpty) {
-        String cleanLimit = _limitController.text.replaceAll('.', '');
+        // Replace comma with dot and parse
+        String cleanLimit = _limitController.text.replaceAll(',', '.');
         limit = double.tryParse(cleanLimit) ?? 0.0;
       }
 
@@ -153,7 +158,7 @@ class _AddWalletScreenState extends State<AddWalletScreen> {
       }
 
       if (mounted) {
-        Navigator.pop(context);
+        Navigator.pop(context, true); // Return true to indicate success
       }
     }
   }
@@ -378,10 +383,9 @@ class _AddWalletScreenState extends State<AddWalletScreen> {
                         const SizedBox(height: 8),
                         TextFormField(
                           controller: _balanceController,
-                          keyboardType: TextInputType.number,
+                          keyboardType: const TextInputType.numberWithOptions(decimal: true),
                           inputFormatters: [
-                            FilteringTextInputFormatter.digitsOnly,
-                            ThousandsSeparatorInputFormatter(),
+                            DecimalInputFormatter(),
                           ],
                           decoration: InputDecoration(
                             prefixText: '₺ ',
@@ -407,8 +411,8 @@ class _AddWalletScreenState extends State<AddWalletScreen> {
                           ),
                           validator: (value) {
                             if (value != null && value.isNotEmpty) {
-                              // Remove dots for validation
-                              String cleanValue = value.replaceAll('.', '');
+                              // Replace comma with dot for validation
+                              String cleanValue = value.replaceAll(',', '.');
                               if (double.tryParse(cleanValue) == null) {
                                 return 'Geçerli bir sayı girin';
                               }
@@ -435,10 +439,9 @@ class _AddWalletScreenState extends State<AddWalletScreen> {
                           const SizedBox(height: 8),
                           TextFormField(
                             controller: _limitController,
-                            keyboardType: TextInputType.number,
+                            keyboardType: const TextInputType.numberWithOptions(decimal: true),
                             inputFormatters: [
-                              FilteringTextInputFormatter.digitsOnly,
-                              ThousandsSeparatorInputFormatter(),
+                              DecimalInputFormatter(),
                             ],
                             decoration: InputDecoration(
                               prefixText: '₺ ',
