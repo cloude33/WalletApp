@@ -51,8 +51,10 @@ class _ManageWalletsScreenState extends State<ManageWalletsScreen> {
 
   Future<void> _loadWallets() async {
     final wallets = await _dataService.getWallets();
+    // Sadece kredi kartı olmayanları göster
+    final nonCreditCardWallets = wallets.where((w) => w.type != 'credit_card').toList();
     setState(() {
-      _wallets = wallets;
+      _wallets = nonCreditCardWallets;
       _loading = false;
     });
   }
