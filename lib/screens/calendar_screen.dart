@@ -170,7 +170,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
     final screenHeight = MediaQuery.of(context).size.height;
     
     return Scaffold(
-      backgroundColor: const Color(0xFFF2F2F7),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SafeArea(
         child: Column(
         children: [
@@ -313,14 +313,14 @@ class _CalendarScreenState extends State<CalendarScreen> {
                         Icon(
                           Icons.receipt_long_outlined,
                           size: 48,
-                          color: Colors.grey.shade300,
+                          color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.3),
                         ),
                         const SizedBox(height: 12),
                         Text(
                           'İşlem yok',
                           style: TextStyle(
                             fontSize: 14,
-                            color: Colors.grey.shade600,
+                            color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.6),
                           ),
                         ),
                       ],
@@ -634,7 +634,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.bold,
-                  color: isSunday ? Colors.red : Colors.grey.shade700,
+                  color: isSunday ? Colors.red : Theme.of(context).textTheme.bodyMedium?.color,
                 ),
               ),
             ),

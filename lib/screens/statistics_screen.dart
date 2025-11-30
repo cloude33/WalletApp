@@ -289,7 +289,8 @@ class _StatisticsScreenState extends State<StatisticsScreen>
         Container(
           height: 300,
           padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(color: Theme.of(context).cardColor,
+          decoration: BoxDecoration(
+            color: Theme.of(context).cardColor,
             borderRadius: BorderRadius.circular(12),
             boxShadow: [
               BoxShadow(
@@ -490,32 +491,38 @@ class _StatisticsScreenState extends State<StatisticsScreen>
         expenseCategories[item.category] =
             (expenseCategories[item.category] ?? 0) + item.amount;
         totalExpense += item.amount;
-        
+
         // Track payment method
         final wallet = widget.wallets.firstWhere(
           (w) => w.id == item.walletId,
-          orElse: () => widget.wallets.isNotEmpty ? widget.wallets.first : Wallet(
-            id: '',
-            name: 'Nakit',
-            balance: 0,
-            type: 'cash',
-            color: '0xFF8E8E93',
-            icon: 'cash',
-            creditLimit: 0.0,
-          ),
+          orElse: () => widget.wallets.isNotEmpty
+              ? widget.wallets.first
+              : Wallet(
+                  id: '',
+                  name: 'Nakit',
+                  balance: 0,
+                  type: 'cash',
+                  color: '0xFF8E8E93',
+                  icon: 'cash',
+                  creditLimit: 0.0,
+                ),
         );
-        
-        final paymentType = wallet.type == 'credit_card' ? 'Kredi Kartı' : 'Nakit';
-        paymentMethods[paymentType] = (paymentMethods[paymentType] ?? 0) + item.amount;
+
+        final paymentType = wallet.type == 'credit_card'
+            ? 'Kredi Kartı'
+            : 'Nakit';
+        paymentMethods[paymentType] =
+            (paymentMethods[paymentType] ?? 0) + item.amount;
       }
       // Handle credit card transactions (always expenses)
       else if (item is CreditCardTransaction) {
         expenseCategories[item.category] =
             (expenseCategories[item.category] ?? 0) + item.amount;
         totalExpense += item.amount;
-        
+
         // Credit card transactions are always credit card payments
-        paymentMethods['Kredi Kartı'] = (paymentMethods['Kredi Kartı'] ?? 0) + item.amount;
+        paymentMethods['Kredi Kartı'] =
+            (paymentMethods['Kredi Kartı'] ?? 0) + item.amount;
       }
     }
 
@@ -529,7 +536,8 @@ class _StatisticsScreenState extends State<StatisticsScreen>
         Container(
           height: 300,
           padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(color: Theme.of(context).cardColor,
+          decoration: BoxDecoration(
+            color: Theme.of(context).cardColor,
             borderRadius: BorderRadius.circular(12),
             boxShadow: [
               BoxShadow(
@@ -561,14 +569,22 @@ class _StatisticsScreenState extends State<StatisticsScreen>
                                 sectionsSpace: 2,
                                 centerSpaceRadius: 40,
                                 pieTouchData: PieTouchData(
-                                  touchCallback: (FlTouchEvent event, pieTouchResponse) {
-                                    if (event is FlTapUpEvent && pieTouchResponse != null) {
-                                      final sectionIndex = pieTouchResponse.touchedSection?.touchedSectionIndex;
-                                      if (sectionIndex != null && sectionIndex < sortedEntries.length) {
-                                        _showCategoryDetails(sortedEntries[sectionIndex].key);
-                                      }
-                                    }
-                                  },
+                                  touchCallback:
+                                      (FlTouchEvent event, pieTouchResponse) {
+                                        if (event is FlTapUpEvent &&
+                                            pieTouchResponse != null) {
+                                          final sectionIndex = pieTouchResponse
+                                              .touchedSection
+                                              ?.touchedSectionIndex;
+                                          if (sectionIndex != null &&
+                                              sectionIndex <
+                                                  sortedEntries.length) {
+                                            _showCategoryDetails(
+                                              sortedEntries[sectionIndex].key,
+                                            );
+                                          }
+                                        }
+                                      },
                                 ),
                                 sections: sortedEntries.map((e) {
                                   final percentage =
@@ -644,13 +660,13 @@ class _StatisticsScreenState extends State<StatisticsScreen>
               : const Center(child: Text('Harcama yok')),
         ),
         const SizedBox(height: 16),
-        
+
         // Payment Method Distribution
         if (paymentMethods.isNotEmpty) ...[
           _buildPaymentMethodDistribution(paymentMethods, totalExpense),
           const SizedBox(height: 16),
         ],
-        
+
         _buildDetailedSpendingCard(),
         const SizedBox(height: 16),
         ...sortedEntries.map((e) {
@@ -1062,7 +1078,8 @@ class _StatisticsScreenState extends State<StatisticsScreen>
         Container(
           height: 250,
           padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(color: Theme.of(context).cardColor,
+          decoration: BoxDecoration(
+            color: Theme.of(context).cardColor,
             borderRadius: BorderRadius.circular(12),
           ),
           child: totalAssets > 0
@@ -1256,7 +1273,9 @@ class _StatisticsScreenState extends State<StatisticsScreen>
                       Container(
                         height: 8,
                         decoration: BoxDecoration(
-                          color: Colors.grey[200],
+                          color: Theme.of(context).brightness == Brightness.dark
+                              ? Colors.grey[800]
+                              : Colors.grey[200],
                           borderRadius: BorderRadius.circular(4),
                         ),
                       ),
@@ -1788,7 +1807,8 @@ class _StatisticsScreenState extends State<StatisticsScreen>
         : null;
 
     return Container(
-      decoration: BoxDecoration(color: Theme.of(context).cardColor,
+      decoration: BoxDecoration(
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
@@ -1806,18 +1826,23 @@ class _StatisticsScreenState extends State<StatisticsScreen>
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
+                Text(
                   'Genel Bakış',
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
-                    color: Colors.black87,
+                    color: Theme.of(context).textTheme.bodyLarge?.color,
                   ),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   'Seçili dönem özeti',
-                  style: TextStyle(fontSize: 13, color: Colors.grey[600]),
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: Theme.of(
+                      context,
+                    ).textTheme.bodyMedium?.color?.withOpacity(0.6),
+                  ),
                 ),
               ],
             ),
@@ -2036,7 +2061,8 @@ class _StatisticsScreenState extends State<StatisticsScreen>
     Widget? headerAction,
   }) {
     return Container(
-      decoration: BoxDecoration(color: Theme.of(context).cardColor,
+      decoration: BoxDecoration(
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
@@ -2060,10 +2086,10 @@ class _StatisticsScreenState extends State<StatisticsScreen>
                     Expanded(
                       child: Text(
                         title,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
-                          color: Colors.black87,
+                          color: Theme.of(context).textTheme.bodyLarge?.color,
                         ),
                       ),
                     ),
@@ -2073,7 +2099,12 @@ class _StatisticsScreenState extends State<StatisticsScreen>
                 const SizedBox(height: 4),
                 Text(
                   subtitle,
-                  style: TextStyle(fontSize: 13, color: Colors.grey[600]),
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: Theme.of(
+                      context,
+                    ).textTheme.bodyMedium?.color?.withOpacity(0.6),
+                  ),
                 ),
                 const SizedBox(height: 12),
                 const Text(
@@ -2544,7 +2575,9 @@ class _StatisticsScreenState extends State<StatisticsScreen>
           Container(
             height: 6,
             decoration: BoxDecoration(
-              color: Colors.grey[200],
+              color: Theme.of(context).brightness == Brightness.dark
+                  ? Colors.grey[800]
+                  : Colors.grey[200],
               borderRadius: BorderRadius.circular(4),
             ),
             child: Row(
@@ -2705,7 +2738,9 @@ class _StatisticsScreenState extends State<StatisticsScreen>
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
             decoration: BoxDecoration(
-              color: Colors.grey[300],
+              color: Theme.of(context).brightness == Brightness.dark
+                  ? Colors.grey[700]
+                  : Colors.grey[300],
               borderRadius: BorderRadius.circular(4),
             ),
             child: Text(percentage),
@@ -2718,7 +2753,8 @@ class _StatisticsScreenState extends State<StatisticsScreen>
   Widget _buildTimeFilter() {
     return Container(
       height: 50,
-      decoration: BoxDecoration(color: Theme.of(context).cardColor,
+      decoration: BoxDecoration(
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(25),
         boxShadow: [
           BoxShadow(
@@ -2820,7 +2856,8 @@ class _StatisticsScreenState extends State<StatisticsScreen>
   Widget _buildAdvancedFilters() {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      decoration: BoxDecoration(color: Theme.of(context).cardColor,
+      decoration: BoxDecoration(
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
@@ -2883,7 +2920,9 @@ class _StatisticsScreenState extends State<StatisticsScreen>
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
-          color: Colors.grey[100],
+          color: Theme.of(context).brightness == Brightness.dark
+              ? Colors.grey[800]
+              : Colors.grey[100],
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
             color: Colors.grey[300]!,
@@ -3333,13 +3372,17 @@ class _StatisticsScreenState extends State<StatisticsScreen>
     );
   }
 
-  Widget _buildPaymentMethodDistribution(Map<String, double> paymentMethods, double totalExpense) {
+  Widget _buildPaymentMethodDistribution(
+    Map<String, double> paymentMethods,
+    double totalExpense,
+  ) {
     final sortedMethods = paymentMethods.entries.toList()
       ..sort((a, b) => b.value.compareTo(a.value));
 
     return Container(
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(color: Theme.of(context).cardColor,
+      decoration: BoxDecoration(
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
@@ -3354,10 +3397,7 @@ class _StatisticsScreenState extends State<StatisticsScreen>
         children: [
           const Text(
             'Ödeme Yöntemi Dağılımı',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-            ),
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 16),
           SizedBox(
@@ -3365,14 +3405,20 @@ class _StatisticsScreenState extends State<StatisticsScreen>
             child: BarChart(
               BarChartData(
                 alignment: BarChartAlignment.spaceAround,
-                maxY: sortedMethods.map((e) => e.value).reduce((a, b) => a > b ? a : b) * 1.2,
+                maxY:
+                    sortedMethods
+                        .map((e) => e.value)
+                        .reduce((a, b) => a > b ? a : b) *
+                    1.2,
                 barTouchData: BarTouchData(
                   touchTooltipData: BarTouchTooltipData(
                     getTooltipColor: (_) => Colors.blueGrey,
                     getTooltipItem: (group, groupIndex, rod, rodIndex) {
                       final method = sortedMethods[group.x.toInt()].key;
                       final amount = rod.toY;
-                      final percentage = totalExpense > 0 ? (amount / totalExpense) * 100 : 0;
+                      final percentage = totalExpense > 0
+                          ? (amount / totalExpense) * 100
+                          : 0;
                       return BarTooltipItem(
                         '$method\n${NumberFormat('#,##0', 'tr_TR').format(amount)} ₺\n${percentage.toStringAsFixed(1)}%',
                         const TextStyle(
@@ -3389,12 +3435,16 @@ class _StatisticsScreenState extends State<StatisticsScreen>
                     sideTitles: SideTitles(
                       showTitles: true,
                       getTitlesWidget: (value, meta) {
-                        if (value.toInt() >= 0 && value.toInt() < sortedMethods.length) {
+                        if (value.toInt() >= 0 &&
+                            value.toInt() < sortedMethods.length) {
                           return Padding(
                             padding: const EdgeInsets.only(top: 8),
                             child: Text(
                               sortedMethods[value.toInt()].key,
-                              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
+                              style: const TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w500,
+                              ),
                               textAlign: TextAlign.center,
                             ),
                           );
@@ -3427,7 +3477,7 @@ class _StatisticsScreenState extends State<StatisticsScreen>
                 barGroups: sortedMethods.asMap().entries.map((entry) {
                   final index = entry.key;
                   final methodData = entry.value;
-                  
+
                   // Determine color based on payment method
                   Color barColor;
                   if (methodData.key.contains('Kredi')) {
@@ -3457,7 +3507,9 @@ class _StatisticsScreenState extends State<StatisticsScreen>
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: const Color(0xFFF2F2F7),
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? const Color(0xFF2C2C2E)
+                    : const Color(0xFFF2F2F7),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Column(
@@ -3483,7 +3535,9 @@ class _StatisticsScreenState extends State<StatisticsScreen>
                             const SizedBox(width: 8),
                             Text(
                               methodData.key,
-                              style: const TextStyle(fontWeight: FontWeight.w500),
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w500,
+                              ),
                             ),
                           ],
                         ),
@@ -3539,26 +3593,32 @@ class _StatisticsScreenState extends State<StatisticsScreen>
   void _showCategoryDetails(String category) {
     // Get all transactions for this category
     final categoryTransactions = <Map<String, dynamic>>[];
-    
+
     for (var item in _filteredTransactions) {
-      if (item is Transaction && item.category == category && item.type == 'expense') {
+      if (item is Transaction &&
+          item.category == category &&
+          item.type == 'expense') {
         categoryTransactions.add({
           'type': 'normal',
           'description': item.description,
           'amount': item.amount,
           'date': item.date,
-          'wallet': widget.wallets.firstWhere(
-            (w) => w.id == item.walletId,
-            orElse: () => widget.wallets.isNotEmpty ? widget.wallets.first : Wallet(
-              id: '',
-              name: 'Bilinmeyen',
-              balance: 0,
-              type: 'cash',
-              color: '0xFF8E8E93',
-              icon: 'cash',
-              creditLimit: 0.0,
-            ),
-          ).name,
+          'wallet': widget.wallets
+              .firstWhere(
+                (w) => w.id == item.walletId,
+                orElse: () => widget.wallets.isNotEmpty
+                    ? widget.wallets.first
+                    : Wallet(
+                        id: '',
+                        name: 'Bilinmeyen',
+                        balance: 0,
+                        type: 'cash',
+                        color: '0xFF8E8E93',
+                        icon: 'cash',
+                        creditLimit: 0.0,
+                      ),
+              )
+              .name,
         });
       } else if (item is CreditCardTransaction && item.category == category) {
         categoryTransactions.add({
@@ -3572,7 +3632,9 @@ class _StatisticsScreenState extends State<StatisticsScreen>
     }
 
     // Sort by amount (descending)
-    categoryTransactions.sort((a, b) => (b['amount'] as double).compareTo(a['amount'] as double));
+    categoryTransactions.sort(
+      (a, b) => (b['amount'] as double).compareTo(a['amount'] as double),
+    );
 
     // Calculate total
     final total = categoryTransactions.fold<double>(
@@ -3596,7 +3658,8 @@ class _StatisticsScreenState extends State<StatisticsScreen>
                 Container(
                   padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(
-                    color: Colors.primaries[category.hashCode % Colors.primaries.length],
+                    color: Colors
+                        .primaries[category.hashCode % Colors.primaries.length],
                     borderRadius: const BorderRadius.only(
                       topLeft: Radius.circular(16),
                       topRight: Radius.circular(16),
@@ -3646,15 +3709,21 @@ class _StatisticsScreenState extends State<StatisticsScreen>
                     itemCount: categoryTransactions.length,
                     itemBuilder: (context, index) {
                       final transaction = categoryTransactions[index];
-                      final percentage = ((transaction['amount'] as double) / total) * 100;
-                      
+                      final percentage =
+                          ((transaction['amount'] as double) / total) * 100;
+
                       return ListTile(
                         leading: CircleAvatar(
-                          backgroundColor: Colors.primaries[category.hashCode % Colors.primaries.length].withOpacity(0.2),
+                          backgroundColor: Colors
+                              .primaries[category.hashCode %
+                                  Colors.primaries.length]
+                              .withOpacity(0.2),
                           child: Text(
                             '${index + 1}',
                             style: TextStyle(
-                              color: Colors.primaries[category.hashCode % Colors.primaries.length],
+                              color:
+                                  Colors.primaries[category.hashCode %
+                                      Colors.primaries.length],
                               fontWeight: FontWeight.bold,
                             ),
                           ),
@@ -3699,4 +3768,3 @@ class _StatisticsScreenState extends State<StatisticsScreen>
     );
   }
 }
-

@@ -158,7 +158,7 @@ class _UserSelectionScreenState extends State<UserSelectionScreen> {
       onLongPress: () => _deleteUser(user),
       child: Container(
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: Theme.of(context).cardColor,
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
@@ -232,7 +232,7 @@ class _UserSelectionScreenState extends State<UserSelectionScreen> {
       },
       child: Container(
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: Theme.of(context).cardColor,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(color: const Color(0xFF00BFA5), width: 2),
           boxShadow: [

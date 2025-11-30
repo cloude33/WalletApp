@@ -178,7 +178,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF2F2F7),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SafeArea(
         child: Column(
           children: [
@@ -642,12 +642,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
     Color? titleColor,
     VoidCallback? onTap,
   }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return ListTile(
       contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
       leading: Container(
         padding: const EdgeInsets.all(8),
         decoration: BoxDecoration(
-          color: const Color(0xFFF2F2F7),
+          color: isDark ? const Color(0xFF2C2C2E) : const Color(0xFFF2F2F7),
           borderRadius: BorderRadius.circular(10),
         ),
         child: Icon(
@@ -683,6 +684,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     required VoidCallback onCancel,
     required VoidCallback onEdit,
   }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Column(
       children: [
         ListTile(
@@ -693,7 +695,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           leading: Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: const Color(0xFFF2F2F7),
+              color: isDark ? const Color(0xFF2C2C2E) : const Color(0xFFF2F2F7),
               borderRadius: BorderRadius.circular(10),
             ),
             child: Icon(icon, color: const Color(0xFF5E5CE6), size: 24),
@@ -727,8 +729,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
             decoration: BoxDecoration(
-              color: const Color(0xFFF8F8F8),
-              border: Border(top: BorderSide(color: Colors.grey.shade200)),
+              color: isDark ? const Color(0xFF1C1C1E) : const Color(0xFFF8F8F8),
+              border: Border(top: BorderSide(color: isDark ? const Color(0xFF3A3A3C) : Colors.grey.shade200)),
             ),
             child: Column(
               children: [

@@ -185,10 +185,11 @@ class _RecurringTransactionsScreenState extends State<RecurringTransactionsScree
     final color = isIncome ? const Color(0xFF34C759) : const Color(0xFFFF3B30);
     final nextOccurrence = transaction.getNextOccurrence();
 
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
