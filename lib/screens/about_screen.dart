@@ -60,9 +60,9 @@ class AboutScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 40),
                   _buildSection(context, 'Geliştirici', [
-                    _buildInfoItem('Geliştirici', 'WalletApp Team'),
-                    _buildInfoItem('Web Sitesi', 'www.walletapp.com'),
-                    _buildInfoItem('İletişim', 'contact@walletapp.com'),
+                    _buildInfoItem(context, 'Geliştirici', 'WalletApp Team'),
+                    _buildInfoItem(context, 'Web Sitesi', 'www.walletapp.com'),
+                    _buildInfoItem(context, 'İletişim', 'contact@walletapp.com'),
                   ]),
                   const SizedBox(height: 20),
                   _buildSection(context, 'Yasal', [
@@ -152,7 +152,7 @@ class AboutScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildInfoItem(String title, String value) {
+  Widget _buildInfoItem(BuildContext context, String title, String value) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -168,16 +168,16 @@ class AboutScreen extends StatelessWidget {
         children: [
           Text(
             title,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 16,
-              color: Color(0xFF1C1C1E),
+              color: Theme.of(context).textTheme.bodyLarge?.color,
             ),
           ),
           Text(
             value,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 16,
-              color: Color(0xFF8E8E93),
+              color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.6),
             ),
           ),
         ],
@@ -207,9 +207,9 @@ class AboutScreen extends StatelessWidget {
           children: [
             Text(
               title,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 16,
-                color: Color(0xFF1C1C1E),
+                color: Theme.of(context).textTheme.bodyLarge?.color,
               ),
             ),
             const Icon(

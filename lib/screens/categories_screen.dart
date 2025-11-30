@@ -420,9 +420,10 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                         children: [
                           Text(
                             category.name,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.w600,
+                              color: Theme.of(context).textTheme.bodyLarge?.color,
                             ),
                           ),
                           if (_showStats && count > 0) ...[
@@ -431,7 +432,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                               '$count işlem • ₺${NumberFormat('#,##0', 'tr_TR').format(amount)}',
                               style: TextStyle(
                                 fontSize: 12,
-                                color: Colors.grey.shade600,
+                                color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.6),
                               ),
                             ),
                           ],

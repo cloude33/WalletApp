@@ -161,9 +161,9 @@ class HelpScreen extends StatelessWidget {
         child: ExpansionTile(
           title: Text(
             question,
-            style: const TextStyle(
+            style: TextStyle(
               fontWeight: FontWeight.w600,
-              color: Color(0xFF1C1C1E),
+              color: Theme.of(context).textTheme.bodyLarge?.color,
             ),
           ),
           children: [
@@ -171,8 +171,8 @@ class HelpScreen extends StatelessWidget {
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
               child: Text(
                 answer,
-                style: const TextStyle(
-                  color: Color(0xFF8E8E93),
+                style: TextStyle(
+                  color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.7),
                   height: 1.5,
                 ),
               ),
