@@ -24,6 +24,7 @@ import 'recurring_transaction_list_screen.dart';
 import '../services/recurring_transaction_service.dart';
 import '../repositories/recurring_transaction_repository.dart';
 import '../widgets/export_dialog.dart';
+import '../widgets/theme_toggle_button.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -493,18 +494,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
             icon: Icons.brightness_6,
             title: 'Tema',
             subtitle: _currentThemeMode == ThemeMode.light
-                ? 'Açık'
+                ? 'Açık Mod'
                 : _currentThemeMode == ThemeMode.dark
-                ? 'Koyu'
-                : 'Sistem',
-            trailing: const Icon(
-              Icons.arrow_forward_ios,
-              size: 16,
-              color: Color(0xFF8E8E93),
-            ),
-            onTap: () async {
-              await _showThemeDialog();
-            },
+                ? 'Karanlık Mod'
+                : 'Sistem Ayarı',
+            trailing: const ThemeToggleButton(),
+            onTap: null,
           ),
         ]),
         const SizedBox(height: 20),

@@ -134,18 +134,25 @@ class ThemeService extends ChangeNotifier {
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.dark,
-      primaryColor: const Color(0xFF2C6BED),
+      primaryColor: const Color(0xFF0A84FF),
       scaffoldBackgroundColor: const Color(0xFF000000),
       colorScheme: const ColorScheme.dark(
-        primary: Color(0xFF2C6BED),
+        primary: Color(0xFF0A84FF),
         secondary: Color(0xFFFFD60A),
         surface: Color(0xFF1C1C1E),
+        background: Color(0xFF000000),
         error: Color(0xFFFF453A),
+        onPrimary: Colors.white,
+        onSecondary: Colors.black,
+        onSurface: Colors.white,
+        onBackground: Colors.white,
+        onError: Colors.white,
       ),
       appBarTheme: const AppBarTheme(
         backgroundColor: Color(0xFF1C1C1E),
         foregroundColor: Colors.white,
         elevation: 0,
+        iconTheme: IconThemeData(color: Colors.white),
       ),
       cardTheme: const CardThemeData(
         color: Color(0xFF1C1C1E),
@@ -155,7 +162,7 @@ class ThemeService extends ChangeNotifier {
         ),
       ),
       floatingActionButtonTheme: const FloatingActionButtonThemeData(
-        backgroundColor: Color(0xFF2C6BED),
+        backgroundColor: Color(0xFF0A84FF),
         foregroundColor: Colors.white,
       ),
       textTheme: const TextTheme(
@@ -190,12 +197,14 @@ class ThemeService extends ChangeNotifier {
           color: Colors.white,
         ),
         bodyLarge: TextStyle(fontSize: 16, color: Colors.white),
-        bodyMedium: TextStyle(fontSize: 14, color: Colors.white),
+        bodyMedium: TextStyle(fontSize: 14, color: Color(0xFFE5E5EA)),
         bodySmall: TextStyle(fontSize: 12, color: Color(0xFF8E8E93)),
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: const Color(0xFF2C2C2E),
+        labelStyle: const TextStyle(color: Color(0xFF8E8E93)),
+        hintStyle: const TextStyle(color: Color(0xFF8E8E93)),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide.none,
@@ -206,13 +215,36 @@ class ThemeService extends ChangeNotifier {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Color(0xFF2C6BED), width: 2),
+          borderSide: const BorderSide(color: Color(0xFF0A84FF), width: 2),
         ),
       ),
       bottomNavigationBarTheme: const BottomNavigationBarThemeData(
         backgroundColor: Color(0xFF1C1C1E),
-        selectedItemColor: Color(0xFF2C6BED),
+        selectedItemColor: Color(0xFF0A84FF),
         unselectedItemColor: Color(0xFF8E8E93),
+        type: BottomNavigationBarType.fixed,
+      ),
+      dividerColor: const Color(0xFF38383A),
+      iconTheme: const IconThemeData(color: Colors.white),
+      listTileTheme: const ListTileThemeData(
+        textColor: Colors.white,
+        iconColor: Colors.white,
+      ),
+      dialogTheme: const DialogTheme(
+        backgroundColor: Color(0xFF1C1C1E),
+        titleTextStyle: TextStyle(
+          color: Colors.white,
+          fontSize: 20,
+          fontWeight: FontWeight.bold,
+        ),
+        contentTextStyle: TextStyle(
+          color: Color(0xFFE5E5EA),
+          fontSize: 14,
+        ),
+      ),
+      snackBarTheme: const SnackBarThemeData(
+        backgroundColor: Color(0xFF2C2C2E),
+        contentTextStyle: TextStyle(color: Colors.white),
       ),
     );
   }
