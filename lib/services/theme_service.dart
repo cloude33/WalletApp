@@ -60,9 +60,10 @@ class ThemeService extends ChangeNotifier {
         error: Color(0xFFFF3B30),
       ),
       appBarTheme: const AppBarTheme(
-        backgroundColor: Color(0xFF2C6BED),
-        foregroundColor: Colors.white,
+        backgroundColor: Colors.white,
+        foregroundColor: Colors.black,
         elevation: 0,
+        iconTheme: IconThemeData(color: Colors.black),
       ),
       cardTheme: const CardThemeData(
         color: Colors.white,
@@ -149,10 +150,10 @@ class ThemeService extends ChangeNotifier {
         onError: Colors.white,
       ),
       appBarTheme: const AppBarTheme(
-        backgroundColor: Color(0xFF1C1C1E),
-        foregroundColor: Colors.white,
+        backgroundColor: Colors.white,
+        foregroundColor: Colors.black,
         elevation: 0,
-        iconTheme: IconThemeData(color: Colors.white),
+        iconTheme: IconThemeData(color: Colors.black),
       ),
       cardTheme: const CardThemeData(
         color: Color(0xFF1C1C1E),
