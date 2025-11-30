@@ -230,7 +230,7 @@ class ThemeService extends ChangeNotifier {
         textColor: Colors.white,
         iconColor: Colors.white,
       ),
-      dialogTheme: const DialogTheme(
+      dialogTheme: const DialogThemeData(
         backgroundColor: Color(0xFF1C1C1E),
         titleTextStyle: TextStyle(
           color: Colors.white,
