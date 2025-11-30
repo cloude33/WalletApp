@@ -194,9 +194,9 @@ class _StatisticsScreenState extends State<StatisticsScreen>
         child: Column(
           children: [
             Container(
-              decoration: const BoxDecoration(
-                color: Colors.white,
-                boxShadow: [
+              decoration: BoxDecoration(
+                color: Theme.of(context).appBarTheme.backgroundColor,
+                boxShadow: const [
                   BoxShadow(
                     color: Colors.black12,
                     blurRadius: 4,
@@ -289,8 +289,7 @@ class _StatisticsScreenState extends State<StatisticsScreen>
         Container(
           height: 300,
           padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: Colors.white,
+          decoration: BoxDecoration(color: Theme.of(context).cardColor,
             borderRadius: BorderRadius.circular(12),
             boxShadow: [
               BoxShadow(
@@ -530,8 +529,7 @@ class _StatisticsScreenState extends State<StatisticsScreen>
         Container(
           height: 300,
           padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: Colors.white,
+          decoration: BoxDecoration(color: Theme.of(context).cardColor,
             borderRadius: BorderRadius.circular(12),
             boxShadow: [
               BoxShadow(
@@ -1064,8 +1062,7 @@ class _StatisticsScreenState extends State<StatisticsScreen>
         Container(
           height: 250,
           padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: Colors.white,
+          decoration: BoxDecoration(color: Theme.of(context).cardColor,
             borderRadius: BorderRadius.circular(12),
           ),
           child: totalAssets > 0
@@ -1791,8 +1788,7 @@ class _StatisticsScreenState extends State<StatisticsScreen>
         : null;
 
     return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
+      decoration: BoxDecoration(color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
@@ -2040,8 +2036,7 @@ class _StatisticsScreenState extends State<StatisticsScreen>
     Widget? headerAction,
   }) {
     return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
+      decoration: BoxDecoration(color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
@@ -2723,8 +2718,7 @@ class _StatisticsScreenState extends State<StatisticsScreen>
   Widget _buildTimeFilter() {
     return Container(
       height: 50,
-      decoration: BoxDecoration(
-        color: Colors.white,
+      decoration: BoxDecoration(color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(25),
         boxShadow: [
           BoxShadow(
@@ -2826,8 +2820,7 @@ class _StatisticsScreenState extends State<StatisticsScreen>
   Widget _buildAdvancedFilters() {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      decoration: BoxDecoration(
-        color: Colors.white,
+      decoration: BoxDecoration(color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
@@ -3346,8 +3339,7 @@ class _StatisticsScreenState extends State<StatisticsScreen>
 
     return Container(
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
+      decoration: BoxDecoration(color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
@@ -3707,3 +3699,4 @@ class _StatisticsScreenState extends State<StatisticsScreen>
     );
   }
 }
+
