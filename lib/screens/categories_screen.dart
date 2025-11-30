@@ -189,9 +189,9 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
   Widget _buildHeader() {
     return Container(
       padding: const EdgeInsets.all(20),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        boxShadow: [
+      decoration: BoxDecoration(
+        color: Theme.of(context).appBarTheme.backgroundColor,
+        boxShadow: const [
           BoxShadow(color: Colors.black12, blurRadius: 4, offset: Offset(0, 2)),
         ],
       ),
@@ -285,7 +285,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
   Widget _buildSearchBar() {
     return Container(
       padding: const EdgeInsets.all(16),
-      color: Colors.white,
+      color: Theme.of(context).cardColor,
       child: TextField(
         controller: _searchController,
         decoration: InputDecoration(
@@ -381,7 +381,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
           key: ValueKey(category.id),
           margin: const EdgeInsets.only(bottom: 10),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: Theme.of(context).cardColor,
             borderRadius: BorderRadius.circular(12),
             boxShadow: [
               BoxShadow(

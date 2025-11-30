@@ -170,7 +170,9 @@ class _DebtListScreenState extends State<DebtListScreen>
                     hintText: 'Kişi ara...',
                     prefixIcon: const Icon(Icons.search),
                     filled: true,
-                    fillColor: Colors.white.withOpacity(0.9),
+                    fillColor: Theme.of(context).brightness == Brightness.dark
+                        ? Colors.grey[800]
+                        : Colors.white.withOpacity(0.9),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                       borderSide: BorderSide.none,

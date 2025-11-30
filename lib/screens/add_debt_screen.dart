@@ -177,7 +177,11 @@ class _AddDebtScreenState extends State<AddDebtScreen> {
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: isSelected ? color.withOpacity(0.1) : Colors.grey[100],
+          color: isSelected
+              ? color.withOpacity(0.1)
+              : (Theme.of(context).brightness == Brightness.dark
+                  ? Colors.grey[800]
+                  : Colors.grey[100]),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: isSelected ? color : Colors.grey[300]!,
