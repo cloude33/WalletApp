@@ -203,7 +203,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
     final dayTotal = _getDayTotal(_selectedDate);
 
     return Container(
-      color: Colors.white,
+      color: Theme.of(context).scaffoldBackgroundColor,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -511,9 +511,9 @@ class _CalendarScreenState extends State<CalendarScreen> {
   Widget _buildHeader() {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        boxShadow: [
+      decoration: BoxDecoration(
+        color: Theme.of(context).appBarTheme.backgroundColor,
+        boxShadow: const [
           BoxShadow(
             color: Colors.black12,
             blurRadius: 4,
@@ -570,7 +570,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
   Widget _buildSummary() {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
-      color: Colors.white,
+      color: Theme.of(context).cardColor,
       child: LayoutBuilder(
         builder: (context, constraints) {
           return Row(
