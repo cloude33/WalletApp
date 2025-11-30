@@ -491,12 +491,12 @@ class _HomeScreenState extends State<HomeScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'İşlemler',
             style: TextStyle(
               fontSize: 22,
               fontWeight: FontWeight.bold,
-              color: Color(0xFF1C1C1E),
+              color: Theme.of(context).textTheme.displayLarge?.color,
             ),
           ),
           const SizedBox(height: 12),
@@ -754,10 +754,10 @@ class _HomeScreenState extends State<HomeScreen> {
                 children: [
                   Text(
                     transaction.description,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
-                      color: Color(0xFF1C1C1E),
+                      color: Theme.of(context).textTheme.bodyLarge?.color,
                     ),
                   ),
                   const SizedBox(height: 4),
@@ -766,30 +766,30 @@ class _HomeScreenState extends State<HomeScreen> {
                       if (card != null) ...[
                         Text(
                           '${card.bankName} •••• ${card.last4Digits}',
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 13,
-                            color: Color(0xFF8E8E93),
+                            color: Theme.of(context).textTheme.bodySmall?.color,
                           ),
                         ),
                         if (isInstallment) ...[
-                          const Text(
+                          Text(
                             ' • ',
-                            style: TextStyle(color: Color(0xFF8E8E93)),
+                            style: TextStyle(color: Theme.of(context).textTheme.bodySmall?.color),
                           ),
                           Text(
                             '${transaction.installmentsPaid}/${transaction.installmentCount} Taksit',
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 13,
-                              color: Color(0xFF8E8E93),
+                              color: Theme.of(context).textTheme.bodySmall?.color,
                             ),
                           ),
                         ],
                       ] else ...[
                         Text(
                           transaction.category,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 13,
-                            color: Color(0xFF8E8E93),
+                            color: Theme.of(context).textTheme.bodySmall?.color,
                           ),
                         ),
                       ],

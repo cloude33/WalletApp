@@ -199,7 +199,7 @@ class ThemeService extends ChangeNotifier {
         ),
         bodyLarge: TextStyle(fontSize: 16, color: Colors.white),
         bodyMedium: TextStyle(fontSize: 14, color: Color(0xFFE5E5EA)),
-        bodySmall: TextStyle(fontSize: 12, color: Color(0xFF8E8E93)),
+        bodySmall: TextStyle(fontSize: 12, color: Color(0xFFAAAAAA)),
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
