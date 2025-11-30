@@ -937,7 +937,7 @@ class _HomeScreenState extends State<HomeScreen> {
           children: [
             // Top Colored Section - Budget Status
             Container(
-              padding: const EdgeInsets.all(24),
+              padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
                 borderRadius: const BorderRadius.vertical(
                   top: Radius.circular(24),
@@ -945,7 +945,9 @@ class _HomeScreenState extends State<HomeScreen> {
                 gradient: LinearGradient(
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
-                  colors: [const Color(0xFF667eea), const Color(0xFF764ba2)],
+                  colors: Theme.of(context).brightness == Brightness.dark
+                      ? [const Color(0xFF4A5568), const Color(0xFF2D3748)]
+                      : [const Color(0xFF667eea), const Color(0xFF764ba2)],
                 ),
               ),
               child: Column(
@@ -958,7 +960,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         'Bütçe Durumu',
                         style: TextStyle(
                           color: Colors.white,
-                          fontSize: 16,
+                          fontSize: 14,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
@@ -975,14 +977,14 @@ class _HomeScreenState extends State<HomeScreen> {
                           statusMessage,
                           style: const TextStyle(
                             color: Colors.white,
-                            fontSize: 12,
+                            fontSize: 11,
                             fontWeight: FontWeight.w600,
                           ),
                         ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 12),
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
@@ -993,27 +995,27 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                         style: const TextStyle(
                           color: Colors.white,
-                          fontSize: 36,
+                          fontSize: 28,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
-                      const SizedBox(width: 8),
+                      const SizedBox(width: 6),
                       Padding(
-                        padding: const EdgeInsets.only(bottom: 8),
+                        padding: const EdgeInsets.only(bottom: 6),
                         child: Text(
                           totalBudget == 0
                               ? 'Toplam Harcama'
                               : (remainingBudget >= 0 ? 'Kalan' : 'Aşım'),
                           style: TextStyle(
                             color: Colors.white.withOpacity(0.9),
-                            fontSize: 14,
+                            fontSize: 12,
                             fontWeight: FontWeight.w500,
                           ),
                         ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 12),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -1021,7 +1023,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         '${(usagePercentage * 100).toStringAsFixed(1)}% Kullanıldı',
                         style: TextStyle(
                           color: Colors.white.withOpacity(0.9),
-                          fontSize: 13,
+                          fontSize: 11,
                           fontWeight: FontWeight.w500,
                         ),
                       ),
@@ -1029,13 +1031,13 @@ class _HomeScreenState extends State<HomeScreen> {
                         '${CurrencyHelper.formatAmount(totalSpent, _currentUser)} / ${CurrencyHelper.formatAmount(totalBudget, _currentUser)}',
                         style: TextStyle(
                           color: Colors.white.withOpacity(0.9),
-                          fontSize: 13,
+                          fontSize: 11,
                           fontWeight: FontWeight.w500,
                         ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 6),
                   ClipRRect(
                     borderRadius: BorderRadius.circular(10),
                     child: LinearProgressIndicator(
@@ -1044,7 +1046,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       valueColor: const AlwaysStoppedAnimation<Color>(
                         Colors.white,
                       ),
-                      minHeight: 8,
+                      minHeight: 6,
                     ),
                   ),
                   if (budgetsExceeded > 0) ...[
@@ -1388,12 +1390,14 @@ class _HomeScreenState extends State<HomeScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text(
+                  Text(
                     'Bütçelerim',
                     style: TextStyle(
                       fontSize: 22,
                       fontWeight: FontWeight.bold,
-                      color: Color(0xFF1C1C1E),
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? Colors.grey[200]
+                          : const Color(0xFF1C1C1E),
                     ),
                   ),
                   TextButton(
@@ -1445,10 +1449,12 @@ class _HomeScreenState extends State<HomeScreen> {
                                 Expanded(
                                   child: Text(
                                     budget.name,
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       fontSize: 16,
                                       fontWeight: FontWeight.bold,
-                                      color: Color(0xFF1C1C1E),
+                                      color: Theme.of(context).brightness == Brightness.dark
+                                          ? Colors.grey[200]
+                                          : const Color(0xFF1C1C1E),
                                     ),
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
