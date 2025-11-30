@@ -150,10 +150,10 @@ class ThemeService extends ChangeNotifier {
         onError: Colors.white,
       ),
       appBarTheme: const AppBarTheme(
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
+        backgroundColor: Color(0xFF1C1C1E),
+        foregroundColor: Colors.white,
         elevation: 0,
-        iconTheme: IconThemeData(color: Colors.black),
+        iconTheme: IconThemeData(color: Colors.white),
       ),
       cardTheme: const CardThemeData(
         color: Color(0xFF1C1C1E),
