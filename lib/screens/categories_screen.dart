@@ -306,18 +306,28 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
               : null,
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide(color: Colors.grey.shade300),
+            borderSide: BorderSide(
+              color: Theme.of(context).brightness == Brightness.dark
+                  ? Colors.grey.shade700
+                  : Colors.grey.shade300,
+            ),
           ),
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide(color: Colors.grey.shade300),
+            borderSide: BorderSide(
+              color: Theme.of(context).brightness == Brightness.dark
+                  ? Colors.grey.shade700
+                  : Colors.grey.shade300,
+            ),
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
             borderSide: const BorderSide(color: Color(0xFF00BFA5), width: 2),
           ),
           filled: true,
-          fillColor: Colors.grey.shade50,
+          fillColor: Theme.of(context).brightness == Brightness.dark
+              ? Colors.grey.shade800
+              : Colors.grey.shade50,
         ),
         onChanged: (value) => setState(() => _searchQuery = value.toLowerCase()),
       ),
