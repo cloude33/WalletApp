@@ -91,17 +91,20 @@ class _CurrencySettingsScreenState extends State<CurrencySettingsScreen> {
       child: Row(
         children: [
           IconButton(
-            icon: const Icon(Icons.arrow_back, color: Color(0xFF1C1C1E)),
+            icon: Icon(
+              Icons.arrow_back,
+              color: Theme.of(context).textTheme.bodyLarge?.color,
+            ),
             onPressed: () => Navigator.pop(context),
           ),
-          const Expanded(
+          Expanded(
             child: Text(
               'Para Birimi',
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
-                color: Color(0xFF1C1C1E),
+                color: Theme.of(context).textTheme.bodyLarge?.color,
               ),
             ),
           ),
