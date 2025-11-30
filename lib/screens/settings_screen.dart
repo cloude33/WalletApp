@@ -469,7 +469,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             },
           ),
           _buildSettingItem(
-            icon: Icons.attach_money,
+            icon: Icons.currency_exchange,
             title: 'Para Birimi',
             subtitle:
                 '${_currentUser?.currencySymbol ?? '₺'} ${_currentUser?.currencyCode ?? 'TRY'}',
