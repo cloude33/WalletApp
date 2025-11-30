@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../models/wallet.dart';
 import '../services/data_service.dart';
+import '../services/credit_card_service.dart';
 import 'add_wallet_screen.dart';
 import 'edit_wallet_screen.dart';
 
@@ -57,11 +58,18 @@ class _ManageWalletsScreenState extends State<ManageWalletsScreen> {
   }
 
   Future<void> _deleteWallet(String id) async {
+    // Find the wallet to check if it's a credit card
+    final wallet = _wallets.firstWhere((w) => w.id == id);
+    
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Cüzdanı Sil'),
-        content: const Text('Bu cüzdanı silmek istediğinizden emin misiniz?'),
+        content: Text(
+          wallet.type == 'credit_card'
+              ? 'Bu kredi kartını silmek istediğinizden emin misiniz? İlgili tüm işlemler de silinecektir.'
+              : 'Bu cüzdanı silmek istediğinizden emin misiniz?',
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
@@ -77,12 +85,48 @@ class _ManageWalletsScreenState extends State<ManageWalletsScreen> {
     );
 
     if (confirmed == true) {
-      await _dataService.deleteWallet(id);
-      _loadWallets();
-      if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('Cüzdan silindi')));
+      try {
+        // If it's a credit card, delete from credit card service too
+        if (wallet.type == 'credit_card') {
+          final creditCardService = CreditCardService();
+          try {
+            await creditCardService.deleteCard(id);
+          } catch (e) {
+            // If credit card doesn't exist or has debt, show error
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('Hata: $e'),
+                  backgroundColor: Colors.red,
+                ),
+              );
+            }
+            return;
+          }
+        }
+        
+        // Delete wallet
+        await _dataService.deleteWallet(id);
+        _loadWallets();
+        
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                wallet.type == 'credit_card' ? 'Kredi kartı silindi' : 'Cüzdan silindi',
+              ),
+            ),
+          );
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Hata: $e'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
       }
     }
   }
