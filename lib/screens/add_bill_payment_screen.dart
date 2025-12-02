@@ -116,6 +116,16 @@ class _AddBillPaymentScreenState extends State<AddBillPaymentScreen> {
       return;
     }
 
+    if (_periodStart == null || _periodEnd == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Fatura dönemi hesaplanamadı'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
     setState(() => _isSaving = true);
 
     try {
@@ -214,6 +224,7 @@ class _AddBillPaymentScreenState extends State<AddBillPaymentScreen> {
                                 Expanded(
                                   child: Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
+                                    mainAxisSize: MainAxisSize.min,
                                     children: [
                                       Text(
                                         template.name,
@@ -309,7 +320,9 @@ class _AddBillPaymentScreenState extends State<AddBillPaymentScreen> {
                             const SizedBox(width: 8),
                             Expanded(
                               child: Text(
-                                'Fatura Dönemi: ${DateFormat('dd MMM', 'tr_TR').format(_periodStart!)} - ${DateFormat('dd MMM yyyy', 'tr_TR').format(_periodEnd!)}',
+                                _periodStart != null && _periodEnd != null
+                                    ? 'Fatura Dönemi: ${DateFormat('dd MMM', 'tr_TR').format(_periodStart!)} - ${DateFormat('dd MMM yyyy', 'tr_TR').format(_periodEnd!)}'
+                                    : 'Fatura Dönemi: -',
                                 style: const TextStyle(fontSize: 13),
                               ),
                             ),
@@ -382,16 +395,29 @@ class _AddBillPaymentScreenState extends State<AddBillPaymentScreen> {
           ),
           const SizedBox(height: 24),
           ElevatedButton.icon(
-            onPressed: () {
-              Navigator.pop(context);
+            onPressed: () async {
+              // Navigate to bill templates screen
+              final result = await Navigator.pushNamed(context, '/bill-templates');
+              if (result == true && mounted) {
+                // Reload templates if a new one was added
+                _loadTemplates();
+              }
             },
-            icon: const Icon(Icons.arrow_back),
-            label: const Text('Geri Dön'),
+            icon: const Icon(Icons.add),
+            label: const Text('Fatura Tanımla'),
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFF00BFA5),
               foregroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
             ),
+          ),
+          const SizedBox(height: 12),
+          TextButton.icon(
+            onPressed: () {
+              Navigator.pop(context);
+            },
+            icon: const Icon(Icons.arrow_back),
+            label: const Text('Geri Dön'),
           ),
         ],
       ),

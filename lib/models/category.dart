@@ -77,6 +77,8 @@ class Category {
     if (icon == Icons.local_hospital) return 'local_hospital';
     if (icon == Icons.weekend) return 'weekend';
     if (icon == Icons.shopping_cart) return 'shopping_cart';
+    if (icon == Icons.bolt) return 'bolt';
+    if (icon == Icons.receipt_long) return 'receipt_long';
     // Default fallback - this shouldn't happen for our default categories
     return 'category';
   }
@@ -112,6 +114,12 @@ class Category {
         return Icons.weekend;
       case 'shopping_cart':
         return Icons.shopping_cart;
+      case 'bolt':
+      case 'electric_bolt':
+        return Icons.bolt; // Elektrik için
+      case 'receipt':
+      case 'receipt_long':
+        return Icons.receipt_long; // Fatura için
       default:
         return Icons.category;
     }
@@ -196,7 +204,7 @@ final List<Category> _defaultCategories = [
   Category(
     id: 'e1',
     name: 'Faturalar',
-    icon: Icons.water_drop,
+    icon: Icons.receipt_long,
     color: Colors.cyan,
     type: 'expense',
   ),

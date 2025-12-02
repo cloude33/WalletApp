@@ -25,7 +25,7 @@ import 'calendar_screen.dart';
 import 'statistics_screen.dart';
 import 'settings_screen.dart';
 import 'bill_history_screen.dart';
-import 'add_bill_payment_screen.dart';
+import 'add_bill_screen.dart';
 import 'bill_templates_screen.dart';
 import '../services/credit_card_service.dart';
 import '../services/bill_payment_service.dart';
@@ -431,12 +431,12 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                         }
                         break;
                       case 'bill':
-                        // Add bill payment with new screen
+                        // Add bill with unified screen
                         if (!mounted) return;
                         final billResult = await Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => const AddBillPaymentScreen(),
+                            builder: (context) => const AddBillScreen(),
                           ),
                         );
                         if (billResult == true) {

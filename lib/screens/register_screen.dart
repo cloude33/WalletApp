@@ -214,23 +214,23 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 // Logo/Icon
                 Center(
                   child: Container(
-                    width: 100,
-                    height: 100,
+                    width: 140,
+                    height: 140,
                     decoration: BoxDecoration(
                       color: const Color(0xFFFDB32A).withValues(alpha: 0.1),
                       shape: BoxShape.circle,
                     ),
                     child: ClipOval(
                       child: Padding(
-                        padding: const EdgeInsets.all(8),
+                        padding: const EdgeInsets.all(2),
                         child: Image.asset(
-                          'assets/images/logo.png',
+                          'assets/icon/logo.png',
                           fit: BoxFit.contain,
                           errorBuilder: (context, error, stackTrace) {
                             // Fallback to icon if image fails to load
                             return const Icon(
                               Icons.account_balance_wallet,
-                              size: 60,
+                              size: 110,
                               color: Color(0xFFFDB32A),
                             );
                           },

@@ -275,7 +275,7 @@ class _StatisticsScreenState extends State<StatisticsScreen>
 
   Widget _buildCashFlowTab() {
     return ListView(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 120),
       children: [
         SizedBox(
           height: 300,
@@ -1140,7 +1140,7 @@ class _StatisticsScreenState extends State<StatisticsScreen>
         16,
         16,
         16,
-        100,
+        120,
       ), // Bottom padding for filter
       children: [
         _buildOverviewSummaryCards(),
@@ -3544,31 +3544,34 @@ class _StatisticsScreenState extends State<StatisticsScreen>
                               ),
                               child: Column(
                                 mainAxisAlignment: MainAxisAlignment.center,
+                                mainAxisSize: MainAxisSize.min,
                                 children: [
                                   // Kategori ikonu
                                   Container(
-                                    padding: const EdgeInsets.all(16),
+                                    padding: const EdgeInsets.all(12),
                                     decoration: BoxDecoration(
                                       color: Colors.white.withValues(alpha: 0.2),
                                       shape: BoxShape.circle,
                                     ),
                                     child: Icon(
                                       _getCategoryIcon(entry.key),
-                                      size: 40,
+                                      size: 36,
                                       color: Colors.white,
                                     ),
                                   ),
-                                  const SizedBox(height: 16),
+                                  const SizedBox(height: 12),
                                   // Kategori adı
                                   Text(
                                     entry.key,
                                     style: const TextStyle(
-                                      fontSize: 18,
+                                      fontSize: 16,
                                       fontWeight: FontWeight.bold,
                                       color: Colors.white,
                                     ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
                                   ),
-                                  const SizedBox(height: 8),
+                                  const SizedBox(height: 6),
                                   // Tutar
                                   FutureBuilder(
                                     future: _dataService.getCurrentUser(),
@@ -3580,19 +3583,21 @@ class _StatisticsScreenState extends State<StatisticsScreen>
                                           snapshot.data,
                                         ),
                                         style: const TextStyle(
-                                          fontSize: 24,
+                                          fontSize: 22,
                                           fontWeight: FontWeight.bold,
                                           color: Colors.white,
                                         ),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
                                       );
                                     },
                                   ),
-                                  const SizedBox(height: 8),
+                                  const SizedBox(height: 4),
                                   // Yüzde
                                   Text(
                                     '${percentage.toStringAsFixed(1)}%',
                                     style: TextStyle(
-                                      fontSize: 16,
+                                      fontSize: 14,
                                       color: Colors.white.withValues(alpha: 0.9),
                                     ),
                                   ),
