@@ -220,10 +220,30 @@ class _AddBillScreenState extends State<AddBillScreen> {
                         items: _templates.map((template) {
                           return DropdownMenuItem<BillTemplate>(
                             value: template,
-                            child: Text(
-                              template.name,
-                              overflow: TextOverflow.ellipsis,
-                              maxLines: 1,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  template.provider ?? template.name,
+                                  overflow: TextOverflow.ellipsis,
+                                  maxLines: 1,
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                                if (template.category == BillTemplateCategory.phone && 
+                                    template.phoneNumber != null)
+                                  Text(
+                                    template.phoneNumber!.startsWith('0')
+                                        ? template.phoneNumber!
+                                        : '0${template.phoneNumber!}',
+                                    style: const TextStyle(
+                                      fontSize: 13,
+                                      color: Color(0xFF757575),
+                                    ),
+                                  ),
+                              ],
                             ),
                           );
                         }).toList(),

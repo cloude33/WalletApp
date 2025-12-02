@@ -496,8 +496,6 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
               ],
               _buildBudgetsSection(), // Bütçeler
               const SizedBox(height: 20),
-              _buildBillsSection(), // Faturalar
-              const SizedBox(height: 20),
               _buildAllTransactions(), // Tüm işlemler (normal + kredi kartı)
               const SizedBox(height: 20),
               _buildGoalsSection(), // Hedeflerim

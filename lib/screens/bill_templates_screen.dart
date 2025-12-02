@@ -171,17 +171,22 @@ class _BillTemplatesScreenState extends State<BillTemplatesScreen> {
         subtitle: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            if (template.provider != null)
-              Text(template.provider!),
+            // Telefon kategorisi için sadece numara göster (provider zaten başlıkta)
             if (template.category == BillTemplateCategory.phone && 
                 template.phoneNumber != null)
               Text(
-                template.phoneNumber!,
+                template.phoneNumber!.startsWith('0') 
+                    ? template.phoneNumber!
+                    : '0${template.phoneNumber!}',
                 style: const TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w500,
                 ),
               ),
+            // Telefon dışındaki kategoriler için provider göster
+            if (template.category != BillTemplateCategory.phone && 
+                template.provider != null)
+              Text(template.provider!),
             Text(
               template.categoryDisplayName,
               style: const TextStyle(
