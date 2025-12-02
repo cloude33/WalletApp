@@ -221,9 +221,7 @@ class _AddBillScreenState extends State<AddBillScreen> {
                           return DropdownMenuItem<BillTemplate>(
                             value: template,
                             child: Text(
-                              template.provider != null 
-                                  ? '${template.name} (${template.provider})'
-                                  : template.name,
+                              template.name,
                               overflow: TextOverflow.ellipsis,
                               maxLines: 1,
                             ),

@@ -173,11 +173,20 @@ class _BillTemplatesScreenState extends State<BillTemplatesScreen> {
           children: [
             if (template.provider != null)
               Text(template.provider!),
+            if (template.category == BillTemplateCategory.phone && 
+                template.phoneNumber != null)
+              Text(
+                template.phoneNumber!,
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
             Text(
               template.categoryDisplayName,
-              style: TextStyle(
+              style: const TextStyle(
                 fontSize: 12,
-                color: Colors.grey[600],
+                color: Color(0xFF757575),
               ),
             ),
           ],

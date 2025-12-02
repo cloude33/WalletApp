@@ -122,6 +122,21 @@ class _AddBillTemplateScreenState extends State<AddBillTemplateScreen> {
   }
 
   String _getGeneratedName() {
+    // Telefon kategorisi için numara varsa ekle
+    if (_selectedCategory == BillTemplateCategory.phone && 
+        _phoneNumberController.text.trim().isNotEmpty) {
+      String phoneNumber = _phoneNumberController.text.trim();
+      
+      // Eğer numara 0 ile başlamıyorsa, başına 0 ekle
+      if (!phoneNumber.startsWith('0')) {
+        phoneNumber = '0$phoneNumber';
+      }
+      
+      return _selectedProvider != null 
+          ? '$_selectedProvider - $phoneNumber'
+          : 'Telefon - $phoneNumber';
+    }
+    
     if (_selectedProvider != null) {
       return _selectedProvider!;
     }
