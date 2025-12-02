@@ -5,27 +5,21 @@ import '../services/recurring_transaction_service.dart';
 class RecurringStatisticsScreen extends StatefulWidget {
   final RecurringTransactionService service;
 
-  const RecurringStatisticsScreen({
-    super.key,
-    required this.service,
-  });
+  const RecurringStatisticsScreen({super.key, required this.service});
 
   @override
   State<RecurringStatisticsScreen> createState() =>
       _RecurringStatisticsScreenState();
 }
 
-class _RecurringStatisticsScreenState
-    extends State<RecurringStatisticsScreen> {
+class _RecurringStatisticsScreenState extends State<RecurringStatisticsScreen> {
   @override
   Widget build(BuildContext context) {
     final stats = widget.service.getStatistics();
     final categoryBreakdown = widget.service.getCategoryBreakdown();
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Tekrarlayan İşlem İstatistikleri'),
-      ),
+      appBar: AppBar(title: const Text('Tekrarlayan İşlem İstatistikleri')),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -97,10 +91,7 @@ class _RecurringStatisticsScreenState
                 const SizedBox(width: 8),
                 Text(
                   title,
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.grey[600],
-                  ),
+                  style: TextStyle(fontSize: 14, color: Colors.grey[600]),
                 ),
               ],
             ),
@@ -124,9 +115,7 @@ class _RecurringStatisticsScreenState
       return const Card(
         child: Padding(
           padding: EdgeInsets.all(32),
-          child: Center(
-            child: Text('Henüz veri yok'),
-          ),
+          child: Center(child: Text('Henüz veri yok')),
         ),
       );
     }
@@ -153,17 +142,16 @@ class _RecurringStatisticsScreenState
           children: [
             const Text(
               'Kategori Dağılımı',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 24),
             SizedBox(
               height: 200,
               child: PieChart(
                 PieChartData(
-                  sections: breakdown.entries.toList().asMap().entries.map((entry) {
+                  sections: breakdown.entries.toList().asMap().entries.map((
+                    entry,
+                  ) {
                     final index = entry.key;
                     final amount = entry.value.value;
                     final percentage = (amount / total * 100);
@@ -221,10 +209,7 @@ class _RecurringStatisticsScreenState
           children: [
             const Text(
               'Kategori Detayları',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 16),
             ...sortedEntries.asMap().entries.map((entry) {

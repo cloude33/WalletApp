@@ -16,6 +16,7 @@ class RecurringTransactionCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final nextDate = transaction.nextDate;
     final dateFormat = DateFormat('dd MMM yyyy', 'tr_TR');
+    final currencyFormat = NumberFormat('#,##0.00', 'tr_TR');
 
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
@@ -52,7 +53,7 @@ class RecurringTransactionCard extends StatelessWidget {
                     ),
                   ),
                   Text(
-                    '${transaction.isIncome ? '+' : '-'}${transaction.amount.toStringAsFixed(2)} ₺',
+                    '${transaction.isIncome ? '+' : '-'}${currencyFormat.format(transaction.amount)} ₺',
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
@@ -64,18 +65,11 @@ class RecurringTransactionCard extends StatelessWidget {
               const SizedBox(height: 12),
               Row(
                 children: [
-                  Icon(
-                    Icons.repeat,
-                    size: 16,
-                    color: Colors.grey[600],
-                  ),
+                  Icon(Icons.repeat, size: 16, color: Colors.grey[600]),
                   const SizedBox(width: 4),
                   Text(
                     transaction.frequency.displayName,
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.grey[600],
-                    ),
+                    style: TextStyle(fontSize: 14, color: Colors.grey[600]),
                   ),
                   const Spacer(),
                   if (nextDate != null) ...[
@@ -87,10 +81,7 @@ class RecurringTransactionCard extends StatelessWidget {
                     const SizedBox(width: 4),
                     Text(
                       'Sonraki: ${dateFormat.format(nextDate)}',
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Colors.grey[600],
-                      ),
+                      style: TextStyle(fontSize: 14, color: Colors.grey[600]),
                     ),
                   ],
                 ],
@@ -106,10 +97,7 @@ class RecurringTransactionCard extends StatelessWidget {
                 const SizedBox(height: 4),
                 Text(
                   '${transaction.createdCount} işlem oluşturuldu',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.grey[600],
-                  ),
+                  style: TextStyle(fontSize: 12, color: Colors.grey[600]),
                 ),
               ],
             ],

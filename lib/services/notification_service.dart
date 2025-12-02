@@ -246,4 +246,66 @@ class NotificationService {
   bool _hasRecentNotification(String budgetId, NotificationType type) {
     return false;
   }
+
+  // ==================== BILL REMINDERS ====================
+
+  /// Schedule bill reminder
+  Future<void> scheduleBillReminder({
+    required String billId,
+    required String billName,
+    double? amount,
+    required DateTime dueDate,
+    required DateTime reminderDate,
+  }) async {
+    // Geçmiş tarih kontrolü
+    if (reminderDate.isBefore(DateTime.now())) return;
+
+    final notification = AppNotification(
+      id: 'bill_$billId',
+      type: NotificationType.billReminder,
+      priority: NotificationPriority.high,
+      title: 'Fatura Hatırlatması',
+      message: amount != null
+          ? '$billName faturanız: ₺${amount.toStringAsFixed(2)} - Son ödeme: ${_formatDate(dueDate)}'
+          : '$billName faturanız - Son ödeme: ${_formatDate(dueDate)}',
+      createdAt: reminderDate,
+      data: {
+        'billId': billId,
+        'billName': billName,
+        'amount': amount,
+        'dueDate': dueDate.toIso8601String(),
+      },
+      actions: [
+        const NotificationAction(
+          id: 'pay',
+          title: 'Öde',
+        ),
+        const NotificationAction(
+          id: 'snooze',
+          title: 'Ertele',
+        ),
+      ],
+    );
+
+    await addNotification(notification);
+  }
+
+  /// Cancel bill reminder
+  Future<void> cancelBillReminder(String billId) async {
+    final notificationId = 'bill_$billId';
+    await deleteNotification(notificationId);
+  }
+
+  /// Check upcoming bills and create reminders
+  Future<List<AppNotification>> checkUpcomingBills() async {
+    // Bu metod BillService tarafından çağrılacak
+    // Şimdilik boş bırakıyoruz, BillService'den çağrılacak
+    return [];
+  }
+
+  String _formatDate(DateTime date) {
+    final day = date.day.toString().padLeft(2, '0');
+    final month = date.month.toString().padLeft(2, '0');
+    return '$day.$month.${date.year}';
+  }
 }

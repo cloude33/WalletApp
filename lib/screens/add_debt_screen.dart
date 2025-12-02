@@ -178,7 +178,7 @@ class _AddDebtScreenState extends State<AddDebtScreen> {
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: isSelected
-              ? color.withOpacity(0.1)
+              ? color.withValues(alpha: 0.1)
               : (Theme.of(context).brightness == Brightness.dark
                   ? Colors.grey[800]
                   : Colors.grey[100]),
@@ -287,7 +287,7 @@ class _AddDebtScreenState extends State<AddDebtScreen> {
 
   Widget _buildCategorySelector() {
     return DropdownButtonFormField<DebtCategory>(
-      value: _selectedCategory,
+      initialValue: _selectedCategory,
       decoration: InputDecoration(
         labelText: 'Kategori',
         prefixIcon: const Icon(Icons.category),

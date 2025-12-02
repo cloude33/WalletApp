@@ -163,7 +163,7 @@ class _CreditCardListScreenState extends State<CreditCardListScreen> {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: Colors.orange.withOpacity(0.1),
+                color: Colors.orange.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Row(
@@ -286,7 +286,7 @@ class _CreditCardListScreenState extends State<CreditCardListScreen> {
                     width: 48,
                     height: 48,
                     decoration: BoxDecoration(
-                      color: card.color.withOpacity(0.2),
+                      color: card.color.withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Icon(Icons.credit_card, color: card.color, size: 28),
@@ -322,7 +322,7 @@ class _CreditCardListScreenState extends State<CreditCardListScreen> {
                           vertical: 4,
                         ),
                         decoration: BoxDecoration(
-                          color: statusColor.withOpacity(0.1),
+                          color: statusColor.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Text(

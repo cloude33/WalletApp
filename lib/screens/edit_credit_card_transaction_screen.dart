@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:intl/intl.dart';
+import 'package:image_picker/image_picker.dart';
+import 'dart:convert';
 import '../models/credit_card.dart';
 import '../models/credit_card_transaction.dart';
 import '../services/credit_card_service.dart';
+import '../utils/image_helper.dart';
 
 class EditCreditCardTransactionScreen extends StatefulWidget {
   final CreditCard card;
@@ -40,6 +44,7 @@ class _EditCreditCardTransactionScreenState
   bool _isLoading = false;
   double _availableCredit = 0;
   double _installmentAmount = 0;
+  late List<String> _images;
 
   // Common categories
   final List<String> _categories = [
@@ -59,10 +64,10 @@ class _EditCreditCardTransactionScreenState
   @override
   void initState() {
     super.initState();
-    
+
     // Initialize with existing transaction data
     _amountController = TextEditingController(
-      text: widget.transaction.amount.toStringAsFixed(2),
+      text: NumberFormat('#,##0.00', 'tr_TR').format(widget.transaction.amount),
     );
     _descriptionController = TextEditingController(
       text: widget.transaction.description,
@@ -72,6 +77,7 @@ class _EditCreditCardTransactionScreenState
     );
     _selectedDate = widget.transaction.transactionDate;
     _selectedCategory = widget.transaction.category;
+    _images = List<String>.from(widget.transaction.images);
 
     _amountController.addListener(_calculateInstallmentAmount);
     _installmentCountController.addListener(_calculateInstallmentAmount);
@@ -154,6 +160,8 @@ class _EditCreditCardTransactionScreenState
                     _buildInstallmentWarning(),
                   ],
                   const SizedBox(height: 24),
+                  _buildImageSection(),
+                  const SizedBox(height: 24),
                   _buildAvailableCreditWarning(),
                   const SizedBox(height: 16),
                   _buildSaveButton(),
@@ -165,16 +173,12 @@ class _EditCreditCardTransactionScreenState
 
   Widget _buildCardInfo() {
     return Card(
-      color: widget.card.color.withOpacity(0.1),
+      color: widget.card.color.withValues(alpha: 0.1),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Row(
           children: [
-            Icon(
-              Icons.credit_card,
-              color: widget.card.color,
-              size: 32,
-            ),
+            Icon(Icons.credit_card, color: widget.card.color, size: 32),
             const SizedBox(width: 12),
             Expanded(
               child: Column(
@@ -189,10 +193,7 @@ class _EditCreditCardTransactionScreenState
                   ),
                   Text(
                     '•••• ${widget.card.last4Digits}',
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.grey[600],
-                    ),
+                    style: TextStyle(fontSize: 14, color: Colors.grey[600]),
                   ),
                   const SizedBox(height: 4),
                   Text(
@@ -263,12 +264,12 @@ class _EditCreditCardTransactionScreenState
       onTap: _selectDate,
       child: InputDecorator(
         decoration: const InputDecoration(
-          labelText: 'İşlem Tarihi',
+          labelText: 'İşlem Tarihi ve Saati',
           prefixIcon: Icon(Icons.calendar_today),
           border: OutlineInputBorder(),
         ),
         child: Text(
-          DateFormat('dd MMMM yyyy', 'tr_TR').format(_selectedDate),
+          _formatDateWithTime(_selectedDate),
           style: const TextStyle(fontSize: 16),
         ),
       ),
@@ -277,17 +278,14 @@ class _EditCreditCardTransactionScreenState
 
   Widget _buildCategoryField() {
     return DropdownButtonFormField<String>(
-      value: _selectedCategory,
+      initialValue: _selectedCategory,
       decoration: const InputDecoration(
         labelText: 'Kategori',
         prefixIcon: Icon(Icons.category),
         border: OutlineInputBorder(),
       ),
       items: _categories.map((category) {
-        return DropdownMenuItem(
-          value: category,
-          child: Text(category),
-        );
+        return DropdownMenuItem(value: category, child: Text(category));
       }).toList(),
       onChanged: (value) {
         if (value != null) {
@@ -301,14 +299,14 @@ class _EditCreditCardTransactionScreenState
 
   Widget _buildInstallmentCountField() {
     final canEditInstallments = widget.transaction.installmentsPaid == 0;
-    
+
     return TextFormField(
       controller: _installmentCountController,
       enabled: canEditInstallments,
       decoration: InputDecoration(
         labelText: 'Taksit Sayısı',
         hintText: '1-36 arası',
-        helperText: canEditInstallments 
+        helperText: canEditInstallments
             ? '1 = Peşin, 2+ = Taksitli'
             : 'Taksit ödemesi başladığı için değiştirilemez',
         prefixIcon: Icon(Icons.schedule),
@@ -328,7 +326,8 @@ class _EditCreditCardTransactionScreenState
         if (count == null || count < 1 || count > 36) {
           return '1-36 arası bir değer giriniz';
         }
-        if (!canEditInstallments && count != widget.transaction.installmentCount) {
+        if (!canEditInstallments &&
+            count != widget.transaction.installmentCount) {
           return 'Taksit sayısı değiştirilemez';
         }
         return null;
@@ -337,11 +336,12 @@ class _EditCreditCardTransactionScreenState
   }
 
   Widget _buildInstallmentInfo() {
-    final installmentCount = int.tryParse(_installmentCountController.text) ?? 1;
+    final installmentCount =
+        int.tryParse(_installmentCountController.text) ?? 1;
     final isInstallment = installmentCount > 1;
 
     return Card(
-      color: Colors.blue.withOpacity(0.1),
+      color: Colors.blue.withValues(alpha: 0.1),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -369,10 +369,7 @@ class _EditCreditCardTransactionScreenState
               const SizedBox(height: 4),
               Text(
                 '$installmentCount ay boyunca her ekstre döneminde ${_currencyFormat.format(_installmentAmount)} ödenecek',
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Colors.grey[700],
-                ),
+                style: TextStyle(fontSize: 14, color: Colors.grey[700]),
               ),
               if (widget.transaction.installmentsPaid > 0) ...[
                 const SizedBox(height: 8),
@@ -387,10 +384,7 @@ class _EditCreditCardTransactionScreenState
             ] else ...[
               Text(
                 'Bu işlem peşin olarak kaydedilecek',
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Colors.grey[700],
-                ),
+                style: TextStyle(fontSize: 14, color: Colors.grey[700]),
               ),
             ],
           ],
@@ -401,7 +395,7 @@ class _EditCreditCardTransactionScreenState
 
   Widget _buildInstallmentWarning() {
     return Card(
-      color: Colors.orange.withOpacity(0.1),
+      color: Colors.orange.withValues(alpha: 0.1),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Row(
@@ -423,10 +417,7 @@ class _EditCreditCardTransactionScreenState
                   const SizedBox(height: 4),
                   Text(
                     'Bu işlemin ${widget.transaction.installmentsPaid} taksiti ödenmiştir. Taksit sayısı değiştirilemez.',
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.orange[700],
-                    ),
+                    style: TextStyle(fontSize: 14, color: Colors.orange[700]),
                   ),
                 ],
               ),
@@ -439,10 +430,10 @@ class _EditCreditCardTransactionScreenState
 
   Widget _buildAvailableCreditWarning() {
     final amount = double.tryParse(_amountController.text) ?? 0;
-    
+
     if (amount > _availableCredit) {
       return Card(
-        color: Colors.red.withOpacity(0.1),
+        color: Colors.red.withValues(alpha: 0.1),
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Row(
@@ -464,10 +455,7 @@ class _EditCreditCardTransactionScreenState
                     const SizedBox(height: 4),
                     Text(
                       'Bu işlem kullanılabilir limitinizi (${_currencyFormat.format(_availableCredit)}) aşıyor!',
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Colors.red[700],
-                      ),
+                      style: TextStyle(fontSize: 14, color: Colors.red[700]),
                     ),
                   ],
                 ),
@@ -486,31 +474,143 @@ class _EditCreditCardTransactionScreenState
       onPressed: _saveTransaction,
       style: ElevatedButton.styleFrom(
         padding: const EdgeInsets.symmetric(vertical: 16),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
       ),
-      child: const Text(
-        'Kaydet',
-        style: TextStyle(fontSize: 16),
-      ),
+      child: const Text('Kaydet', style: TextStyle(fontSize: 16)),
     );
   }
 
-  Future<void> _selectDate() async {
-    final picked = await showDatePicker(
-      context: context,
-      initialDate: _selectedDate,
-      firstDate: DateTime(2020),
-      lastDate: DateTime.now(),
-      locale: const Locale('tr', 'TR'),
-    );
+  String _formatDateWithTime(DateTime date) {
+    final months = [
+      'Ocak',
+      'Şubat',
+      'Mart',
+      'Nisan',
+      'Mayıs',
+      'Haziran',
+      'Temmuz',
+      'Ağustos',
+      'Eylül',
+      'Ekim',
+      'Kasım',
+      'Aralık',
+    ];
 
-    if (picked != null && picked != _selectedDate) {
-      setState(() {
-        _selectedDate = picked;
-      });
-    }
+    final hours = date.hour.toString().padLeft(2, '0');
+    final minutes = date.minute.toString().padLeft(2, '0');
+
+    return '${date.day} ${months[date.month - 1]} ${date.year} $hours:$minutes';
+  }
+
+  Future<void> _selectDate() async {
+    showModalBottomSheet(
+      context: context,
+      builder: (BuildContext context) {
+        return Container(
+          height: 400,
+          decoration: BoxDecoration(
+            color: Theme.of(context).cardColor,
+            borderRadius: const BorderRadius.only(
+              topLeft: Radius.circular(20),
+              topRight: Radius.circular(20),
+            ),
+          ),
+          child: Column(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  border: Border(
+                    bottom: BorderSide(color: Colors.grey.shade200),
+                  ),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: const Text(
+                        'İptal',
+                        style: TextStyle(color: Colors.grey),
+                      ),
+                    ),
+                    const Text(
+                      'Tarih ve Saat Seç',
+                      style: TextStyle(
+                        fontSize: 17,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: const Text(
+                        'Tamam',
+                        style: TextStyle(
+                          color: Color(0xFF5E5CE6),
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Expanded(
+                child: Column(
+                  children: [
+                    // Date picker
+                    Expanded(
+                      child: CupertinoDatePicker(
+                        mode: CupertinoDatePickerMode.date,
+                        initialDateTime: _selectedDate.isAfter(DateTime.now())
+                            ? DateTime.now()
+                            : _selectedDate,
+                        minimumDate: DateTime(2020),
+                        maximumDate: DateTime.now(),
+                        onDateTimeChanged: (DateTime newDate) {
+                          setState(() {
+                            // Preserve time when changing date
+                            _selectedDate = DateTime(
+                              newDate.year,
+                              newDate.month,
+                              newDate.day,
+                              _selectedDate.hour,
+                              _selectedDate.minute,
+                            );
+                          });
+                        },
+                      ),
+                    ),
+                    // Time picker
+                    SizedBox(
+                      height: 100,
+                      child: CupertinoDatePicker(
+                        mode: CupertinoDatePickerMode.time,
+                        initialDateTime: _selectedDate.isAfter(DateTime.now())
+                            ? DateTime.now()
+                            : _selectedDate,
+                        use24hFormat: true,
+                        onDateTimeChanged: (DateTime newTime) {
+                          setState(() {
+                            // Preserve date when changing time
+                            _selectedDate = DateTime(
+                              _selectedDate.year,
+                              _selectedDate.month,
+                              _selectedDate.day,
+                              newTime.hour,
+                              newTime.minute,
+                            );
+                          });
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
   }
 
   Future<void> _saveTransaction() async {
@@ -519,7 +619,7 @@ class _EditCreditCardTransactionScreenState
     }
 
     final amount = double.parse(_amountController.text);
-    
+
     // Show confirmation if exceeding limit
     if (amount > _availableCredit) {
       final confirm = await showDialog<bool>(
@@ -556,6 +656,7 @@ class _EditCreditCardTransactionScreenState
         transactionDate: _selectedDate,
         category: _selectedCategory,
         installmentCount: int.parse(_installmentCountController.text),
+        images: _images,
       );
 
       await _cardService.updateTransaction(updatedTransaction);
@@ -572,10 +673,7 @@ class _EditCreditCardTransactionScreenState
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Hata: $e'),
-            backgroundColor: Colors.red,
-          ),
+          SnackBar(content: Text('Hata: $e'), backgroundColor: Colors.red),
         );
       }
     } finally {
@@ -628,10 +726,7 @@ class _EditCreditCardTransactionScreenState
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Hata: $e'),
-            backgroundColor: Colors.red,
-          ),
+          SnackBar(content: Text('Hata: $e'), backgroundColor: Colors.red),
         );
       }
     } finally {
@@ -639,5 +734,120 @@ class _EditCreditCardTransactionScreenState
         setState(() => _isLoading = false);
       }
     }
+  }
+
+  Widget _buildImageSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Fiş/Fatura',
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 12),
+        if (_images.isEmpty)
+          OutlinedButton.icon(
+            onPressed: _pickImage,
+            icon: const Icon(Icons.add_photo_alternate),
+            label: const Text('Fiş Ekle'),
+            style: OutlinedButton.styleFrom(
+              minimumSize: const Size(double.infinity, 50),
+            ),
+          )
+        else
+          Column(
+            children: [
+              SizedBox(
+                height: 120,
+                child: ListView.builder(
+                  scrollDirection: Axis.horizontal,
+                  itemCount: _images.length + 1,
+                  itemBuilder: (context, index) {
+                    if (index == _images.length) {
+                      return GestureDetector(
+                        onTap: _pickImage,
+                        child: Container(
+                          width: 100,
+                          margin: const EdgeInsets.only(right: 8),
+                          decoration: BoxDecoration(
+                            border: Border.all(color: Colors.grey),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: const Icon(
+                            Icons.add_photo_alternate,
+                            size: 40,
+                          ),
+                        ),
+                      );
+                    }
+                    return Stack(
+                      children: [
+                        Container(
+                          width: 100,
+                          margin: const EdgeInsets.only(right: 8),
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(8),
+                            image: DecorationImage(
+                              image: MemoryImage(base64Decode(_images[index])),
+                              fit: BoxFit.cover,
+                            ),
+                          ),
+                        ),
+                        Positioned(
+                          top: 4,
+                          right: 12,
+                          child: GestureDetector(
+                            onTap: () => _removeImage(index),
+                            child: Container(
+                              padding: const EdgeInsets.all(4),
+                              decoration: const BoxDecoration(
+                                color: Colors.red,
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(
+                                Icons.close,
+                                color: Colors.white,
+                                size: 16,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+      ],
+    );
+  }
+
+  Future<void> _pickImage() async {
+    try {
+      final base64Image = await ImageHelper.pickImage(
+        source: ImageSource.gallery,
+      );
+      if (base64Image != null) {
+        setState(() {
+          _images.add(base64Image);
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Resim eklenirken hata: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  void _removeImage(int index) {
+    setState(() {
+      _images.removeAt(index);
+    });
   }
 }

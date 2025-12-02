@@ -72,15 +72,6 @@ class AuthService {
 
   Future<bool> authenticateWithBiometric() async {
     try {
-      // Önce PIN kodunun olup olmadığını kontrol et
-      final hasPin = await hasPinCode();
-      if (!hasPin) {
-        throw PlatformException(
-          code: 'NoPin',
-          message: 'PIN kodu bulunamadı',
-        );
-      }
-
       // Biyometrik özelliğin mevcut olup olmadığını kontrol et
       final isAvailable = await isBiometricAvailable();
       if (!isAvailable) {
@@ -98,12 +89,10 @@ class AuthService {
         ),
       );
       return didAuthenticate;
-    } on PlatformException catch (e) {
-      print('Biometric authentication error: ${e.code} - ${e.message}');
+    } on PlatformException catch (_) {
       // PlatformException'ı yeniden fırlat ki çağıran kod hata kodunu görebilsin
       rethrow;
     } catch (e) {
-      print('Unexpected error in biometric authentication: $e');
       throw PlatformException(
         code: 'Unknown',
         message: 'Beklenmeyen bir hata oluştu',
@@ -123,7 +112,6 @@ class AuthService {
       }
       return account;
     } catch (e) {
-      print('Google Sign-In error: $e');
       return null;
     }
   }
@@ -153,7 +141,6 @@ class AuthService {
       }
       return null;
     } catch (e) {
-      print('Facebook Sign-In error: $e');
       return null;
     }
   }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:intl/intl.dart';
 import '../models/recurrence_frequency.dart';
 import '../models/recurring_template.dart';
@@ -49,9 +50,7 @@ class _AddRecurringTransactionScreenState
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Yeni Tekrarlayan İşlem'),
-      ),
+      appBar: AppBar(title: const Text('Yeni Tekrarlayan İşlem')),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Form(
@@ -246,10 +245,8 @@ class _AddRecurringTransactionScreenState
             ),
             const SizedBox(height: 16),
             DropdownButtonFormField<RecurrenceFrequency>(
-              value: _frequency,
-              decoration: const InputDecoration(
-                border: OutlineInputBorder(),
-              ),
+              initialValue: _frequency,
+              decoration: const InputDecoration(border: OutlineInputBorder()),
               items: RecurrenceFrequency.values.map((freq) {
                 return DropdownMenuItem(
                   value: freq,
@@ -285,33 +282,24 @@ class _AddRecurringTransactionScreenState
             ),
             const SizedBox(height: 16),
             ListTile(
-              title: const Text('Başlangıç Tarihi'),
-              subtitle: Text(dateFormat.format(_startDate)),
+              title: const Text('Başlangıç Tarihi ve Saati'),
+              subtitle: Text(_formatDateWithTime(_startDate)),
               trailing: const Icon(Icons.calendar_today),
               onTap: () async {
-                final date = await showDatePicker(
-                  context: context,
-                  initialDate: _startDate,
-                  firstDate: DateTime.now(),
-                  lastDate: DateTime.now().add(const Duration(days: 3650)),
-                );
-                if (date != null) {
-                  setState(() {
-                    _startDate = date;
-                  });
-                }
+                await _selectDateTime(context, true);
               },
             ),
             ListTile(
               title: const Text('Bitiş Tarihi (Opsiyonel)'),
-              subtitle: Text(_endDate != null
-                  ? dateFormat.format(_endDate!)
-                  : 'Belirsiz'),
+              subtitle: Text(
+                _endDate != null ? dateFormat.format(_endDate!) : 'Belirsiz',
+              ),
               trailing: const Icon(Icons.calendar_today),
               onTap: () async {
                 final date = await showDatePicker(
                   context: context,
-                  initialDate: _endDate ?? _startDate.add(const Duration(days: 365)),
+                  initialDate:
+                      _endDate ?? _startDate.add(const Duration(days: 365)),
                   firstDate: _startDate,
                   lastDate: DateTime.now().add(const Duration(days: 3650)),
                 );
@@ -405,10 +393,173 @@ class _AddRecurringTransactionScreenState
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Hata: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Hata: $e')));
       }
     }
+  }
+
+  String _formatDateWithTime(DateTime date) {
+    final months = [
+      'Ocak',
+      'Şubat',
+      'Mart',
+      'Nisan',
+      'Mayıs',
+      'Haziran',
+      'Temmuz',
+      'Ağustos',
+      'Eylül',
+      'Ekim',
+      'Kasım',
+      'Aralık',
+    ];
+
+    final hours = date.hour.toString().padLeft(2, '0');
+    final minutes = date.minute.toString().padLeft(2, '0');
+
+    return '${date.day} ${months[date.month - 1]} ${date.year} $hours:$minutes';
+  }
+
+  Future<void> _selectDateTime(BuildContext context, bool isStartDate) async {
+    DateTime initialDate = isStartDate ? _startDate : (_endDate ?? _startDate);
+
+    showModalBottomSheet(
+      context: context,
+      builder: (BuildContext context) {
+        return Container(
+          height: 400,
+          decoration: BoxDecoration(
+            color: Theme.of(context).cardColor,
+            borderRadius: const BorderRadius.only(
+              topLeft: Radius.circular(20),
+              topRight: Radius.circular(20),
+            ),
+          ),
+          child: Column(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  border: Border(
+                    bottom: BorderSide(color: Colors.grey.shade200),
+                  ),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: const Text(
+                        'İptal',
+                        style: TextStyle(color: Colors.grey),
+                      ),
+                    ),
+                    const Text(
+                      'Tarih ve Saat Seç',
+                      style: TextStyle(
+                        fontSize: 17,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: const Text(
+                        'Tamam',
+                        style: TextStyle(
+                          color: Color(0xFF5E5CE6),
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Expanded(
+                child: Column(
+                  children: [
+                    // Date picker
+                    Expanded(
+                      child: CupertinoDatePicker(
+                        mode: CupertinoDatePickerMode.date,
+                        initialDateTime:
+                            initialDate.isBefore(
+                              isStartDate ? DateTime.now() : _startDate,
+                            )
+                            ? (isStartDate ? DateTime.now() : _startDate)
+                            : initialDate,
+                        minimumDate: isStartDate ? DateTime.now() : _startDate,
+                        maximumDate: DateTime.now().add(
+                          const Duration(days: 3650),
+                        ),
+                        onDateTimeChanged: (DateTime newDate) {
+                          setState(() {
+                            // Preserve time when changing date
+                            if (isStartDate) {
+                              _startDate = DateTime(
+                                newDate.year,
+                                newDate.month,
+                                newDate.day,
+                                _startDate.hour,
+                                _startDate.minute,
+                              );
+                            } else {
+                              _endDate = DateTime(
+                                newDate.year,
+                                newDate.month,
+                                newDate.day,
+                                _endDate?.hour ?? _startDate.hour,
+                                _endDate?.minute ?? _startDate.minute,
+                              );
+                            }
+                          });
+                        },
+                      ),
+                    ),
+                    // Time picker
+                    SizedBox(
+                      height: 100,
+                      child: CupertinoDatePicker(
+                        mode: CupertinoDatePickerMode.time,
+                        initialDateTime:
+                            initialDate.isBefore(
+                              isStartDate ? DateTime.now() : _startDate,
+                            )
+                            ? (isStartDate ? DateTime.now() : _startDate)
+                            : initialDate,
+                        use24hFormat: true,
+                        onDateTimeChanged: (DateTime newTime) {
+                          setState(() {
+                            // Preserve date when changing time
+                            if (isStartDate) {
+                              _startDate = DateTime(
+                                _startDate.year,
+                                _startDate.month,
+                                _startDate.day,
+                                newTime.hour,
+                                newTime.minute,
+                              );
+                            } else if (_endDate != null) {
+                              _endDate = DateTime(
+                                _endDate!.year,
+                                _endDate!.month,
+                                _endDate!.day,
+                                newTime.hour,
+                                newTime.minute,
+                              );
+                            }
+                          });
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
   }
 }

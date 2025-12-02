@@ -133,7 +133,7 @@ class _CurrencySettingsScreenState extends State<CurrencySettingsScreen> {
             ),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.05),
+                color: Colors.black.withValues(alpha: 0.05),
                 blurRadius: 10,
                 offset: const Offset(0, 2),
               ),
@@ -146,7 +146,7 @@ class _CurrencySettingsScreenState extends State<CurrencySettingsScreen> {
               height: 50,
               decoration: BoxDecoration(
                 color: isSelected
-                    ? const Color(0xFF5E5CE6).withOpacity(0.1)
+                    ? const Color(0xFF5E5CE6).withValues(alpha: 0.1)
                     : const Color(0xFFF2F2F7),
                 borderRadius: BorderRadius.circular(12),
               ),
@@ -173,7 +173,7 @@ class _CurrencySettingsScreenState extends State<CurrencySettingsScreen> {
               currency.code,
               style: TextStyle(
                 fontSize: 13,
-                color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.6),
+                color: Theme.of(context).textTheme.bodyMedium?.color?.withValues(alpha: 0.6),
               ),
             ),
             trailing: isSelected

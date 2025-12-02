@@ -122,7 +122,7 @@ class _CreditCardDetailScreenState extends State<CreditCardDetailScreen> {
               width: 60,
               height: 60,
               decoration: BoxDecoration(
-                color: widget.card.color.withOpacity(0.2),
+                color: widget.card.color.withValues(alpha: 0.2),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Icon(
@@ -417,7 +417,7 @@ class _CreditCardDetailScreenState extends State<CreditCardDetailScreen> {
     return ListTile(
       onTap: () => _navigateToEditTransaction(transaction),
       leading: CircleAvatar(
-        backgroundColor: widget.card.color.withOpacity(0.2),
+        backgroundColor: widget.card.color.withValues(alpha: 0.2),
         child: Icon(
           Icons.schedule,
           color: widget.card.color,
@@ -525,7 +525,7 @@ class _CreditCardDetailScreenState extends State<CreditCardDetailScreen> {
     return ListTile(
       onTap: () => _navigateToEditTransaction(transaction),
       leading: CircleAvatar(
-        backgroundColor: widget.card.color.withOpacity(0.2),
+        backgroundColor: widget.card.color.withValues(alpha: 0.2),
         child: Icon(
           isInstallment ? Icons.schedule : Icons.shopping_bag,
           color: widget.card.color,
@@ -574,7 +574,21 @@ class _CreditCardDetailScreenState extends State<CreditCardDetailScreen> {
     );
 
     if (result == true) {
-      _loadCardDetails();
+      await _loadCardDetails();
+      // Notify parent screen (list) that card was updated
+      if (mounted) {
+        Navigator.pop(context, true);
+        // Reopen detail screen with updated card
+        final updatedCard = await _cardService.getCard(widget.card.id);
+        if (updatedCard != null && mounted) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => CreditCardDetailScreen(card: updatedCard),
+            ),
+          );
+        }
+      }
     }
   }
 

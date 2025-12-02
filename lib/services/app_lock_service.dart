@@ -21,6 +21,10 @@ class AppLockService {
     _prefs = await SharedPreferences.getInstance();
     _lockTimeoutMinutes = _prefs?.getInt('lock_timeout_minutes') ?? 5;
     _lastActiveTime = DateTime.now();
+    // Initialize locked state from preferences
+    // On app start, always start unlocked
+    _isLocked = false;
+    await _prefs?.setBool('is_locked', false);
   }
 
   // Set lock timeout
@@ -51,7 +55,7 @@ class AppLockService {
   void startMonitoring() {
     _lockTimer?.cancel();
     _lastActiveTime = DateTime.now();
-    _isLocked = false;
+    // Don't reset _isLocked here, it should preserve its state
 
     _lockTimer = Timer.periodic(const Duration(seconds: 30), (timer) {
       _checkInactivity();
@@ -67,14 +71,14 @@ class AppLockService {
   // Update last active time
   void updateActivity() {
     _lastActiveTime = DateTime.now();
-    if (_isLocked) {
-      _isLocked = false;
-    }
+    // Don't automatically unlock here, only update activity time
+    // Unlocking should be done explicitly through unlock() method
   }
 
   // Check for inactivity
   void _checkInactivity() async {
     if (_lastActiveTime == null) return;
+    if (_isLocked) return; // Already locked, no need to check
 
     final autoLockEnabled = await isAutoLockEnabled();
     if (!autoLockEnabled) return;
@@ -82,8 +86,9 @@ class AppLockService {
     final now = DateTime.now();
     final difference = now.difference(_lastActiveTime!);
 
-    if (difference.inMinutes >= _lockTimeoutMinutes && !_isLocked) {
+    if (difference.inMinutes >= _lockTimeoutMinutes) {
       _isLocked = true;
+      await _prefs?.setBool('is_locked', true);
       onLock?.call();
     }
   }
@@ -94,13 +99,17 @@ class AppLockService {
   // Manually lock the app
   void lock() {
     _isLocked = true;
+    _prefs?.setBool('is_locked', true);
     onLock?.call();
   }
 
   // Unlock the app
   void unlock() {
     _isLocked = false;
+    _prefs?.setBool('is_locked', false);
     _lastActiveTime = DateTime.now();
+    // Restart monitoring to ensure proper inactivity tracking
+    startMonitoring();
   }
 
   // Dispose

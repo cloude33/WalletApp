@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart' hide Category;
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/user.dart';
 import '../models/wallet.dart';
@@ -72,16 +73,16 @@ class DataService {
     final walletsJson = _prefs?.getString('wallets') ?? '[]';
     final List<dynamic> walletsList = json.decode(walletsJson);
     final wallets = walletsList.map((w) => Wallet.fromJson(w)).toList();
-    
+
     // Load credit cards and add them as wallets
     try {
       final creditCardService = CreditCardService();
       final creditCards = await creditCardService.getActiveCards();
-      
+
       for (var card in creditCards) {
         // Get current debt for the card
         final currentDebt = await creditCardService.getCurrentDebt(card.id);
-        
+
         // Create a wallet representation of the credit card
         final ccWallet = Wallet(
           id: 'cc_${card.id}', // Prefix to identify credit card wallets
@@ -92,27 +93,31 @@ class DataService {
           icon: 'credit_card',
           creditLimit: card.creditLimit,
         );
-        
+
         wallets.add(ccWallet);
       }
     } catch (e) {
       // If credit card service fails, just continue with regular wallets
-      print('Error loading credit cards as wallets: $e');
+      debugPrint('Error loading credit cards as wallets: $e');
     }
-    
+
     // Cache the result
     _cache.put('wallets', wallets);
-    
+
     return wallets;
   }
 
   Future<void> saveWallets(List<Wallet> wallets) async {
     // Filter out credit card wallets (they are dynamically generated)
-    final regularWallets = wallets.where((w) => !w.id.startsWith('cc_')).toList();
-    
-    final walletsJson = json.encode(regularWallets.map((w) => w.toJson()).toList());
+    final regularWallets = wallets
+        .where((w) => !w.id.startsWith('cc_'))
+        .toList();
+
+    final walletsJson = json.encode(
+      regularWallets.map((w) => w.toJson()).toList(),
+    );
     await _prefs?.setString('wallets', walletsJson);
-    
+
     // Invalidate cache
     _cache.invalidate('wallets');
   }
@@ -149,11 +154,13 @@ class DataService {
     // Load from storage
     final transactionsJson = _prefs?.getString('transactions') ?? '[]';
     final List<dynamic> transactionsList = json.decode(transactionsJson);
-    final transactions = transactionsList.map((t) => Transaction.fromJson(t)).toList();
-    
+    final transactions = transactionsList
+        .map((t) => Transaction.fromJson(t))
+        .toList();
+
     // Cache the result
     _cache.put('transactions', transactions);
-    
+
     return transactions;
   }
 
@@ -162,7 +169,7 @@ class DataService {
       transactions.map((t) => t.toJson()).toList(),
     );
     await _prefs?.setString('transactions', transactionsJson);
-    
+
     // Invalidate cache
     _cache.invalidate('transactions');
   }
@@ -171,6 +178,9 @@ class DataService {
     final transactions = await getTransactions();
     transactions.add(transaction);
     await saveTransactions(transactions);
+    
+    // İşlemin etkisini cüzdana uygula
+    await _applyTransactionEffect(transaction);
   }
 
   Future<void> deleteTransaction(String id) async {
@@ -181,9 +191,9 @@ class DataService {
     }
 
     final tx = transactions[index];
-    
+
     // Taksitli işlem kontrolü
-    if (tx.parentTransactionId != null || 
+    if (tx.parentTransactionId != null ||
         transactions.any((t) => t.parentTransactionId == tx.id)) {
       // Taksitli işlem ise, tüm taksitleri sil
       await deleteTransactionWithInstallments(id);
@@ -197,7 +207,10 @@ class DataService {
     await _revertTransactionEffect(tx);
   }
 
-  Future<void> updateTransaction(Transaction oldTransaction, Transaction newTransaction) async {
+  Future<void> updateTransaction(
+    Transaction oldTransaction,
+    Transaction newTransaction,
+  ) async {
     final transactions = await getTransactions();
     final index = transactions.indexWhere((t) => t.id == oldTransaction.id);
     if (index == -1) {
@@ -231,11 +244,13 @@ class DataService {
     if (walletIndex == -1) return;
 
     final wallet = wallets[walletIndex];
-    final adjustment = transaction.type == 'income' 
-        ? -transaction.amount 
+    final adjustment = transaction.type == 'income'
+        ? -transaction.amount
         : transaction.amount;
-    
-    wallets[walletIndex] = wallet.copyWith(balance: wallet.balance + adjustment);
+
+    wallets[walletIndex] = wallet.copyWith(
+      balance: wallet.balance + adjustment,
+    );
     await saveWallets(wallets);
   }
 
@@ -255,11 +270,13 @@ class DataService {
     if (walletIndex == -1) return;
 
     final wallet = wallets[walletIndex];
-    final adjustment = transaction.type == 'income' 
-        ? transaction.amount 
+    final adjustment = transaction.type == 'income'
+        ? transaction.amount
         : -transaction.amount;
-    
-    wallets[walletIndex] = wallet.copyWith(balance: wallet.balance + adjustment);
+
+    wallets[walletIndex] = wallet.copyWith(
+      balance: wallet.balance + adjustment,
+    );
     await saveWallets(wallets);
   }
 
@@ -279,11 +296,15 @@ class DataService {
     }
 
     // Tüm ilgili işlemleri bul ve sil
-    final relatedTransactions = transactions.where((t) => 
-      t.id == parentId || 
-      t.parentTransactionId == parentId ||
-      (t.parentTransactionId != null && t.parentTransactionId == transaction.id)
-    ).toList();
+    final relatedTransactions = transactions
+        .where(
+          (t) =>
+              t.id == parentId ||
+              t.parentTransactionId == parentId ||
+              (t.parentTransactionId != null &&
+                  t.parentTransactionId == transaction.id),
+        )
+        .toList();
 
     for (final tx in relatedTransactions) {
       await _revertTransactionEffect(tx);
@@ -301,7 +322,7 @@ class DataService {
     String? memo,
   }) async {
     final timestamp = DateTime.now().millisecondsSinceEpoch.toString();
-    
+
     // Giden işlem
     final fromTransaction = Transaction(
       id: timestamp,
@@ -331,7 +352,7 @@ class DataService {
 
     // Wallet bakiyelerini güncelle
     final wallets = await getWallets();
-    
+
     final fromIndex = wallets.indexWhere((w) => w.id == fromWalletId);
     if (fromIndex != -1) {
       wallets[fromIndex] = wallets[fromIndex].copyWith(
@@ -428,7 +449,9 @@ class DataService {
   }
 
   Future<void> saveCategories(List<Category> categories) async {
-    final categoriesJson = json.encode(categories.map((c) => c.toJson()).toList());
+    final categoriesJson = json.encode(
+      categories.map((c) => c.toJson()).toList(),
+    );
     await _prefs?.setString('categories', categoriesJson);
   }
 
@@ -458,55 +481,7 @@ class DataService {
     return await getAllUsers();
   }
 
-  Future<void> restoreBackup(Map<String, dynamic> backupData) async {
-    try {
-      // Kullanıcıları geri yükle
-      if (backupData['users'] != null) {
-        final users = (backupData['users'] as List)
-            .map((u) => User.fromJson(u))
-            .toList();
-        await saveAllUsers(users);
-        if (users.isNotEmpty) {
-          await saveUser(users.first);
-        }
-      }
 
-      // Cüzdanları geri yükle
-      if (backupData['wallets'] != null) {
-        final wallets = (backupData['wallets'] as List)
-            .map((w) => Wallet.fromJson(w))
-            .toList();
-        await saveWallets(wallets);
-      }
-
-      // İşlemleri geri yükle
-      if (backupData['transactions'] != null) {
-        final transactions = (backupData['transactions'] as List)
-            .map((t) => Transaction.fromJson(t))
-            .toList();
-        await saveTransactions(transactions);
-      }
-
-      // Hedefleri geri yükle
-      if (backupData['goals'] != null) {
-        final goals = (backupData['goals'] as List)
-            .map((g) => Goal.fromJson(g))
-            .toList();
-        await saveGoals(goals);
-      }
-
-      // Kategorileri geri yükle
-      if (backupData['categories'] != null) {
-        final categories = (backupData['categories'] as List)
-            .map((c) => Category.fromJson(c))
-            .toList();
-        await saveCategories(categories);
-      }
-    } catch (e) {
-      print('Veri geri yükleme hatası: $e');
-      rethrow;
-    }
-  }
 
   // Loan methods
   Future<List<Loan>> getLoans() async {
@@ -541,123 +516,36 @@ class DataService {
     }
   }
 
-  // Recurring Transaction methods
-  Future<List<RecurringTransaction>> getRecurringTransactions() async {
-    final json = _prefs?.getString('recurring_transactions') ?? '[]';
-    final List<dynamic> list = jsonDecode(json);
-    return list.map((item) => RecurringTransaction.fromJson(item)).toList();
-  }
-
-  Future<void> saveRecurringTransactions(List<RecurringTransaction> transactions) async {
-    final json = jsonEncode(transactions.map((t) => t.toJson()).toList());
-    await _prefs?.setString('recurring_transactions', json);
-  }
-
-  Future<void> addRecurringTransaction(RecurringTransaction transaction) async {
-    final transactions = await getRecurringTransactions();
-    transactions.add(transaction);
-    await saveRecurringTransactions(transactions);
-  }
-
-  Future<void> updateRecurringTransaction(RecurringTransaction transaction) async {
-    final transactions = await getRecurringTransactions();
-    final index = transactions.indexWhere((t) => t.id == transaction.id);
-    if (index != -1) {
-      transactions[index] = transaction;
-      await saveRecurringTransactions(transactions);
-    }
-  }
-
-  Future<void> deleteRecurringTransaction(String id) async {
-    final transactions = await getRecurringTransactions();
-    transactions.removeWhere((t) => t.id == id);
-    await saveRecurringTransactions(transactions);
-  }
-
-  Future<void> toggleRecurringTransaction(String id) async {
-    final transactions = await getRecurringTransactions();
-    final index = transactions.indexWhere((t) => t.id == id);
-    if (index != -1) {
-      transactions[index] = transactions[index].copyWith(
-        isActive: !transactions[index].isActive,
-      );
-      await saveRecurringTransactions(transactions);
-    }
-  }
-
-  // Process recurring transactions that are due
-  Future<List<Transaction>> processRecurringTransactions() async {
-    final recurringTransactions = await getRecurringTransactions();
-    final currentDate = DateTime.now();
-    final processedTransactions = <Transaction>[];
-    final wallets = await getWallets();
-
-    for (var recurring in recurringTransactions) {
-      if (recurring.shouldProcess(currentDate)) {
-        // Create new transaction
-        final transaction = Transaction(
-          id: '${recurring.id}_${DateTime.now().millisecondsSinceEpoch}',
-          type: recurring.isIncome ? 'income' : 'expense',
-          amount: recurring.amount,
-          description: recurring.description ?? recurring.title,
-          category: recurring.category,
-          walletId: wallets.isNotEmpty ? wallets.first.id : '',
-          date: currentDate,
-          memo: recurring.description,
-          images: [],
-        );
-
-        await addTransaction(transaction);
-        processedTransactions.add(transaction);
-
-        // Update recurring transaction
-        final updated = recurring.copyWith(
-          lastCreatedDate: currentDate,
-          createdCount: recurring.createdCount + 1,
-        );
-        await updateRecurringTransaction(updated);
-
-        // Check if should deactivate
-        if (updated.shouldDeactivate) {
-          final deactivated = updated.copyWith(isActive: false);
-          await updateRecurringTransaction(deactivated);
-        }
-      }
-    }
-
-    return processedTransactions;
-  }
-
   Future<void> clearAllData() async {
     // Clear SharedPreferences
     await _prefs?.clear();
-    
+
     // Clear cache
     _cache.clear();
-    
+
     // Clear credit card data
     try {
       final creditCardService = CreditCardService();
       await creditCardService.clearAllData();
     } catch (e) {
-      print('Error clearing credit card data: $e');
+      debugPrint('Error clearing credit card data: $e');
     }
-    
+
     // Clear recurring transactions
     try {
       final recurringRepo = RecurringTransactionRepository();
       await recurringRepo.init();
       await recurringRepo.clear();
     } catch (e) {
-      print('Error clearing recurring transactions: $e');
+      debugPrint('Error clearing recurring transactions: $e');
     }
-    
+
     // Clear scheduled notifications
     try {
       final notificationRepo = ScheduledNotificationRepository();
       await notificationRepo.clearAll();
     } catch (e) {
-      print('Error clearing notifications: $e');
+      debugPrint('Error clearing notifications: $e');
     }
   }
 
@@ -697,7 +585,13 @@ class DataService {
             (backupData['recurringTransactions'] as List)
                 .map((rt) => RecurringTransaction.fromJson(rt))
                 .toList();
-        await saveRecurringTransactions(recurringTransactions);
+
+        // Save using the repository directly since we removed the DataService method
+        final repo = RecurringTransactionRepository();
+        await repo.init();
+        for (var transaction in recurringTransactions) {
+          await repo.add(transaction);
+        }
       }
 
       // Restore categories
@@ -708,7 +602,7 @@ class DataService {
         await saveCategories(categoriesList);
       }
     } catch (e) {
-      print('Error in restoreFromBackup: $e');
+      debugPrint('Error in restoreFromBackup: $e');
       rethrow;
     }
   }

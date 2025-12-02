@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:flutter/foundation.dart';
 
 class ThemeService extends ChangeNotifier {
   static final ThemeService _instance = ThemeService._internal();
@@ -141,12 +140,10 @@ class ThemeService extends ChangeNotifier {
         primary: Color(0xFF0A84FF),
         secondary: Color(0xFFFFD60A),
         surface: Color(0xFF1C1C1E),
-        background: Color(0xFF000000),
         error: Color(0xFFFF453A),
         onPrimary: Colors.white,
         onSecondary: Colors.black,
         onSurface: Colors.white,
-        onBackground: Colors.white,
         onError: Colors.white,
       ),
       appBarTheme: const AppBarTheme(
@@ -249,9 +246,9 @@ class ThemeService extends ChangeNotifier {
       ),
       // Ek dark theme ayarları
       canvasColor: const Color(0xFF000000),
-      shadowColor: Colors.black.withOpacity(0.5),
+      shadowColor: Colors.black.withValues(alpha: 0.5),
       highlightColor: const Color(0xFF2C2C2E),
-      splashColor: const Color(0xFF0A84FF).withOpacity(0.2),
+      splashColor: const Color(0xFF0A84FF).withValues(alpha: 0.2),
     );
   }
 }

@@ -214,15 +214,28 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 // Logo/Icon
                 Center(
                   child: Container(
-                    padding: const EdgeInsets.all(20),
+                    width: 100,
+                    height: 100,
                     decoration: BoxDecoration(
-                      color: const Color(0xFFFDB32A).withOpacity(0.1),
+                      color: const Color(0xFFFDB32A).withValues(alpha: 0.1),
                       shape: BoxShape.circle,
                     ),
-                    child: const Icon(
-                      Icons.account_balance_wallet,
-                      size: 60,
-                      color: Color(0xFFFDB32A),
+                    child: ClipOval(
+                      child: Padding(
+                        padding: const EdgeInsets.all(8),
+                        child: Image.asset(
+                          'assets/images/logo.png',
+                          fit: BoxFit.contain,
+                          errorBuilder: (context, error, stackTrace) {
+                            // Fallback to icon if image fails to load
+                            return const Icon(
+                              Icons.account_balance_wallet,
+                              size: 60,
+                              color: Color(0xFFFDB32A),
+                            );
+                          },
+                        ),
+                      ),
                     ),
                   ),
                 ),
@@ -434,7 +447,19 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     Expanded(
                       child: OutlinedButton.icon(
                         onPressed: _isLoading ? null : _handleGoogleSignIn,
-                        icon: const Icon(Icons.g_mobiledata, size: 24, color: Color(0xFF1C1C1E)),
+                        icon: Image.asset(
+                          'assets/images/google-logo.png',
+                          width: 24,
+                          height: 24,
+                          errorBuilder: (context, error, stackTrace) {
+                            // Fallback to icon if image fails to load
+                            return const Icon(
+                              Icons.g_mobiledata,
+                              size: 24,
+                              color: Color(0xFF1C1C1E),
+                            );
+                          },
+                        ),
                         label: const Text(
                           'Google',
                           style: TextStyle(color: Color(0xFF1C1C1E)),

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'recurring_transaction_service.dart';
 
 /// Service for scheduling recurring transaction checks
@@ -40,7 +41,7 @@ class RecurringSchedulerService {
     try {
       await _recurringService.checkAndCreateTransactions();
     } catch (e) {
-      print('Error checking recurring transactions: $e');
+      debugPrint('Error checking recurring transactions: $e');
     }
   }
 

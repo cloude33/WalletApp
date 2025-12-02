@@ -30,7 +30,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
   }
 
   Future<void> _loadCategories() async {
-    final categories = await _dataService.getCategories();
+    final categories = (await _dataService.getCategories()).cast<Category>();
     final transactions = await _dataService.getTransactions();
     setState(() {
       _categories = categories;
@@ -385,7 +385,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
     return ReorderableListView.builder(
       padding: const EdgeInsets.all(20),
       itemCount: filteredCategories.length,
-      onReorder: _searchQuery.isEmpty ? _reorderCategories : (_, __) {},
+      onReorder: _searchQuery.isEmpty ? _reorderCategories : (oldIndex, newIndex) {},
       itemBuilder: (context, index) {
         final category = filteredCategories[index];
         final count = usageCount[category.name] ?? 0;
@@ -442,7 +442,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                               '$count işlem • ₺${NumberFormat('#,##0', 'tr_TR').format(amount)}',
                               style: TextStyle(
                                 fontSize: 12,
-                                color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.6),
+                                color: Theme.of(context).textTheme.bodyMedium?.color?.withValues(alpha: 0.6),
                               ),
                             ),
                           ],

@@ -8,7 +8,9 @@ import '../models/budget.dart';
 import '../models/loan.dart';
 import '../models/credit_card_transaction.dart';
 import '../services/data_service.dart';
-import '../utils/currency_formatter.dart';
+import '../services/bill_payment_service.dart';
+import '../services/bill_template_service.dart';
+import '../utils/currency_helper.dart';
 
 class StatisticsScreen extends StatefulWidget {
   final List<Transaction> transactions;
@@ -36,9 +38,9 @@ class _StatisticsScreenState extends State<StatisticsScreen>
   String _selectedTimeFilter = 'Aylık'; // Günlük, Haftalık, Aylık, Yıllık, Özel
   DateTime? _customStartDate;
   DateTime? _customEndDate;
-  String _selectedWalletId = 'all';
-  String _selectedCategory = 'all';
-  String _selectedTransactionType = 'all'; // income, expense, all
+  final String _selectedWalletId = 'all';
+  final String _selectedCategory = 'all';
+  final String _selectedTransactionType = 'all'; // income, expense, all
 
   final DataService _dataService = DataService();
   List<Category> _categories = [];
@@ -56,7 +58,7 @@ class _StatisticsScreenState extends State<StatisticsScreen>
   }
 
   Future<void> _loadCategories() async {
-    final categories = await _dataService.getCategories();
+    final categories = (await _dataService.getCategories()).cast<Category>();
     if (mounted) {
       setState(() {
         _categories = categories;
@@ -75,29 +77,22 @@ class _StatisticsScreenState extends State<StatisticsScreen>
     DateTime startDate;
     DateTime? endDate;
 
-    print('Filter: $_selectedTimeFilter');
-
     switch (_selectedTimeFilter) {
       case 'Günlük':
         startDate = DateTime(now.year, now.month, now.day);
         endDate = DateTime(now.year, now.month, now.day, 23, 59, 59);
-        print('Günlük: $startDate - $endDate');
         break;
       case 'Haftalık':
         startDate = now.subtract(const Duration(days: 7));
-        print('Haftalık: $startDate - $now');
         break;
       case 'Aylık':
         startDate = DateTime(now.year, now.month, 1);
-        print('Aylık: $startDate - $now');
         break;
       case 'Yıllık':
         startDate = DateTime(now.year, 1, 1);
-        print('Yıllık: $startDate - $now');
         break;
       case 'Özel':
         if (_customStartDate != null && _customEndDate != null) {
-          print('Özel: $_customStartDate - $_customEndDate');
           // Filter both regular and credit card transactions
           final regularFiltered = widget.transactions
               .where(
@@ -179,9 +174,6 @@ class _StatisticsScreenState extends State<StatisticsScreen>
         )
         .toList();
 
-    print('Filtered regular transactions: ${regularFiltered.length}');
-    print('Filtered credit card transactions: ${creditCardFiltered.length}');
-
     // Combine both lists
     return [...regularFiltered, ...creditCardFiltered];
   }
@@ -190,7 +182,9 @@ class _StatisticsScreenState extends State<StatisticsScreen>
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
-      backgroundColor: isDark ? const Color(0xFF000000) : const Color(0xFFF2F2F7),
+      backgroundColor: isDark
+          ? const Color(0xFF000000)
+          : const Color(0xFFF2F2F7),
       body: SafeArea(
         child: Column(
           children: [
@@ -217,7 +211,9 @@ class _StatisticsScreenState extends State<StatisticsScreen>
                             'İstatistikler',
                             textAlign: TextAlign.center,
                             style: TextStyle(
-                              color: Theme.of(context).textTheme.bodyLarge?.color,
+                              color: Theme.of(
+                                context,
+                              ).textTheme.bodyLarge?.color,
                               fontSize: 20,
                               fontWeight: FontWeight.w500,
                             ),
@@ -281,30 +277,32 @@ class _StatisticsScreenState extends State<StatisticsScreen>
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
       children: [
-        Container(
+        SizedBox(
           height: 300,
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: Theme.of(context).cardColor,
-            borderRadius: BorderRadius.circular(12),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.05),
-                blurRadius: 5,
-                offset: const Offset(0, 2),
-              ),
-            ],
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'Gelir vs Gider',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 20),
-              Expanded(child: _buildLineChart()),
-            ],
+          child: Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Theme.of(context).cardColor,
+              borderRadius: BorderRadius.circular(12),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.05),
+                  blurRadius: 5,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Gelir vs Gider',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 20),
+                Expanded(child: _buildLineChart()),
+              ],
+            ),
           ),
         ),
         const SizedBox(height: 16),
@@ -455,7 +453,7 @@ class _StatisticsScreenState extends State<StatisticsScreen>
             dotData: FlDotData(show: true),
             belowBarData: BarAreaData(
               show: true,
-              color: Colors.green.withOpacity(0.2),
+              color: Colors.green.withValues(alpha: 0.2),
             ),
           ),
           LineChartBarData(
@@ -467,7 +465,7 @@ class _StatisticsScreenState extends State<StatisticsScreen>
             dotData: FlDotData(show: true),
             belowBarData: BarAreaData(
               show: true,
-              color: Colors.red.withOpacity(0.2),
+              color: Colors.red.withValues(alpha: 0.2),
             ),
           ),
         ],
@@ -528,131 +526,137 @@ class _StatisticsScreenState extends State<StatisticsScreen>
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
       children: [
         // Category Pie Chart
-        Container(
+        SizedBox(
           height: 300,
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: Theme.of(context).cardColor,
-            borderRadius: BorderRadius.circular(12),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.05),
-                blurRadius: 5,
-                offset: const Offset(0, 2),
-              ),
-            ],
-          ),
-          child: totalExpense > 0
-              ? Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Kategori Bazlı Harcama Dağılımı',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
+          child: Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Theme.of(context).cardColor,
+              borderRadius: BorderRadius.circular(12),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.05),
+                  blurRadius: 5,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: totalExpense > 0
+                ? Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Kategori Bazlı Harcama Dağılımı',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 10),
-                    Expanded(
-                      child: Row(
-                        children: [
-                          Expanded(
-                            flex: 3,
-                            child: PieChart(
-                              PieChartData(
-                                sectionsSpace: 2,
-                                centerSpaceRadius: 40,
-                                pieTouchData: PieTouchData(
-                                  touchCallback:
-                                      (FlTouchEvent event, pieTouchResponse) {
-                                        if (event is FlTapUpEvent &&
-                                            pieTouchResponse != null) {
-                                          final sectionIndex = pieTouchResponse
-                                              .touchedSection
-                                              ?.touchedSectionIndex;
-                                          if (sectionIndex != null &&
-                                              sectionIndex <
-                                                  sortedEntries.length) {
-                                            _showCategoryDetails(
-                                              sortedEntries[sectionIndex].key,
-                                            );
+                      const SizedBox(height: 10),
+                      Expanded(
+                        child: Row(
+                          children: [
+                            Expanded(
+                              flex: 3,
+                              child: PieChart(
+                                PieChartData(
+                                  sectionsSpace: 2,
+                                  centerSpaceRadius: 40,
+                                  pieTouchData: PieTouchData(
+                                    touchCallback:
+                                        (FlTouchEvent event, pieTouchResponse) {
+                                          if (event is FlTapUpEvent &&
+                                              pieTouchResponse != null) {
+                                            final sectionIndex =
+                                                pieTouchResponse
+                                                    .touchedSection
+                                                    ?.touchedSectionIndex;
+                                            if (sectionIndex != null &&
+                                                sectionIndex <
+                                                    sortedEntries.length) {
+                                              _showCategoryDetails(
+                                                sortedEntries[sectionIndex].key,
+                                              );
+                                            }
                                           }
-                                        }
-                                      },
+                                        },
+                                  ),
+                                  sections: sortedEntries.map((e) {
+                                    final percentage =
+                                        (e.value / totalExpense) * 100;
+                                    final color =
+                                        Colors.primaries[e.key.hashCode %
+                                            Colors.primaries.length];
+                                    return PieChartSectionData(
+                                      color: color,
+                                      value: percentage,
+                                      title:
+                                          '${percentage.toStringAsFixed(0)}%',
+                                      radius: 50,
+                                      titleStyle: const TextStyle(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.white,
+                                      ),
+                                    );
+                                  }).toList(),
                                 ),
-                                sections: sortedEntries.map((e) {
+                              ),
+                            ),
+                            Expanded(
+                              flex: 2,
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: sortedEntries.take(5).map((e) {
                                   final percentage =
                                       (e.value / totalExpense) * 100;
                                   final color =
                                       Colors.primaries[e.key.hashCode %
                                           Colors.primaries.length];
-                                  return PieChartSectionData(
-                                    color: color,
-                                    value: percentage,
-                                    title: '${percentage.toStringAsFixed(0)}%',
-                                    radius: 50,
-                                    titleStyle: const TextStyle(
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.white,
+                                  return Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 4,
+                                    ),
+                                    child: Row(
+                                      children: [
+                                        Container(
+                                          width: 12,
+                                          height: 12,
+                                          decoration: BoxDecoration(
+                                            color: color,
+                                            shape: BoxShape.circle,
+                                          ),
+                                        ),
+                                        const SizedBox(width: 6),
+                                        Expanded(
+                                          child: Text(
+                                            e.key,
+                                            style: const TextStyle(
+                                              fontSize: 12,
+                                            ),
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        ),
+                                        Text(
+                                          '${percentage.toStringAsFixed(1)}%',
+                                          style: const TextStyle(
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                        ),
+                                      ],
                                     ),
                                   );
                                 }).toList(),
                               ),
                             ),
-                          ),
-                          Expanded(
-                            flex: 2,
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: sortedEntries.take(5).map((e) {
-                                final percentage =
-                                    (e.value / totalExpense) * 100;
-                                final color =
-                                    Colors.primaries[e.key.hashCode %
-                                        Colors.primaries.length];
-                                return Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                    vertical: 4,
-                                  ),
-                                  child: Row(
-                                    children: [
-                                      Container(
-                                        width: 12,
-                                        height: 12,
-                                        decoration: BoxDecoration(
-                                          color: color,
-                                          shape: BoxShape.circle,
-                                        ),
-                                      ),
-                                      const SizedBox(width: 6),
-                                      Expanded(
-                                        child: Text(
-                                          e.key,
-                                          style: const TextStyle(fontSize: 12),
-                                          overflow: TextOverflow.ellipsis,
-                                        ),
-                                      ),
-                                      Text(
-                                        '${percentage.toStringAsFixed(1)}%',
-                                        style: const TextStyle(
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.w500,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                );
-                              }).toList(),
-                            ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
-                    ),
-                  ],
-                )
-              : const Center(child: Text('Harcama yok')),
+                    ],
+                  )
+                : const Center(child: Text('Harcama yok')),
+          ),
         ),
         const SizedBox(height: 16),
 
@@ -1141,6 +1145,8 @@ class _StatisticsScreenState extends State<StatisticsScreen>
       children: [
         _buildOverviewSummaryCards(),
         const SizedBox(height: 16),
+        _buildBillTrackingCard(),
+        const SizedBox(height: 16),
         _buildDebtReceivablePanel(),
         const SizedBox(height: 16),
         _buildBudgetGoalComparisonCard(),
@@ -1322,9 +1328,9 @@ class _StatisticsScreenState extends State<StatisticsScreen>
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: Colors.blue.withOpacity(0.1),
+              color: Colors.blue.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: Colors.blue.withOpacity(0.3)),
+              border: Border.all(color: Colors.blue.withValues(alpha: 0.3)),
             ),
             child: Column(
               children: [
@@ -1558,15 +1564,15 @@ class _StatisticsScreenState extends State<StatisticsScreen>
         color: isDark
             ? const Color(0xFF1C1C1E)
             : (isDebt
-                ? Colors.red.withOpacity(0.1)
-                : Colors.green.withOpacity(0.1)),
+                  ? Colors.red.withValues(alpha: 0.1)
+                  : Colors.green.withValues(alpha: 0.1)),
         borderRadius: BorderRadius.circular(8),
         border: Border.all(
           color: isDark
-              ? color.withOpacity(0.5)
+              ? color.withValues(alpha: 0.5)
               : (isDebt
-                  ? Colors.red.withOpacity(0.3)
-                  : Colors.green.withOpacity(0.3)),
+                    ? Colors.red.withValues(alpha: 0.3)
+                    : Colors.green.withValues(alpha: 0.3)),
         ),
       ),
       child: Column(
@@ -1606,12 +1612,7 @@ class _StatisticsScreenState extends State<StatisticsScreen>
         children: [
           Icon(icon, size: 16, color: color),
           const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              title,
-              style: const TextStyle(fontSize: 14),
-            ),
-          ),
+          Expanded(child: Text(title, style: const TextStyle(fontSize: 14))),
           Text(
             '₺${NumberFormat('#,##0', 'tr_TR').format(amount)}',
             style: TextStyle(fontWeight: FontWeight.bold, color: color),
@@ -1817,7 +1818,7 @@ class _StatisticsScreenState extends State<StatisticsScreen>
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 5,
             offset: const Offset(0, 2),
           ),
@@ -1846,7 +1847,7 @@ class _StatisticsScreenState extends State<StatisticsScreen>
                     fontSize: 13,
                     color: Theme.of(
                       context,
-                    ).textTheme.bodyMedium?.color?.withOpacity(0.6),
+                    ).textTheme.bodyMedium?.color?.withValues(alpha: 0.6),
                   ),
                 ),
               ],
@@ -1921,10 +1922,10 @@ class _StatisticsScreenState extends State<StatisticsScreen>
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1C1C1E) : color.withOpacity(0.1),
+        color: isDark ? const Color(0xFF1C1C1E) : color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(8),
         border: Border.all(
-          color: isDark ? color.withOpacity(0.5) : color.withOpacity(0.3),
+          color: isDark ? color.withValues(alpha: 0.5) : color.withValues(alpha: 0.3),
         ),
       ),
       child: Column(
@@ -1962,7 +1963,7 @@ class _StatisticsScreenState extends State<StatisticsScreen>
               subtitle,
               style: TextStyle(
                 fontSize: 12,
-                color: isDark ? Colors.grey[400] : color.withOpacity(0.8),
+                color: isDark ? Colors.grey[400] : color.withValues(alpha: 0.8),
               ),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
@@ -1985,7 +1986,7 @@ class _StatisticsScreenState extends State<StatisticsScreen>
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 5,
             offset: const Offset(0, 2),
           ),
@@ -2022,7 +2023,7 @@ class _StatisticsScreenState extends State<StatisticsScreen>
                     fontSize: 13,
                     color: Theme.of(
                       context,
-                    ).textTheme.bodyMedium?.color?.withOpacity(0.6),
+                    ).textTheme.bodyMedium?.color?.withValues(alpha: 0.6),
                   ),
                 ),
                 const SizedBox(height: 12),
@@ -2119,18 +2120,18 @@ class _StatisticsScreenState extends State<StatisticsScreen>
             ),
             _buildTableRow(
               'Günlük Ort.',
-              CurrencyFormatter.formatWithSymbol(income / 30),
-              CurrencyFormatter.formatWithSymbol(expense / 30),
+              CurrencyHelper.formatAmountCompact(income / 30),
+              CurrencyHelper.formatAmountCompact(expense / 30),
             ),
             _buildTableRow(
               'Genel Ort.',
-              CurrencyFormatter.formatWithSymbol(income),
-              CurrencyFormatter.formatWithSymbol(expense),
+              CurrencyHelper.formatAmountCompact(income),
+              CurrencyHelper.formatAmountCompact(expense),
             ),
             _buildTableRow(
               'Toplam',
-              CurrencyFormatter.formatWithSymbol(income),
-              CurrencyFormatter.formatWithSymbol(expense),
+              CurrencyHelper.formatAmountCompact(income),
+              CurrencyHelper.formatAmountCompact(expense),
             ),
             const SizedBox(height: 16),
             Row(
@@ -2139,7 +2140,7 @@ class _StatisticsScreenState extends State<StatisticsScreen>
                 const Text('Nakit akışı', style: TextStyle(fontSize: 16)),
                 const SizedBox(width: 8),
                 Text(
-                  CurrencyFormatter.formatWithSymbol(cashFlow),
+                  CurrencyHelper.formatAmountCompact(cashFlow),
                   style: const TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
@@ -2709,7 +2710,7 @@ class _StatisticsScreenState extends State<StatisticsScreen>
         borderRadius: BorderRadius.circular(25),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
+            color: Colors.black.withValues(alpha: 0.1),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -2803,131 +2804,6 @@ class _StatisticsScreenState extends State<StatisticsScreen>
     }
   }
 
-  // Enhanced filter bar with additional filters
-  // ignore: unused_element
-  Widget _buildAdvancedFilters() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      decoration: BoxDecoration(
-        color: Theme.of(context).cardColor,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 5,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Row(
-                children: [
-                  _buildFilterChip(
-                    label: 'Hesap',
-                    value: _selectedWalletId == 'all'
-                        ? 'Tümü'
-                        : _getWalletName(_selectedWalletId),
-                    onTap: _showWalletFilterDialog,
-                  ),
-                  const SizedBox(width: 8),
-                  _buildFilterChip(
-                    label: 'Kategori',
-                    value: _selectedCategory == 'all'
-                        ? 'Tümü'
-                        : _selectedCategory,
-                    onTap: _showCategoryFilterDialog,
-                  ),
-                  const SizedBox(width: 8),
-                  _buildFilterChip(
-                    label: 'Tür',
-                    value: _selectedTransactionType == 'all'
-                        ? 'Tümü'
-                        : _getTransactionTypeLabel(_selectedTransactionType),
-                    onTap: _showTypeFilterDialog,
-                  ),
-                ],
-              ),
-            ),
-          ),
-          IconButton(
-            icon: const Icon(Icons.filter_list, color: Color(0xFF007AFF)),
-            onPressed: _showAdvancedFilterDialog,
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildFilterChip({
-    required String label,
-    required String value,
-    required VoidCallback onTap,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-        decoration: BoxDecoration(
-          color: Theme.of(context).brightness == Brightness.dark
-              ? Colors.grey[800]
-              : Colors.grey[100],
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: Colors.grey[300]!,
-          ), // Fix the nullability issue
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              '$label: ',
-              style: const TextStyle(fontSize: 12, color: Colors.grey),
-            ),
-            Text(
-              value,
-              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
-            ),
-            const SizedBox(width: 4),
-            const Icon(Icons.arrow_drop_down, size: 16, color: Colors.grey),
-          ],
-        ),
-      ),
-    );
-  }
-
-  String _getWalletName(String walletId) {
-    final wallet = widget.wallets.firstWhere(
-      (w) => w.id == walletId,
-      orElse: () => Wallet(
-        id: '',
-        name: 'Bilinmeyen',
-        balance: 0,
-        type: 'unknown',
-        color: '0xFF000000',
-        icon: 'money',
-        creditLimit: 0.0,
-      ),
-    );
-    return wallet.name;
-  }
-
-  String _getTransactionTypeLabel(String type) {
-    switch (type) {
-      case 'income':
-        return 'Gelir';
-      case 'expense':
-        return 'Gider';
-      case 'transfer':
-        return 'Transfer';
-      default:
-        return 'Tümü';
-    }
-  }
-
   String _getWalletTypeName(String type) {
     switch (type) {
       case 'cash':
@@ -2965,191 +2841,6 @@ class _StatisticsScreenState extends State<StatisticsScreen>
       default:
         return Colors.grey;
     }
-  }
-
-  Future<void> _showWalletFilterDialog() async {
-    final selectedWalletId = await showDialog<String>(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: const Text('Hesap Seçin'),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                RadioListTile<String>(
-                  title: const Text('Tüm Hesaplar'),
-                  value: 'all',
-                  groupValue: _selectedWalletId,
-                  onChanged: (value) {
-                    Navigator.of(context).pop(value);
-                  },
-                ),
-                ...widget.wallets.map((wallet) {
-                  return RadioListTile<String>(
-                    title: Text(wallet.name),
-                    value: wallet.id,
-                    groupValue: _selectedWalletId,
-                    onChanged: (value) {
-                      Navigator.of(context).pop(value);
-                    },
-                  );
-                }),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-
-    if (selectedWalletId != null) {
-      setState(() {
-        _selectedWalletId = selectedWalletId;
-      });
-    }
-  }
-
-  Future<void> _showCategoryFilterDialog() async {
-    // Get all unique categories from transactions
-    final categories = <String>{};
-
-    // Add categories from regular transactions
-    for (var transaction in widget.transactions) {
-      categories.add(transaction.category);
-    }
-
-    // Add categories from credit card transactions
-    for (var transaction in widget.creditCardTransactions) {
-      categories.add(transaction.category);
-    }
-
-    final sortedCategories = categories.toList()..sort();
-
-    final selectedCategory = await showDialog<String>(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: const Text('Kategori Seçin'),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                RadioListTile<String>(
-                  title: const Text('Tüm Kategoriler'),
-                  value: 'all',
-                  groupValue: _selectedCategory,
-                  onChanged: (value) {
-                    Navigator.of(context).pop(value);
-                  },
-                ),
-                ...sortedCategories.map((category) {
-                  return RadioListTile<String>(
-                    title: Text(category),
-                    value: category,
-                    groupValue: _selectedCategory,
-                    onChanged: (value) {
-                      Navigator.of(context).pop(value);
-                    },
-                  );
-                }),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-
-    if (selectedCategory != null) {
-      setState(() {
-        _selectedCategory = selectedCategory;
-      });
-    }
-  }
-
-  Future<void> _showTypeFilterDialog() async {
-    final selectedType = await showDialog<String>(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: const Text('İşlem Türü Seçin'),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                RadioListTile<String>(
-                  title: const Text('Tüm Türler'),
-                  value: 'all',
-                  groupValue: _selectedTransactionType,
-                  onChanged: (value) {
-                    Navigator.of(context).pop(value);
-                  },
-                ),
-                RadioListTile<String>(
-                  title: const Text('Gelir'),
-                  value: 'income',
-                  groupValue: _selectedTransactionType,
-                  onChanged: (value) {
-                    Navigator.of(context).pop(value);
-                  },
-                ),
-                RadioListTile<String>(
-                  title: const Text('Gider'),
-                  value: 'expense',
-                  groupValue: _selectedTransactionType,
-                  onChanged: (value) {
-                    Navigator.of(context).pop(value);
-                  },
-                ),
-                RadioListTile<String>(
-                  title: const Text('Transfer'),
-                  value: 'transfer',
-                  groupValue: _selectedTransactionType,
-                  onChanged: (value) {
-                    Navigator.of(context).pop(value);
-                  },
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-
-    if (selectedType != null) {
-      setState(() {
-        _selectedTransactionType = selectedType;
-      });
-    }
-  }
-
-  Future<void> _showAdvancedFilterDialog() async {
-    // For now, we can reset all filters
-    await showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: const Text('Filtre Seçenekleri'),
-          content: const Text('Gelişmiş filtreleme seçenekleri burada olacak.'),
-          actions: [
-            TextButton(
-              onPressed: () {
-                setState(() {
-                  _selectedWalletId = 'all';
-                  _selectedCategory = 'all';
-                  _selectedTransactionType = 'all';
-                });
-                Navigator.of(context).pop();
-              },
-              child: const Text('Filtreleri Sıfırla'),
-            ),
-            TextButton(
-              onPressed: Navigator.of(context).pop,
-              child: const Text('Kapat'),
-            ),
-          ],
-        );
-      },
-    );
   }
 
   // The filtered transactions getter is already updated with all filters
@@ -3338,7 +3029,7 @@ class _StatisticsScreenState extends State<StatisticsScreen>
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 5,
             offset: const Offset(0, 2),
           ),
@@ -3509,10 +3200,10 @@ class _StatisticsScreenState extends State<StatisticsScreen>
               child: Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFFF3B30).withOpacity(0.1),
+                  color: const Color(0xFFFF3B30).withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(
-                    color: const Color(0xFFFF3B30).withOpacity(0.3),
+                    color: const Color(0xFFFF3B30).withValues(alpha: 0.3),
                   ),
                 ),
                 child: Row(
@@ -3669,7 +3360,7 @@ class _StatisticsScreenState extends State<StatisticsScreen>
                           backgroundColor: Colors
                               .primaries[category.hashCode %
                                   Colors.primaries.length]
-                              .withOpacity(0.2),
+                              .withValues(alpha: 0.2),
                           child: Text(
                             '${index + 1}',
                             style: TextStyle(
@@ -3718,5 +3409,372 @@ class _StatisticsScreenState extends State<StatisticsScreen>
         );
       },
     );
+  }
+
+  Widget _buildBillTrackingCard() {
+    return FutureBuilder<Map<String, dynamic>>(
+      future: _loadBillStatistics(),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) {
+          return _buildCard(
+            title: 'Fatura Takibi',
+            subtitle: 'Yükleniyor...',
+            content: const Center(
+              child: Padding(
+                padding: EdgeInsets.all(24),
+                child: CircularProgressIndicator(),
+              ),
+            ),
+          );
+        }
+
+        final data = snapshot.data!;
+        final totalPaid = data['totalPaid'] as double;
+        final totalPending = data['totalPending'] as double;
+        final totalOverdue = data['totalOverdue'] as double;
+        final paidCount = data['paidCount'] as int;
+        final pendingCount = data['pendingCount'] as int;
+        final overdueCount = data['overdueCount'] as int;
+        final paymentsByCategory = data['paymentsByCategory'] as Map<String, double>;
+
+        final totalAmount = totalPaid + totalPending + totalOverdue;
+
+        if (totalAmount == 0) {
+          return _buildCard(
+            title: 'Fatura Takibi',
+            subtitle: 'Bu dönemde fatura bulunmamaktadır',
+            content: const Padding(
+              padding: EdgeInsets.all(16),
+              child: Text(
+                'Bu dönemde ödenen veya bekleyen fatura bulunmamaktadır.',
+                style: TextStyle(color: Colors.grey),
+                textAlign: TextAlign.center,
+              ),
+            ),
+          );
+        }
+
+        return _buildCard(
+          title: 'Fatura Takibi',
+          subtitle: 'Ödenen ve bekleyen faturalar',
+          content: Column(
+            children: [
+              // Özet kartları
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: _buildBillSummaryCard(
+                        'Ödendi',
+                        totalPaid,
+                        paidCount,
+                        Colors.green,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: _buildBillSummaryCard(
+                        'Bekliyor',
+                        totalPending,
+                        pendingCount,
+                        Colors.orange,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: _buildBillSummaryCard(
+                        'Gecikmiş',
+                        totalOverdue,
+                        overdueCount,
+                        Colors.red,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              // Kategorilere göre dağılım (Carousel)
+              if (paymentsByCategory.isNotEmpty) ...[
+                const Divider(),
+                Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Kategorilere Göre Dağılım',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      SizedBox(
+                        height: 200,
+                        child: PageView.builder(
+                          itemCount: paymentsByCategory.length,
+                          controller: PageController(viewportFraction: 0.85),
+                          itemBuilder: (context, index) {
+                            final entry = paymentsByCategory.entries.elementAt(index);
+                            final percentage = totalAmount > 0
+                                ? (entry.value / totalAmount) * 100
+                                : 0.0;
+                            
+                            return Container(
+                              margin: const EdgeInsets.symmetric(horizontal: 8),
+                              padding: const EdgeInsets.all(20),
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                  colors: [
+                                    const Color(0xFF00BFA5),
+                                    const Color(0xFF00BFA5).withValues(alpha: 0.7),
+                                  ],
+                                ),
+                                borderRadius: BorderRadius.circular(16),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: const Color(0xFF00BFA5).withValues(alpha: 0.3),
+                                    blurRadius: 10,
+                                    offset: const Offset(0, 4),
+                                  ),
+                                ],
+                              ),
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  // Kategori ikonu
+                                  Container(
+                                    padding: const EdgeInsets.all(16),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white.withValues(alpha: 0.2),
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: Icon(
+                                      _getCategoryIcon(entry.key),
+                                      size: 40,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 16),
+                                  // Kategori adı
+                                  Text(
+                                    entry.key,
+                                    style: const TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  // Tutar
+                                  FutureBuilder(
+                                    future: _dataService.getCurrentUser(),
+                                    builder: (context, snapshot) {
+                                      if (!snapshot.hasData) return const SizedBox();
+                                      return Text(
+                                        CurrencyHelper.formatAmount(
+                                          entry.value,
+                                          snapshot.data,
+                                        ),
+                                        style: const TextStyle(
+                                          fontSize: 24,
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.white,
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                  const SizedBox(height: 8),
+                                  // Yüzde
+                                  Text(
+                                    '${percentage.toStringAsFixed(1)}%',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      color: Colors.white.withValues(alpha: 0.9),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      // Sayfa göstergesi
+                      Center(
+                        child: Text(
+                          'Kaydırarak diğer kategorileri görün',
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: Colors.grey[600],
+                            fontStyle: FontStyle.italic,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildBillSummaryCard(
+    String title,
+    double amount,
+    int count,
+    Color color,
+  ) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: color.withValues(alpha: 0.3)),
+      ),
+      child: Column(
+        children: [
+          Text(
+            title,
+            style: TextStyle(
+              fontSize: 11,
+              color: color,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 4),
+          FutureBuilder(
+            future: _dataService.getCurrentUser(),
+            builder: (context, snapshot) {
+              if (!snapshot.hasData) return const SizedBox();
+              return Text(
+                CurrencyHelper.formatAmount(amount, snapshot.data),
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                  color: color,
+                ),
+              );
+            },
+          ),
+          const SizedBox(height: 2),
+          Text(
+            '$count adet',
+            style: TextStyle(
+              fontSize: 10,
+              color: color.withValues(alpha: 0.7),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<Map<String, dynamic>> _loadBillStatistics() async {
+    try {
+      final paymentService = BillPaymentService();
+      final templateService = BillTemplateService();
+
+      // Tüm ödemeleri getir
+      final allPayments = await paymentService.getPayments();
+
+      // Filtrelenmiş döneme göre ödemeleri filtrele
+      final now = DateTime.now();
+      DateTime startDate;
+      DateTime? endDate;
+
+      switch (_selectedTimeFilter) {
+        case 'Günlük':
+          startDate = DateTime(now.year, now.month, now.day);
+          endDate = DateTime(now.year, now.month, now.day, 23, 59, 59);
+          break;
+        case 'Haftalık':
+          startDate = now.subtract(const Duration(days: 7));
+          break;
+        case 'Aylık':
+          startDate = DateTime(now.year, now.month, 1);
+          break;
+        case 'Yıllık':
+          startDate = DateTime(now.year, 1, 1);
+          break;
+        case 'Özel':
+          if (_customStartDate != null && _customEndDate != null) {
+            startDate = _customStartDate!;
+            endDate = _customEndDate;
+          } else {
+            startDate = DateTime(now.year, now.month, 1);
+          }
+          break;
+        default:
+          startDate = DateTime(now.year, now.month, 1);
+      }
+
+      final filteredPayments = allPayments.where((payment) {
+        final paymentDate = payment.paidDate ?? payment.dueDate;
+        if (endDate != null) {
+          return paymentDate.isAfter(startDate.subtract(const Duration(seconds: 1))) &&
+              paymentDate.isBefore(endDate.add(const Duration(seconds: 1)));
+        }
+        return paymentDate.isAfter(startDate.subtract(const Duration(seconds: 1)));
+      }).toList();
+
+      // İstatistikleri hesapla
+      double totalPaid = 0;
+      double totalPending = 0;
+      double totalOverdue = 0;
+      int paidCount = 0;
+      int pendingCount = 0;
+      int overdueCount = 0;
+      final Map<String, double> paymentsByCategory = {};
+
+      // Template bilgilerini yükle
+      final templates = await templateService.getTemplates();
+      final templateMap = {for (var t in templates) t.id: t};
+
+      for (var payment in filteredPayments) {
+        final template = templateMap[payment.templateId];
+        final categoryName = template?.categoryDisplayName ?? 'Diğer';
+
+        if (payment.isPaid) {
+          totalPaid += payment.amount;
+          paidCount++;
+        } else if (payment.isOverdue) {
+          totalOverdue += payment.amount;
+          overdueCount++;
+        } else {
+          totalPending += payment.amount;
+          pendingCount++;
+        }
+
+        paymentsByCategory[categoryName] =
+            (paymentsByCategory[categoryName] ?? 0) + payment.amount;
+      }
+
+      return {
+        'totalPaid': totalPaid,
+        'totalPending': totalPending,
+        'totalOverdue': totalOverdue,
+        'paidCount': paidCount,
+        'pendingCount': pendingCount,
+        'overdueCount': overdueCount,
+        'paymentsByCategory': paymentsByCategory,
+      };
+    } catch (e) {
+      return {
+        'totalPaid': 0.0,
+        'totalPending': 0.0,
+        'totalOverdue': 0.0,
+        'paidCount': 0,
+        'pendingCount': 0,
+        'overdueCount': 0,
+        'paymentsByCategory': <String, double>{},
+      };
+    }
   }
 }

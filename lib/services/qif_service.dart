@@ -97,7 +97,7 @@ class QifService {
           final dateStr = line.substring(1);
           final date = _parseQifDate(dateStr);
           currentTransaction = Transaction(
-            id: DateTime.now().millisecondsSinceEpoch.toString() + '_$lineNumber',
+            id: '${DateTime.now().millisecondsSinceEpoch}_$lineNumber',
             type: 'expense',
             amount: 0,
             description: '',

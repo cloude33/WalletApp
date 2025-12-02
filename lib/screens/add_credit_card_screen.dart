@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:intl/intl.dart';
 import 'package:uuid/uuid.dart';
 import '../models/credit_card.dart';
 import '../services/credit_card_service.dart';
@@ -26,6 +27,7 @@ class _AddCreditCardScreenState extends State<AddCreditCardScreen> {
   late TextEditingController _dueDateOffsetController;
   late TextEditingController _monthlyInterestRateController;
   late TextEditingController _lateInterestRateController;
+  late TextEditingController _initialDebtController;
 
   Color _selectedColor = Colors.blue;
   bool _isLoading = false;
@@ -85,7 +87,7 @@ class _AddCreditCardScreenState extends State<AddCreditCardScreen> {
     _cardNameController = TextEditingController(text: card?.cardName ?? '');
     _last4DigitsController = TextEditingController(text: card?.last4Digits ?? '');
     _creditLimitController = TextEditingController(
-      text: card != null ? card.creditLimit.toStringAsFixed(0) : '',
+      text: card != null ? _formatNumber(card.creditLimit) : '',
     );
     _statementDayController = TextEditingController(
       text: card?.statementDay.toString() ?? '',
@@ -99,10 +101,23 @@ class _AddCreditCardScreenState extends State<AddCreditCardScreen> {
     _lateInterestRateController = TextEditingController(
       text: card?.lateInterestRate.toString() ?? '4.5',
     );
+    _initialDebtController = TextEditingController(
+      text: card != null && card.initialDebt > 0 ? _formatNumber(card.initialDebt) : '',
+    );
 
     if (card != null) {
       _selectedColor = card.color;
     }
+  }
+
+  // Binlik ayırıcı ile sayı formatlama
+  String _formatNumber(double number) {
+    return NumberFormat('#,##0.##', 'tr_TR').format(number);
+  }
+
+  // Binlik ayırıcıyı kaldırıp sayıya çevirme
+  double _parseNumber(String text) {
+    return double.tryParse(text.replaceAll('.', '').replaceAll(',', '.')) ?? 0;
   }
 
   @override
@@ -115,6 +130,7 @@ class _AddCreditCardScreenState extends State<AddCreditCardScreen> {
     _dueDateOffsetController.dispose();
     _monthlyInterestRateController.dispose();
     _lateInterestRateController.dispose();
+    _initialDebtController.dispose();
     super.dispose();
   }
 
@@ -140,6 +156,8 @@ class _AddCreditCardScreenState extends State<AddCreditCardScreen> {
                   _buildLast4DigitsField(),
                   const SizedBox(height: 16),
                   _buildCreditLimitField(),
+                  const SizedBox(height: 16),
+                  _buildInitialDebtField(),
                   const SizedBox(height: 24),
                   const Text(
                     'Ekstre ve Ödeme Bilgileri',
@@ -286,27 +304,91 @@ class _AddCreditCardScreenState extends State<AddCreditCardScreen> {
       controller: _creditLimitController,
       decoration: const InputDecoration(
         labelText: 'Kredi Limiti',
-        hintText: '50000',
+        hintText: '50.000,00',
+        helperText: 'Ondalık sayı için virgül (,) kullanın',
         prefixIcon: Icon(Icons.account_balance_wallet),
         suffixText: '₺',
         border: OutlineInputBorder(),
       ),
-      keyboardType: TextInputType.number,
+      keyboardType: const TextInputType.numberWithOptions(decimal: true),
       inputFormatters: [
-        FilteringTextInputFormatter.digitsOnly,
+        FilteringTextInputFormatter.allow(RegExp(r'[0-9,.]')),
+        _DecimalThousandsSeparatorInputFormatter(),
       ],
+      onChanged: (value) {
+        // Cursor pozisyonunu koru
+        final cursorPos = _creditLimitController.selection.base.offset;
+        final formatted = _formatNumberInput(value);
+        if (formatted != value) {
+          _creditLimitController.value = TextEditingValue(
+            text: formatted,
+            selection: TextSelection.collapsed(
+              offset: cursorPos + (formatted.length - value.length),
+            ),
+          );
+        }
+      },
       validator: (value) {
         if (value == null || value.isEmpty) {
           return 'Kredi limiti gerekli';
         }
-        final limit = double.tryParse(value);
-        if (limit == null || limit <= 0) {
+        final limit = _parseNumber(value);
+        if (limit <= 0) {
           return 'Geçerli bir limit giriniz';
         }
         return null;
       },
     );
   }
+
+  String _formatNumberInput(String value) {
+    if (value.isEmpty) return value;
+    final number = int.tryParse(value.replaceAll('.', ''));
+    if (number == null) return value;
+    return NumberFormat('#,##0', 'tr_TR').format(number).replaceAll(',', '.');
+  }
+
+  Widget _buildInitialDebtField() {
+    return TextFormField(
+      controller: _initialDebtController,
+      decoration: const InputDecoration(
+        labelText: 'Mevcut Borç (Opsiyonel)',
+        hintText: 'Boş bırakabilirsiniz',
+        helperText: 'Önceki dönemden kalan borç varsa giriniz. Binlik ayırıcı otomatik eklenir.',
+        prefixIcon: Icon(Icons.credit_card_outlined),
+        suffixText: '₺',
+        border: OutlineInputBorder(),
+      ),
+      keyboardType: TextInputType.number,
+      inputFormatters: [
+        FilteringTextInputFormatter.digitsOnly,
+        _ThousandsSeparatorInputFormatter(),
+      ],
+      onChanged: (value) {
+        // Cursor pozisyonunu koru
+        final cursorPos = _initialDebtController.selection.base.offset;
+        final formatted = _formatNumberInput(value);
+        if (formatted != value) {
+          _initialDebtController.value = TextEditingValue(
+            text: formatted,
+            selection: TextSelection.collapsed(
+              offset: cursorPos + (formatted.length - value.length),
+            ),
+          );
+        }
+      },
+      validator: (value) {
+        if (value != null && value.isNotEmpty) {
+          final debt = _parseNumber(value);
+          if (debt < 0) {
+            return 'Geçerli bir tutar giriniz';
+          }
+        }
+        return null;
+      },
+    );
+  }
+
 
   Widget _buildStatementDayField() {
     return TextFormField(
@@ -426,7 +508,7 @@ class _AddCreditCardScreenState extends State<AddCreditCardScreen> {
       spacing: 12,
       runSpacing: 12,
       children: _cardColors.map((color) {
-        final isSelected = color.value == _selectedColor.value;
+        final isSelected = color.toARGB32() == _selectedColor.toARGB32();
         return GestureDetector(
           onTap: () {
             setState(() {
@@ -477,19 +559,24 @@ class _AddCreditCardScreenState extends State<AddCreditCardScreen> {
     setState(() => _isLoading = true);
 
     try {
+      final initialDebt = _initialDebtController.text.isEmpty 
+          ? 0.0 
+          : _parseNumber(_initialDebtController.text);
+      
       final card = CreditCard(
         id: widget.card?.id ?? const Uuid().v4(),
         bankName: _bankNameController.text.trim(),
         cardName: _cardNameController.text.trim(),
         last4Digits: _last4DigitsController.text.trim(),
-        creditLimit: double.parse(_creditLimitController.text),
+        creditLimit: _parseNumber(_creditLimitController.text),
         statementDay: int.parse(_statementDayController.text),
         dueDateOffset: int.parse(_dueDateOffsetController.text),
         monthlyInterestRate: double.parse(_monthlyInterestRateController.text),
         lateInterestRate: double.parse(_lateInterestRateController.text),
-        cardColor: _selectedColor.value,
+        cardColor: _selectedColor.toARGB32(),
         createdAt: widget.card?.createdAt ?? DateTime.now(),
         isActive: widget.card?.isActive ?? true,
+        initialDebt: initialDebt,
       );
 
       if (widget.card == null) {
@@ -529,3 +616,70 @@ class _AddCreditCardScreenState extends State<AddCreditCardScreen> {
     }
   }
 }
+
+// Binlik ayırıcı input formatter
+class _ThousandsSeparatorInputFormatter extends TextInputFormatter {
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    if (newValue.text.isEmpty) {
+      return newValue;
+    }
+
+    // Sadece rakamları al
+    final number = int.tryParse(newValue.text.replaceAll('.', ''));
+    if (number == null) {
+      return oldValue;
+    }
+
+    // Binlik ayırıcı ile formatla
+    final formatted = NumberFormat('#,##0', 'tr_TR')
+        .format(number)
+        .replaceAll(',', '.');
+
+    return TextEditingValue(
+      text: formatted,
+      selection: TextSelection.collapsed(offset: formatted.length),
+    );
+  }
+}
+
+// Ondalık sayı ve binlik ayırıcı destekli formatter
+class _DecimalThousandsSeparatorInputFormatter extends TextInputFormatter {
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    if (newValue.text.isEmpty) {
+      return newValue;
+    }
+
+    String text = newValue.text;
+    
+    // Tüm noktaları kaldır (binlik ayırıcı)
+    text = text.replaceAll('.', '');
+    
+    // Virgülü noktaya çevir (ondalık ayırıcı)
+    text = text.replaceAll(',', '.');
+    
+    // Sadece bir ondalık nokta olsun
+    final parts = text.split('.');
+    if (parts.length > 2) {
+      text = '${parts[0]}.${parts.sublist(1).join('')}';
+    }
+    
+    // Ondalık kısmı maksimum 2 basamak
+    if (parts.length == 2 && parts[1].length > 2) {
+      text = '${parts[0]}.${parts[1].substring(0, 2)}';
+    }
+
+    return TextEditingValue(
+      text: text,
+      selection: TextSelection.collapsed(offset: text.length),
+    );
+  }
+}
+

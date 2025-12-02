@@ -223,7 +223,7 @@ class _ManageWalletsScreenState extends State<ManageWalletsScreen> {
                         return Card(
                           margin: const EdgeInsets.only(bottom: 15),
                           elevation: 3,
-                          shadowColor: Colors.grey.withOpacity(0.2),
+                          shadowColor: Colors.grey.withValues(alpha: 0.2),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(15),
                           ),
@@ -234,7 +234,7 @@ class _ManageWalletsScreenState extends State<ManageWalletsScreen> {
                                   Color(int.parse(wallet.color)),
                                   Color(
                                     int.parse(wallet.color),
-                                  ).withOpacity(0.8),
+                                  ).withValues(alpha: 0.8),
                                 ],
                                 begin: Alignment.topLeft,
                                 end: Alignment.bottomRight,
@@ -242,7 +242,7 @@ class _ManageWalletsScreenState extends State<ManageWalletsScreen> {
                               borderRadius: BorderRadius.circular(15),
                               boxShadow: [
                                 BoxShadow(
-                                  color: Colors.grey.withOpacity(0.1),
+                                  color: Colors.grey.withValues(alpha: 0.1),
                                   spreadRadius: 1,
                                   blurRadius: 5,
                                   offset: const Offset(0, 2),
@@ -259,7 +259,7 @@ class _ManageWalletsScreenState extends State<ManageWalletsScreen> {
                                       Container(
                                         padding: const EdgeInsets.all(12),
                                         decoration: BoxDecoration(
-                                          color: Colors.white.withOpacity(0.2),
+                                          color: Colors.white.withValues(alpha: 0.2),
                                           borderRadius: BorderRadius.circular(
                                             10,
                                           ),

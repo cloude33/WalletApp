@@ -31,6 +31,9 @@ class CreditCardTransaction extends HiveObject {
   @HiveField(8)
   DateTime createdAt;
 
+  @HiveField(9)
+  List<String> images; // Base64 encoded images
+
   CreditCardTransaction({
     required this.id,
     required this.cardId,
@@ -41,7 +44,8 @@ class CreditCardTransaction extends HiveObject {
     required this.installmentCount,
     this.installmentsPaid = 0,
     required this.createdAt,
-  });
+    List<String>? images,
+  }) : images = images ?? [];
 
   // Computed properties
   double get installmentAmount => amount / installmentCount;
@@ -91,6 +95,7 @@ class CreditCardTransaction extends HiveObject {
     int? installmentCount,
     int? installmentsPaid,
     DateTime? createdAt,
+    List<String>? images,
   }) {
     return CreditCardTransaction(
       id: id ?? this.id,
@@ -102,6 +107,7 @@ class CreditCardTransaction extends HiveObject {
       installmentCount: installmentCount ?? this.installmentCount,
       installmentsPaid: installmentsPaid ?? this.installmentsPaid,
       createdAt: createdAt ?? this.createdAt,
+      images: images ?? this.images,
     );
   }
 

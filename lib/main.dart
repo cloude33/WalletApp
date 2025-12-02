@@ -4,6 +4,7 @@ import 'package:intl/date_symbol_data_local.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'screens/welcome_screen.dart';
 import 'screens/login_screen.dart';
+import 'screens/lock_screen.dart';
 import 'services/data_service.dart';
 import 'services/theme_service.dart';
 import 'services/auth_service.dart';
@@ -23,48 +24,49 @@ import 'models/credit_card_transaction.dart';
 import 'models/credit_card_statement.dart';
 import 'models/credit_card_payment.dart';
 import 'services/credit_card_box_service.dart';
+import 'services/bill_migration_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await initializeDateFormatting('tr_TR', null);
-  
+
   // Initialize Hive
   await Hive.initFlutter();
   Hive.registerAdapter(RecurrenceFrequencyAdapter());
   Hive.registerAdapter(RecurringTransactionAdapter());
   Hive.registerAdapter(RecurringTemplateAdapter());
-  
+
   // Register credit card adapters
   Hive.registerAdapter(CreditCardAdapter());
   Hive.registerAdapter(CreditCardTransactionAdapter());
   Hive.registerAdapter(CreditCardStatementAdapter());
   Hive.registerAdapter(CreditCardPaymentAdapter());
-  
+
   await DataService().init();
-  
+
   // Initialize credit card boxes
   await CreditCardBoxService.init();
   await ThemeService().init();
   await AuthService().init();
-  
+
   // Initialize user service
   await UserService().init();
-  
+
   // Initialize app lock service
   await AppLockService().init();
-  
+
   // Initialize recurring transaction repository
   final recurringRepo = RecurringTransactionRepository();
   await recurringRepo.init();
-  
+
   // Initialize recurring template service
   final templateService = RecurringTemplateService();
   await templateService.init();
-  
+
   // Initialize notification service
   await NotificationSchedulerService().initialize();
   await NotificationSchedulerService().requestPermissions();
-  
+
   // Initialize recurring scheduler service
   try {
     final dataService = DataService();
@@ -77,9 +79,17 @@ void main() async {
     final schedulerService = RecurringSchedulerService(recurringService);
     await schedulerService.initialize();
   } catch (e) {
-    print('Recurring scheduler initialization error: $e');
+    // Error handling for recurring scheduler initialization
   }
-  
+
+  // Migrate old Bill data to new BillTemplate + BillPayment structure
+  try {
+    final migrationService = BillMigrationService();
+    await migrationService.migrateBills();
+  } catch (e) {
+    debugPrint('Bill migration error: $e');
+  }
+
   runApp(const MoneyApp());
 }
 
@@ -117,7 +127,7 @@ class _MoneyAppState extends State<MoneyApp> with WidgetsBindingObserver {
     // Check if any users exist in the system
     final dataService = DataService();
     final users = await dataService.getAllUsers();
-    
+
     setState(() {
       // If users exist, go to login screen, otherwise go to welcome screen
       _isFirstLaunch = users.isEmpty;
@@ -128,18 +138,49 @@ class _MoneyAppState extends State<MoneyApp> with WidgetsBindingObserver {
     _lockService.startMonitoring();
     _lockService.onLock = () {
       // Navigate to lock screen when app is locked
-      // This will be handled by the navigator
+      _navigateToLockScreen();
     };
+  }
+
+  void _navigateToLockScreen() {
+    // Navigate to lock screen when app is locked
+    // Add a small delay to ensure proper initialization
+    Future.delayed(const Duration(milliseconds: 100), () {
+      if (!mounted) return;
+
+      // Check if lock screen is already showing
+      final currentRoute = ModalRoute.of(context);
+      if (currentRoute?.settings.name == '/lock' ||
+          currentRoute?.settings.arguments == 'LockScreen') {
+        return;
+      }
+
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => const LockScreen(),
+          settings: const RouteSettings(name: '/lock'),
+        ),
+      );
+    });
   }
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     super.didChangeAppLifecycleState(state);
-    
+
     if (state == AppLifecycleState.resumed) {
-      _lockService.updateActivity();
-    } else if (state == AppLifecycleState.paused) {
-      // App is going to background
+      // Check if app should be locked when resuming
+      if (_lockService.isLocked) {
+        _navigateToLockScreen();
+      } else {
+        // Update activity when app resumes
+        _lockService.updateActivity();
+      }
+    } else if (state == AppLifecycleState.paused ||
+        state == AppLifecycleState.inactive) {
+      // App is going to background or becoming inactive
+      // Don't update activity, let the timer check for inactivity
     }
   }
 
@@ -171,10 +212,16 @@ class _MoneyAppState extends State<MoneyApp> with WidgetsBindingObserver {
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,
       ],
-      supportedLocales: const [
-        Locale('tr', 'TR'),
-      ],
+      supportedLocales: const [Locale('tr', 'TR')],
       home: _isFirstLaunch ? const WelcomeScreen() : const LoginScreen(),
+      builder: (context, child) {
+        return Listener(
+          onPointerDown: (_) => _lockService.updateActivity(),
+          onPointerMove: (_) => _lockService.updateActivity(),
+          onPointerUp: (_) => _lockService.updateActivity(),
+          child: child,
+        );
+      },
     );
   }
 

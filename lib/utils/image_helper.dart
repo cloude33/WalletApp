@@ -118,7 +118,7 @@ class ImageHelper {
                 leading: Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF5E5CE6).withOpacity(0.1),
+                    color: const Color(0xFF5E5CE6).withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: const Icon(
@@ -139,7 +139,7 @@ class ImageHelper {
                 leading: Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF5E5CE6).withOpacity(0.1),
+                    color: const Color(0xFF5E5CE6).withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: const Icon(

@@ -130,7 +130,9 @@ class User {
   factory User.fromJson(Map<String, dynamic> json) {
     try {
       return User(
-        id: json['id']?.toString() ?? const Uuid().v4(), // ID yoksa yeni oluştur
+        id:
+            json['id']?.toString() ??
+            const Uuid().v4(), // ID yoksa yeni oluştur
         name: json['name']?.toString() ?? 'Kullanıcı',
         email: json['email']?.toString(),
         passwordHash: json['passwordHash']?.toString(),
@@ -145,7 +147,8 @@ class User {
             ? DateTime.tryParse(json['lastActive'].toString())
             : null,
         isLocked: json['isLocked'] == true, // Güvenli boolean kontrolü
-        loginAttempts: int.tryParse(json['loginAttempts']?.toString() ?? '0') ?? 0,
+        loginAttempts:
+            int.tryParse(json['loginAttempts']?.toString() ?? '0') ?? 0,
         lockUntil: json['lockUntil'] != null
             ? DateTime.tryParse(json['lockUntil'].toString())
             : null,
@@ -156,10 +159,7 @@ class User {
             ? DateTime.tryParse(json['updatedAt'].toString()) ?? DateTime.now()
             : DateTime.now(),
       );
-    } catch (e, stack) {
-      print('User.fromJson HATASI: $e');
-      print('Hatalı JSON Verisi: $json');
-      print(stack);
+    } catch (e) {
       // Hata durumunda varsayılan güvenli bir kullanıcı döndür
       return User(
         id: const Uuid().v4(),

@@ -87,13 +87,29 @@ class RecurringTransactionService {
   }
 
   Future<void> _createTransactionFromRecurring(RecurringTransaction recurring) async {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    
+    // Bugün zaten bir işlem oluşturulmuş mu kontrol et
+    if (recurring.lastCreatedDate != null) {
+      final lastCreated = DateTime(
+        recurring.lastCreatedDate!.year,
+        recurring.lastCreatedDate!.month,
+        recurring.lastCreatedDate!.day,
+      );
+      if (lastCreated.isAtSameMomentAs(today)) {
+        // Bugün zaten oluşturulmuş, tekrar oluşturma
+        return;
+      }
+    }
+    
     final transaction = Transaction(
       id: const Uuid().v4(),
       type: recurring.isIncome ? 'income' : 'expense',
       amount: recurring.amount,
       category: recurring.category,
       walletId: 'default', // Default wallet kullanılıyor
-      date: DateTime.now(),
+      date: now,
       description: recurring.description ?? '',
       isIncome: recurring.isIncome,
       recurringTransactionId: recurring.id,
@@ -101,7 +117,7 @@ class RecurringTransactionService {
 
     await _dataService.addTransaction(transaction);
 
-    recurring.lastCreatedDate = DateTime.now();
+    recurring.lastCreatedDate = now;
     recurring.createdCount++;
 
     if (recurring.shouldDeactivate) {

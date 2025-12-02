@@ -81,7 +81,7 @@ class _DebtDetailScreenState extends State<DebtDetailScreen> {
                   decoration: InputDecoration(
                     labelText: 'Tutar',
                     suffixText: '₺',
-                    hintText: 'Kalan: ₺${_debt!.remainingAmount.toStringAsFixed(2)}',
+                    hintText: 'Kalan: ₺${NumberFormat('#,##0.00', 'tr_TR').format(_debt!.remainingAmount)}',
                   ),
                   keyboardType: const TextInputType.numberWithOptions(decimal: true),
                   autofocus: true,
@@ -359,7 +359,7 @@ class _DebtDetailScreenState extends State<DebtDetailScreen> {
             Row(
               children: [
                 CircleAvatar(
-                  backgroundColor: color.withOpacity(0.1),
+                  backgroundColor: color.withValues(alpha: 0.1),
                   radius: 30,
                   child: Icon(
                     _debt!.type == DebtType.lent
@@ -448,7 +448,7 @@ class _DebtDetailScreenState extends State<DebtDetailScreen> {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: Colors.green.withOpacity(0.1),
+                  color: Colors.green.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: const Row(
@@ -592,7 +592,7 @@ class _DebtDetailScreenState extends State<DebtDetailScreen> {
     return ListTile(
       contentPadding: EdgeInsets.zero,
       leading: CircleAvatar(
-        backgroundColor: Colors.green.withOpacity(0.1),
+        backgroundColor: Colors.green.withValues(alpha: 0.1),
         child: const Icon(Icons.payment, color: Colors.green),
       ),
       title: Text(

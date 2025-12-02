@@ -1,18 +1,18 @@
 import 'package:flutter/material.dart';
 
 enum NotificationType {
-  budgetWarning,      // Bütçe %80'e ulaştı
-  budgetCritical,     // Bütçe %100'e ulaştı
-  budgetExceeded,     // Bütçe aşıldı
-  dailySummary,       // Günlük özet
-  weeklySummary,      // Haftalık özet
-  monthlySummary,     // Aylık özet
-  billReminder,       // Fatura hatırlatıcısı
-  installmentReminder, // Taksit hatırlatıcısı
-  paymentDue,         // Aynı gün ödeme
-  recurringDue,       // Tekrarlayan işlem zamanı
-  goalAchieved,       // Hedef tamamlandı
-  savingsSuggestion,  // Tasarruf önerisi
+  budgetWarning,
+  budgetCritical,
+  budgetExceeded,
+  dailySummary,
+  weeklySummary,
+  monthlySummary,
+  billReminder,
+  installmentReminder,
+  paymentDue,
+  recurringDue,
+  goalAchieved,
+  savingsSuggestion,
 }
 
 enum NotificationPriority {

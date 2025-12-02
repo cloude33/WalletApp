@@ -134,7 +134,7 @@ class OfxService {
 
     // Create transaction
     return Transaction(
-      id: fitId ?? DateTime.now().millisecondsSinceEpoch.toString() + '_$rowNumber',
+      id: fitId ?? '${DateTime.now().millisecondsSinceEpoch}_$rowNumber',
       type: transactionType,
       amount: amount,
       description: name ?? memo ?? 'Imported transaction',

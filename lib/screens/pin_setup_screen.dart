@@ -159,7 +159,7 @@ class _PinSetupScreenState extends State<PinSetupScreen> {
               subtitle,
               style: TextStyle(
                 fontSize: 16,
-                color: Colors.white.withOpacity(0.8),
+                color: Colors.white.withValues(alpha: 0.8),
               ),
             ),
             const SizedBox(height: 60),
@@ -176,7 +176,7 @@ class _PinSetupScreenState extends State<PinSetupScreen> {
                     shape: BoxShape.circle,
                     color: index < currentPin.length
                         ? Colors.white
-                        : Colors.white.withOpacity(0.3),
+                        : Colors.white.withValues(alpha: 0.3),
                     border: Border.all(
                       color: Colors.white,
                       width: 2,
@@ -240,7 +240,7 @@ class _PinSetupScreenState extends State<PinSetupScreen> {
           height: 80,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            color: Colors.white.withOpacity(0.2),
+            color: Colors.white.withValues(alpha: 0.2),
           ),
           child: Center(
             child: Text(
@@ -268,7 +268,7 @@ class _PinSetupScreenState extends State<PinSetupScreen> {
           height: 80,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            color: Colors.white.withOpacity(0.2),
+            color: Colors.white.withValues(alpha: 0.2),
           ),
           child: const Center(
             child: Icon(

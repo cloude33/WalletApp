@@ -36,7 +36,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
 
   Future<void> _loadData() async {
     final user = await _dataService.getCurrentUser();
-    final categories = await _dataService.getCategories();
+    final categories = (await _dataService.getCategories()).cast<Category>();
     
     // Load credit card transactions
     final cards = await _creditCardService.getAllCards();
@@ -80,7 +80,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
           t.transactionDate.day == date.day;
     }).toList();
     
-    // Combine both lists
+    // Combine all lists
     return [...normalTransactions, ...ccTransactions];
   }
 
@@ -120,8 +120,8 @@ class _CalendarScreenState extends State<CalendarScreen> {
     
     // Credit card expenses
     expense += dayTransactions
-        .where((t) => t is CreditCardTransaction)
-        .fold(0.0, (sum, t) => sum + (t as CreditCardTransaction).amount);
+        .whereType<CreditCardTransaction>()
+        .fold(0.0, (sum, t) => sum + (t).amount);
     
     return expense;
   }
@@ -208,7 +208,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: const Color(0xFF5E5CE6).withOpacity(0.1),
+              color: const Color(0xFF5E5CE6).withValues(alpha: 0.1),
               border: Border(
                 bottom: BorderSide(color: const Color(0xFFE5E5EA)),
               ),
@@ -313,14 +313,14 @@ class _CalendarScreenState extends State<CalendarScreen> {
                         Icon(
                           Icons.receipt_long_outlined,
                           size: 48,
-                          color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.3),
+                          color: Theme.of(context).textTheme.bodyMedium?.color?.withValues(alpha: 0.3),
                         ),
                         const SizedBox(height: 12),
                         Text(
                           'İşlem yok',
                           style: TextStyle(
                             fontSize: 14,
-                            color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.6),
+                            color: Theme.of(context).textTheme.bodyMedium?.color?.withValues(alpha: 0.6),
                           ),
                         ),
                       ],
@@ -368,7 +368,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: color.withOpacity(0.1),
+              color: color.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Icon(category.icon, color: color, size: 20),
@@ -437,7 +437,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: (card?.color ?? Colors.blue).withOpacity(0.1),
+              color: (card?.color ?? Colors.blue).withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Icon(
@@ -721,7 +721,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
         padding: const EdgeInsets.all(4),
         decoration: BoxDecoration(
           color: isSelected
-              ? const Color(0xFF5E5CE6).withOpacity(0.2)
+              ? const Color(0xFF5E5CE6).withValues(alpha: 0.2)
               : Colors.transparent,
           borderRadius: BorderRadius.circular(8),
           border: isToday
@@ -795,4 +795,5 @@ class _CalendarScreenState extends State<CalendarScreen> {
       ),
     );
   }
+
 }

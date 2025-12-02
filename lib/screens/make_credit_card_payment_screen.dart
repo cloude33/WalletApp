@@ -169,7 +169,7 @@ class _MakeCreditCardPaymentScreenState
 
   Widget _buildCardInfo() {
     return Card(
-      color: widget.card.color.withOpacity(0.1),
+      color: widget.card.color.withValues(alpha: 0.1),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Row(
@@ -253,7 +253,7 @@ class _MakeCreditCardPaymentScreenState
                     vertical: 6,
                   ),
                   decoration: BoxDecoration(
-                    color: statusColor.withOpacity(0.1),
+                    color: statusColor.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(
@@ -356,7 +356,7 @@ class _MakeCreditCardPaymentScreenState
           child: OutlinedButton(
             onPressed: () {
               _amountController.text =
-                  _currentStatement!.minimumPayment.toStringAsFixed(2);
+                  NumberFormat('#,##0.00', 'tr_TR').format(_currentStatement!.minimumPayment);
               _calculateRemainingDebt();
             },
             child: const Text('Asgari'),
@@ -367,7 +367,7 @@ class _MakeCreditCardPaymentScreenState
           child: OutlinedButton(
             onPressed: () {
               _amountController.text =
-                  _currentStatement!.remainingDebt.toStringAsFixed(2);
+                  NumberFormat('#,##0.00', 'tr_TR').format(_currentStatement!.remainingDebt);
               _calculateRemainingDebt();
             },
             child: const Text('Tam Ödeme'),
@@ -396,7 +396,7 @@ class _MakeCreditCardPaymentScreenState
 
   Widget _buildPaymentMethodField() {
     return DropdownButtonFormField<String>(
-      value: _selectedPaymentMethod,
+      initialValue: _selectedPaymentMethod,
       decoration: const InputDecoration(
         labelText: 'Ödeme Yöntemi',
         prefixIcon: Icon(Icons.payment),
@@ -440,8 +440,8 @@ class _MakeCreditCardPaymentScreenState
 
     return Card(
       color: isOverpayment
-          ? Colors.orange.withOpacity(0.1)
-          : Colors.blue.withOpacity(0.1),
+          ? Colors.orange.withValues(alpha: 0.1)
+          : Colors.blue.withValues(alpha: 0.1),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(

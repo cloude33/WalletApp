@@ -200,6 +200,12 @@ class CreditCardService {
 
   /// Get current debt for a card
   Future<double> getCurrentDebt(String cardId) async {
+    // Get the card to access initialDebt
+    final card = await _cardRepo.findById(cardId);
+    if (card == null) {
+      return 0;
+    }
+    
     // Get all unpaid statements
     final statements = await _statementRepo.findByCardId(cardId);
     final unpaidStatements = statements.where((s) => !s.isPaidFully);
@@ -232,7 +238,14 @@ class CreditCardService {
       }
     }
     
-    return statementDebt + pendingTransactionDebt;
+    // Add initial debt if no statements exist yet
+    // Once statements are generated, initialDebt should be included in the first statement
+    double initialDebtAmount = 0;
+    if (statements.isEmpty) {
+      initialDebtAmount = card.initialDebt;
+    }
+    
+    return statementDebt + pendingTransactionDebt + initialDebtAmount;
   }
 
   /// Get available credit for a card

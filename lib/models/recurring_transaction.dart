@@ -75,8 +75,16 @@ class RecurringTransaction extends HiveObject {
   DateTime? get nextDate {
     if (!isActive) return null;
     
-    final baseDate = lastCreatedDate ?? startDate;
-    final next = _calculateNextDate(baseDate);
+    // Eğer hiç işlem oluşturulmadıysa, başlangıç tarihini kullan
+    if (lastCreatedDate == null) {
+      final next = startDate;
+      if (endDate != null && next.isAfter(endDate!)) return null;
+      if (occurrenceCount != null && createdCount >= occurrenceCount!) return null;
+      return next;
+    }
+    
+    // Son oluşturulan tarihten sonraki tarihi hesapla
+    final next = _calculateNextDate(lastCreatedDate!);
     
     if (endDate != null && next.isAfter(endDate!)) return null;
     if (occurrenceCount != null && createdCount >= occurrenceCount!) return null;

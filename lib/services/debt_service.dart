@@ -14,8 +14,8 @@ class DebtService {
 
   // Cache
   List<Debt>? _cachedDebts;
-  Map<String, List<DebtPayment>> _cachedPayments = {};
-  Map<String, List<DebtReminder>> _cachedReminders = {};
+  final Map<String, List<DebtPayment>> _cachedPayments = {};
+  final Map<String, List<DebtReminder>> _cachedReminders = {};
   DateTime? _lastCacheUpdate;
   static const Duration _cacheTimeout = Duration(minutes: 5);
 

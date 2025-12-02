@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import '../services/auth_service.dart';
 import '../services/data_service.dart';
 import '../services/user_service.dart';
+import '../services/app_lock_service.dart';
 import 'home_screen.dart';
 import 'register_screen.dart';
 
@@ -26,6 +27,7 @@ class _LoginScreenState extends State<LoginScreen>
   bool _isLoading = false;
   bool _showPassword = false;
   bool _rememberMe = false;
+  String? _userName;
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
 
@@ -34,6 +36,7 @@ class _LoginScreenState extends State<LoginScreen>
     super.initState();
     _checkBiometricAndPin();
     _loadRememberedEmail();
+    _loadUserName();
 
     _animationController = AnimationController(
       vsync: this,
@@ -51,12 +54,36 @@ class _LoginScreenState extends State<LoginScreen>
     final userService = UserService();
     final rememberedEmail = await userService.getRememberedEmail();
     final shouldRemember = await userService.shouldRememberEmail();
-    
+
     if (rememberedEmail != null && shouldRemember) {
       setState(() {
         _emailController.text = rememberedEmail;
         _rememberMe = true;
       });
+    }
+  }
+
+  Future<void> _loadUserName() async {
+    try {
+      final users = await _dataService.getAllUsers();
+      if (users.isNotEmpty) {
+        // Eğer hatırlanan email varsa, o kullanıcıyı bul
+        final rememberedEmail = _emailController.text.trim();
+        final user = rememberedEmail.isNotEmpty
+            ? users.firstWhere(
+                (u) => u.email == rememberedEmail,
+                orElse: () => users.first,
+              )
+            : users.first;
+
+        if (mounted) {
+          setState(() {
+            _userName = user.name;
+          });
+        }
+      }
+    } catch (e) {
+      // Hata durumunda sessizce devam et
     }
   }
 
@@ -70,10 +97,11 @@ class _LoginScreenState extends State<LoginScreen>
 
   Future<void> _checkBiometricAndPin() async {
     final available = await _authService.isBiometricAvailable();
+    final enabled = await _authService.isBiometricEnabled();
     final hasPin = await _authService.hasPinCode();
     if (mounted) {
       setState(() {
-        _isBiometricAvailable = available;
+        _isBiometricAvailable = available && enabled;
         _hasPinCode = hasPin;
       });
     }
@@ -170,6 +198,8 @@ class _LoginScreenState extends State<LoginScreen>
   }
 
   void _navigateToApp() {
+    // Unlock the app when successfully logged in
+    AppLockService().unlock();
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(builder: (context) => const HomeScreen()),
@@ -189,23 +219,60 @@ class _LoginScreenState extends State<LoginScreen>
         children: [
           TextFormField(
             controller: _emailController,
+            style: const TextStyle(color: Colors.white),
             decoration: InputDecoration(
               labelText: 'E-posta',
-              labelStyle: const TextStyle(color: Color(0xFF8E8E93)),
+              labelStyle: TextStyle(color: Colors.white.withValues(alpha: 0.7)),
+              filled: true,
+              fillColor: Colors.white.withValues(alpha: 0.1),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide.none,
               ),
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(color: Color(0xFFE5E5EA)),
+                borderSide: BorderSide(
+                  color: Colors.white.withValues(alpha: 0.2),
+                ),
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(color: Color(0xFFFDB32A), width: 2),
+                borderSide: const BorderSide(
+                  color: Color(0xFFFDB32A),
+                  width: 2,
+                ),
               ),
-              prefixIcon: const Icon(Icons.email, color: Color(0xFF8E8E93)),
+              prefixIcon: Icon(
+                Icons.email,
+                color: Colors.white.withValues(alpha: 0.7),
+              ),
             ),
             keyboardType: TextInputType.emailAddress,
+            onChanged: (value) async {
+              // Email değiştiğinde kullanıcı adını güncelle
+              if (value.contains('@')) {
+                try {
+                  final users = await _dataService.getAllUsers();
+                  final user = users.firstWhere(
+                    (u) => u.email == value.trim(),
+                    orElse: () =>
+                        users.isNotEmpty ? users.first : throw Exception(),
+                  );
+                  if (mounted) {
+                    setState(() {
+                      _userName = user.name;
+                    });
+                  }
+                } catch (e) {
+                  // Kullanıcı bulunamazsa ismi temizle
+                  if (mounted) {
+                    setState(() {
+                      _userName = null;
+                    });
+                  }
+                }
+              }
+            },
             validator: (value) {
               if (value == null || value.isEmpty) {
                 return 'Lütfen e-posta adresinizi girin';
@@ -219,25 +286,37 @@ class _LoginScreenState extends State<LoginScreen>
           const SizedBox(height: 16),
           TextFormField(
             controller: _passwordController,
+            style: const TextStyle(color: Colors.white),
             decoration: InputDecoration(
               labelText: 'Şifre',
-              labelStyle: const TextStyle(color: Color(0xFF8E8E93)),
+              labelStyle: TextStyle(color: Colors.white.withValues(alpha: 0.7)),
+              filled: true,
+              fillColor: Colors.white.withValues(alpha: 0.1),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide.none,
               ),
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(color: Color(0xFFE5E5EA)),
+                borderSide: BorderSide(
+                  color: Colors.white.withValues(alpha: 0.2),
+                ),
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(color: Color(0xFFFDB32A), width: 2),
+                borderSide: const BorderSide(
+                  color: Color(0xFFFDB32A),
+                  width: 2,
+                ),
               ),
-              prefixIcon: const Icon(Icons.lock, color: Color(0xFF8E8E93)),
+              prefixIcon: Icon(
+                Icons.lock,
+                color: Colors.white.withValues(alpha: 0.7),
+              ),
               suffixIcon: IconButton(
                 icon: Icon(
                   _showPassword ? Icons.visibility : Icons.visibility_off,
-                  color: const Color(0xFF8E8E93),
+                  color: Colors.white.withValues(alpha: 0.7),
                 ),
                 onPressed: () {
                   setState(() {
@@ -268,10 +347,16 @@ class _LoginScreenState extends State<LoginScreen>
                       });
                     },
                     activeColor: const Color(0xFFFDB32A),
+                    checkColor: Colors.white,
+                    side: BorderSide(
+                      color: Colors.white.withValues(alpha: 0.5),
+                    ),
                   ),
-                  const Text(
+                  Text(
                     'Beni Hatırla',
-                    style: TextStyle(color: Color(0xFF8E8E93)),
+                    style: TextStyle(
+                      color: Colors.white.withValues(alpha: 0.8),
+                    ),
                   ),
                 ],
               ),
@@ -319,10 +404,10 @@ class _LoginScreenState extends State<LoginScreen>
             ),
           ),
           const SizedBox(height: 16),
-          const Text(
+          Text(
             'veya',
             textAlign: TextAlign.center,
-            style: TextStyle(color: Color(0xFF8E8E93)),
+            style: TextStyle(color: Colors.white.withValues(alpha: 0.6)),
           ),
           const SizedBox(height: 16),
           Row(
@@ -330,14 +415,29 @@ class _LoginScreenState extends State<LoginScreen>
               Expanded(
                 child: OutlinedButton.icon(
                   onPressed: _isLoading ? null : _handleGoogleSignIn,
-                  icon: const Icon(Icons.g_mobiledata, size: 24, color: Color(0xFF1C1C1E)),
+                  icon: Image.asset(
+                    'assets/images/google-logo.png',
+                    width: 24,
+                    height: 24,
+                    errorBuilder: (context, error, stackTrace) {
+                      // Fallback to icon if image fails to load
+                      return const Icon(
+                        Icons.g_mobiledata,
+                        size: 24,
+                        color: Colors.white,
+                      );
+                    },
+                  ),
                   label: const Text(
                     'Google',
-                    style: TextStyle(color: Color(0xFF1C1C1E)),
+                    style: TextStyle(color: Colors.white),
                   ),
                   style: OutlinedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(vertical: 12),
-                    side: const BorderSide(color: Color(0xFFE5E5EA)),
+                    backgroundColor: Colors.white.withValues(alpha: 0.1),
+                    side: BorderSide(
+                      color: Colors.white.withValues(alpha: 0.3),
+                    ),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
@@ -348,14 +448,17 @@ class _LoginScreenState extends State<LoginScreen>
               Expanded(
                 child: OutlinedButton.icon(
                   onPressed: _isLoading ? null : _handleAppleSignIn,
-                  icon: const Icon(Icons.apple, size: 24, color: Color(0xFF1C1C1E)),
+                  icon: const Icon(Icons.apple, size: 24, color: Colors.white),
                   label: const Text(
                     'Apple',
-                    style: TextStyle(color: Color(0xFF1C1C1E)),
+                    style: TextStyle(color: Colors.white),
                   ),
                   style: OutlinedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(vertical: 12),
-                    side: const BorderSide(color: Color(0xFFE5E5EA)),
+                    backgroundColor: Colors.white.withValues(alpha: 0.1),
+                    side: BorderSide(
+                      color: Colors.white.withValues(alpha: 0.3),
+                    ),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
@@ -365,7 +468,7 @@ class _LoginScreenState extends State<LoginScreen>
             ],
           ),
           const SizedBox(height: 16),
-          if (_isBiometricAvailable && _hasPinCode) _buildBiometricButton(),
+          if (_isBiometricAvailable) _buildBiometricButton(),
           if (_hasPinCode) _buildPinLoginButton(),
           const SizedBox(height: 16),
           TextButton(
@@ -391,18 +494,26 @@ class _LoginScreenState extends State<LoginScreen>
         Container(
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            border: Border.all(color: const Color(0xFFE5E5EA), width: 1),
+            border: Border.all(
+              color: Colors.white.withValues(alpha: 0.3),
+              width: 1,
+            ),
+            color: Colors.white.withValues(alpha: 0.1),
           ),
           child: IconButton(
-            icon: const Icon(Icons.fingerprint, size: 40, color: Color(0xFFFDB32A)),
+            icon: const Icon(
+              Icons.fingerprint,
+              size: 40,
+              color: Color(0xFFFDB32A),
+            ),
             onPressed: _handleBiometricAuth,
             padding: const EdgeInsets.all(16),
           ),
         ),
         const SizedBox(height: 8),
-        const Text(
+        Text(
           'Parmak İzi ile Giriş',
-          style: TextStyle(color: Color(0xFF8E8E93)),
+          style: TextStyle(color: Colors.white.withValues(alpha: 0.8)),
         ),
         const SizedBox(height: 16),
       ],
@@ -411,66 +522,178 @@ class _LoginScreenState extends State<LoginScreen>
 
   Widget _buildPinLoginButton() {
     return TextButton.icon(
-      onPressed: () {
-        // TODO: Implement PIN login
-      },
-      icon: const Icon(Icons.dialpad, size: 20, color: Color(0xFF8E8E93)),
-      label: const Text(
+      onPressed: _handlePinLogin,
+      icon: Icon(
+        Icons.dialpad,
+        size: 20,
+        color: Colors.white.withValues(alpha: 0.8),
+      ),
+      label: Text(
         'PIN Kodu ile Giriş Yap',
-        style: TextStyle(color: Color(0xFF8E8E93)),
+        style: TextStyle(color: Colors.white.withValues(alpha: 0.8)),
       ),
     );
   }
 
+  Future<void> _handlePinLogin() async {
+    final pinController = TextEditingController();
+
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('PIN Kodu ile Giriş'),
+        content: TextField(
+          controller: pinController,
+          keyboardType: TextInputType.number,
+          maxLength: 4,
+          obscureText: true,
+          decoration: const InputDecoration(
+            labelText: 'PIN Kodu',
+            hintText: '4 haneli PIN kodunuzu girin',
+            counterText: '',
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('İptal'),
+          ),
+          TextButton(
+            onPressed: () async {
+              if (pinController.text.length == 4) {
+                final isValid = await _authService.verifyPinCode(
+                  pinController.text,
+                );
+                if (context.mounted) {
+                  Navigator.pop(context, isValid);
+                }
+              }
+            },
+            child: const Text('Giriş'),
+          ),
+        ],
+      ),
+    );
+
+    if (result == true && mounted) {
+      _navigateToApp();
+    } else if (result == false && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Hatalı PIN kodu'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            children: [
-              const SizedBox(height: 40),
-              // Logo/Icon
-              Container(
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFFDB32A).withOpacity(0.1),
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(
-                  Icons.account_balance_wallet,
-                  size: 60,
-                  color: Color(0xFFFDB32A),
-                ),
-              ),
-              const SizedBox(height: 24),
-              FadeTransition(
-                opacity: _fadeAnimation,
-                child: const Text(
-                  'Hoş Geldiniz',
-                  style: TextStyle(
-                    fontSize: 28,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF1C1C1E),
+      body: Container(
+        width: double.infinity,
+        height: double.infinity,
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: isDark
+                ? [
+                    const Color(0xFF0f2027), // Koyu Lacivert
+                    const Color(0xFF203a43), // Gri-Mavi
+                    const Color(0xFF2c5364), // Turkuaz
+                  ]
+                : [
+                    const Color(0xFF0f2027), // Koyu Lacivert
+                    const Color(0xFF203a43), // Gri-Mavi
+                    const Color(0xFF2c5364), // Turkuaz
+                  ],
+          ),
+        ),
+        child: SafeArea(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              children: [
+                const SizedBox(height: 40),
+                // Logo/Icon
+                Container(
+                  width: 100,
+                  height: 100,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.15),
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.2),
+                        blurRadius: 20,
+                        offset: const Offset(0, 10),
+                      ),
+                    ],
+                  ),
+                  child: ClipOval(
+                    child: Padding(
+                      padding: const EdgeInsets.all(8),
+                      child: Image.asset(
+                        'assets/images/logo.png',
+                        fit: BoxFit.contain,
+                        errorBuilder: (context, error, stackTrace) {
+                          // Fallback to icon if image fails to load
+                          return const Icon(
+                            Icons.account_balance_wallet,
+                            size: 60,
+                            color: Color(0xFFFDB32A),
+                          );
+                        },
+                      ),
+                    ),
                   ),
                 ),
-              ),
-              const SizedBox(height: 8),
-              FadeTransition(
-                opacity: _fadeAnimation,
-                child: const Text(
-                  'Hesabınıza giriş yapın',
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: Color(0xFF8E8E93),
+                const SizedBox(height: 24),
+                FadeTransition(
+                  opacity: _fadeAnimation,
+                  child: Text(
+                    _userName != null ? 'Hoş Geldin' : 'Hoş Geldiniz',
+                    style: const TextStyle(
+                      fontSize: 28,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
                   ),
                 ),
-              ),
-              const SizedBox(height: 32),
-              _buildLoginForm(),
-            ],
+                if (_userName != null) ...[
+                  const SizedBox(height: 8),
+                  FadeTransition(
+                    opacity: _fadeAnimation,
+                    child: Text(
+                      _userName!.toUpperCase(),
+                      style: const TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFFFDB32A),
+                        letterSpacing: 1.2,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                ],
+                const SizedBox(height: 8),
+                FadeTransition(
+                  opacity: _fadeAnimation,
+                  child: Text(
+                    'Hesabınıza giriş yapın',
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: Colors.white.withValues(alpha: 0.8),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 32),
+                _buildLoginForm(),
+              ],
+            ),
           ),
         ),
       ),

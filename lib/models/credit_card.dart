@@ -41,6 +41,9 @@ class CreditCard extends HiveObject {
   @HiveField(11)
   bool isActive;
 
+  @HiveField(12)
+  double initialDebt; // Başlangıç borcu (önceki aydan kalan)
+
   CreditCard({
     required this.id,
     required this.bankName,
@@ -54,6 +57,7 @@ class CreditCard extends HiveObject {
     required this.cardColor,
     required this.createdAt,
     this.isActive = true,
+    this.initialDebt = 0,
   });
 
   // Computed properties
@@ -101,6 +105,7 @@ class CreditCard extends HiveObject {
     int? cardColor,
     DateTime? createdAt,
     bool? isActive,
+    double? initialDebt,
   }) {
     return CreditCard(
       id: id ?? this.id,
@@ -115,6 +120,7 @@ class CreditCard extends HiveObject {
       cardColor: cardColor ?? this.cardColor,
       createdAt: createdAt ?? this.createdAt,
       isActive: isActive ?? this.isActive,
+      initialDebt: initialDebt ?? this.initialDebt,
     );
   }
 

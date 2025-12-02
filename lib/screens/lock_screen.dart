@@ -3,7 +3,6 @@ import 'package:flutter/services.dart';
 import '../services/auth_service.dart';
 import '../services/user_service.dart';
 import '../services/app_lock_service.dart';
-import 'home_screen.dart';
 
 class LockScreen extends StatefulWidget {
   const LockScreen({super.key});
@@ -144,10 +143,9 @@ class _LockScreenState extends State<LockScreen> {
 
   void _unlock() {
     _lockService.unlock();
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (context) => const HomeScreen()),
-    );
+    // Pop the lock screen instead of replacing it
+    // This returns to the previous screen
+    Navigator.pop(context);
   }
 
   @override
@@ -166,7 +164,7 @@ class _LockScreenState extends State<LockScreen> {
                     const Color(0xFF2D2D2D),
                   ]
                 : [
-                    const Color(0xFFFDB32A).withOpacity(0.1),
+                    const Color(0xFFFDB32A).withValues(alpha: 0.1),
                     Colors.white,
                   ],
           ),
@@ -181,7 +179,7 @@ class _LockScreenState extends State<LockScreen> {
                   Container(
                     padding: const EdgeInsets.all(20),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFFDB32A).withOpacity(0.1),
+                      color: const Color(0xFFFDB32A).withValues(alpha: 0.1),
                       shape: BoxShape.circle,
                     ),
                     child: const Icon(

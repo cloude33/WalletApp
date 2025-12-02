@@ -178,10 +178,10 @@ class _ManageBudgetsScreenState extends State<ManageBudgetsScreen> {
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
                     color: percentage > 90 
-                        ? Colors.red.withOpacity(0.2)
+                        ? Colors.red.withValues(alpha: 0.2)
                         : percentage > 75
-                            ? Colors.orange.withOpacity(0.2)
-                            : Colors.green.withOpacity(0.2),
+                            ? Colors.orange.withValues(alpha: 0.2)
+                            : Colors.green.withValues(alpha: 0.2),
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text(

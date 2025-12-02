@@ -162,7 +162,7 @@ class _UserSelectionScreenState extends State<UserSelectionScreen> {
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
+              color: Colors.black.withValues(alpha: 0.05),
               blurRadius: 10,
               offset: const Offset(0, 5),
             ),
@@ -173,7 +173,7 @@ class _UserSelectionScreenState extends State<UserSelectionScreen> {
           children: [
             CircleAvatar(
               radius: 40,
-              backgroundColor: const Color(0xFF00BFA5).withOpacity(0.1),
+              backgroundColor: const Color(0xFF00BFA5).withValues(alpha: 0.1),
               backgroundImage: user.avatar != null
                   ? MemoryImage(base64Decode(user.avatar!))
                   : null,
@@ -237,7 +237,7 @@ class _UserSelectionScreenState extends State<UserSelectionScreen> {
           border: Border.all(color: const Color(0xFF00BFA5), width: 2),
           boxShadow: [
             BoxShadow(
-              color: const Color(0xFF00BFA5).withOpacity(0.1),
+              color: const Color(0xFF00BFA5).withValues(alpha: 0.1),
               blurRadius: 10,
               offset: const Offset(0, 5),
             ),
@@ -249,7 +249,7 @@ class _UserSelectionScreenState extends State<UserSelectionScreen> {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: const Color(0xFF00BFA5).withOpacity(0.1),
+                color: const Color(0xFF00BFA5).withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
               child: const Icon(

@@ -1,3 +1,5 @@
+// ignore_for_file: use_build_context_synchronously, deprecated_member_use
+
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:file_picker/file_picker.dart';
@@ -14,6 +16,7 @@ import 'currency_settings_screen.dart';
 import 'user_selection_screen.dart';
 import 'add_user_screen.dart';
 import 'debt_list_screen.dart';
+import 'bill_templates_screen.dart';
 import 'categories_screen.dart';
 import 'help_screen.dart';
 import 'about_screen.dart';
@@ -21,6 +24,7 @@ import 'manage_wallets_screen.dart';
 import 'notification_settings_screen.dart';
 import 'credit_card_list_screen.dart';
 import 'recurring_transaction_list_screen.dart';
+import 'pin_setup_screen.dart';
 import '../services/recurring_transaction_service.dart';
 import '../repositories/recurring_transaction_repository.dart';
 import '../widgets/export_dialog.dart';
@@ -47,11 +51,22 @@ class _SettingsScreenState extends State<SettingsScreen> {
   bool _isEditingEmail = false;
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
+  bool _isBiometricAvailable = false;
 
   @override
   void initState() {
     super.initState();
     _loadUser();
+    _checkBiometricAvailability();
+  }
+
+  Future<void> _checkBiometricAvailability() async {
+    final available = await AuthService().isBiometricAvailable();
+    if (mounted) {
+      setState(() {
+        _isBiometricAvailable = available;
+      });
+    }
   }
 
   Future<void> _loadUser() async {
@@ -127,6 +142,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
     if (result == null || result.files.single.path == null) return;
 
+    if (!mounted) return;
+    
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -318,10 +335,30 @@ class _SettingsScreenState extends State<SettingsScreen> {
         ]),
         const SizedBox(height: 20),
         _buildSection('Güvenlik', [
+          FutureBuilder<bool>(
+            future: AuthService().hasPinCode(),
+            builder: (context, snapshot) {
+              final hasPin = snapshot.data ?? false;
+              return _buildSettingItem(
+                icon: Icons.pin,
+                title: hasPin ? 'PIN Kodunu Değiştir' : 'PIN Kodu Ayarla',
+                subtitle: hasPin ? 'PIN kodunuzu değiştirin' : 'Uygulama için PIN kodu oluşturun',
+                trailing: const Icon(
+                  Icons.arrow_forward_ios,
+                  size: 16,
+                  color: Color(0xFF8E8E93),
+                ),
+                onTap: () async {
+                  await _handlePinSetup(hasPin);
+                },
+              );
+            },
+          ),
           _buildSettingItem(
             icon: Icons.lock_clock,
             title: 'Otomatik Kilit',
-            subtitle: 'Uygulama ${AppLockService().getLockTimeout()} dakika sonra kilitlenir',
+            subtitle:
+                'Uygulama ${AppLockService().getLockTimeout()} dakika sonra kilitlenir',
             trailing: const Icon(
               Icons.arrow_forward_ios,
               size: 16,
@@ -331,24 +368,38 @@ class _SettingsScreenState extends State<SettingsScreen> {
               await _showLockTimeoutDialog();
             },
           ),
-          _buildSettingItem(
-            icon: Icons.fingerprint,
-            title: 'Biyometrik Kimlik Doğrulama',
-            subtitle: 'Parmak izi ile kilidi aç',
-            trailing: FutureBuilder<bool>(
-              future: AuthService().isBiometricEnabled(),
-              builder: (context, snapshot) {
-                final isEnabled = snapshot.data ?? false;
-                return Switch(
-                  value: isEnabled,
-                  onChanged: (value) async {
-                    await AuthService().setBiometricEnabled(value);
-                    setState(() {});
-                  },
-                );
-              },
+          if (_isBiometricAvailable)
+            _buildSettingItem(
+              icon: Icons.fingerprint,
+              title: 'Biyometrik Kimlik Doğrulama',
+              subtitle: 'Parmak izi ile kilidi aç',
+              trailing: FutureBuilder<bool>(
+                future: AuthService().isBiometricEnabled(),
+                builder: (context, snapshot) {
+                  final isEnabled = snapshot.data ?? false;
+                  return Switch(
+                    value: isEnabled,
+                    onChanged: (value) async {
+                      // PIN kodu yoksa önce PIN ayarlamasını iste
+                      if (value) {
+                        final hasPin = await AuthService().hasPinCode();
+                        if (!hasPin) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Biyometrik doğrulama için önce PIN kodu ayarlamalısınız'),
+                              backgroundColor: Colors.orange,
+                            ),
+                          );
+                          return;
+                        }
+                      }
+                      await AuthService().setBiometricEnabled(value);
+                      setState(() {});
+                    },
+                  );
+                },
+              ),
             ),
-          ),
         ]),
         const SizedBox(height: 20),
         _buildSection('Genel', [
@@ -423,6 +474,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 _notificationService,
               );
 
+              if (!mounted) return;
+              
               await Navigator.push(
                 context,
                 MaterialPageRoute(
@@ -430,6 +483,23 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       RecurringTransactionListScreen(service: service),
                 ),
               );
+            },
+          ),
+          _buildSettingItem(
+            icon: Icons.receipt_long,
+            title: 'Faturalarım',
+            subtitle: 'Fatura şablonlarınızı yönetin',
+            trailing: const Icon(
+              Icons.arrow_forward_ios,
+              size: 16,
+              color: Color(0xFF8E8E93),
+            ),
+            onTap: () async {
+              await Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const BillTemplatesScreen()),
+              );
+              _loadUser(); // Refresh data
             },
           ),
           _buildSettingItem(
@@ -632,7 +702,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             borderRadius: BorderRadius.circular(16),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.05),
+                color: Colors.black.withValues(alpha: 0.05),
                 blurRadius: 10,
                 offset: const Offset(0, 2),
               ),
@@ -740,7 +810,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
             decoration: BoxDecoration(
               color: isDark ? const Color(0xFF1C1C1E) : const Color(0xFFF8F8F8),
-              border: Border(top: BorderSide(color: isDark ? const Color(0xFF3A3A3C) : Colors.grey.shade200)),
+              border: Border(
+                top: BorderSide(
+                  color: isDark
+                      ? const Color(0xFF3A3A3C)
+                      : Colors.grey.shade200,
+                ),
+              ),
             ),
             child: Column(
               children: [
@@ -796,7 +872,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Future<void> _saveProfile() async {
-    print('_saveProfile called with: ${_nameController.text}');
     if (_nameController.text.isNotEmpty && _currentUser != null) {
       final updatedUser = User(
         id: _currentUser!.id,
@@ -806,9 +881,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         currencyCode: _currentUser!.currencyCode,
         currencySymbol: _currentUser!.currencySymbol,
       );
-      print('Updating user: ${updatedUser.name}');
       await _dataService.updateUser(updatedUser);
-      print('User updated successfully');
       setState(() {
         _currentUser = updatedUser;
         _isEditingProfile = false;
@@ -818,10 +891,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
           context,
         ).showSnackBar(const SnackBar(content: Text('Profil güncellendi')));
       }
-    } else {
-      print(
-        'Validation failed: name=${_nameController.text}, user=$_currentUser',
-      );
     }
   }
 
@@ -843,7 +912,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Future<void> _saveEmail() async {
-    print('_saveEmail called with: ${_emailController.text}');
     if (_currentUser != null) {
       final updatedUser = User(
         id: _currentUser!.id,
@@ -853,9 +921,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         currencyCode: _currentUser!.currencyCode,
         currencySymbol: _currentUser!.currencySymbol,
       );
-      print('Updating user email: ${updatedUser.email}');
       await _dataService.updateUser(updatedUser);
-      print('Email updated successfully');
       setState(() {
         _currentUser = updatedUser;
         _isEditingEmail = false;
@@ -865,13 +931,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
           context,
         ).showSnackBar(const SnackBar(content: Text('E-posta güncellendi')));
       }
-    } else {
-      print('User is null');
     }
   }
 
   Future<void> _changeProfilePicture() async {
-    print('_changeProfilePicture called');
     final ImagePicker picker = ImagePicker();
     try {
       final XFile? image = await picker.pickImage(
@@ -881,13 +944,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
         imageQuality: 85,
       );
 
-      print('Image picked: ${image?.path}');
-
       if (image != null && _currentUser != null) {
         final bytes = await image.readAsBytes();
         final base64Image = base64Encode(bytes);
-
-        print('Image converted to base64, length: ${base64Image.length}');
 
         final updatedUser = User(
           id: _currentUser!.id,
@@ -898,9 +957,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           currencySymbol: _currentUser!.currencySymbol,
         );
 
-        print('Updating user with avatar');
         await _dataService.updateUser(updatedUser);
-        print('Avatar updated successfully');
 
         // Update current user and refresh UI
         setState(() {
@@ -915,13 +972,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
           );
         }
-      } else {
-        print(
-          'Image is null or user is null: image=$image, user=$_currentUser',
-        );
       }
     } catch (e) {
-      print('Error picking image: $e');
       if (mounted) {
         ScaffoldMessenger.of(
           context,
@@ -937,81 +989,30 @@ class _SettingsScreenState extends State<SettingsScreen> {
     super.dispose();
   }
 
-  // ignore: unused_element
-  Future<void> _showThemeDialog() async {
-    return showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: const Text('Tema Seçin'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              RadioListTile<ThemeMode>(
-                title: const Text('Açık Tema'),
-                value: ThemeMode.light,
-                groupValue: _currentThemeMode,
-                activeColor: const Color(0xFF5E5CE6),
-                onChanged: (value) async {
-                  if (value != null) {
-                    await _themeService.setThemeMode(value);
-                    setState(() {
-                      _currentThemeMode = value;
-                    });
-                    if (mounted) Navigator.pop(context);
-                    // Restart app to apply theme
-                    _showRestartSnackbar();
-                  }
-                },
-              ),
-              RadioListTile<ThemeMode>(
-                title: const Text('Koyu Tema'),
-                value: ThemeMode.dark,
-                groupValue: _currentThemeMode,
-                activeColor: const Color(0xFF5E5CE6),
-                onChanged: (value) async {
-                  if (value != null) {
-                    await _themeService.setThemeMode(value);
-                    setState(() {
-                      _currentThemeMode = value;
-                    });
-                    if (mounted) Navigator.pop(context);
-                    _showRestartSnackbar();
-                  }
-                },
-              ),
-              RadioListTile<ThemeMode>(
-                title: const Text('Sistem Ayarı'),
-                value: ThemeMode.system,
-                groupValue: _currentThemeMode,
-                activeColor: const Color(0xFF5E5CE6),
-                onChanged: (value) async {
-                  if (value != null) {
-                    await _themeService.setThemeMode(value);
-                    setState(() {
-                      _currentThemeMode = value;
-                    });
-                    if (mounted) Navigator.pop(context);
-                    _showRestartSnackbar();
-                  }
-                },
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  void _showRestartSnackbar() {
-    // Canlı tema değişimi için yeniden başlatmaya gerek yok.
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Tema değişikliği uygulandı.'),
-        duration: Duration(seconds: 2),
-        backgroundColor: Color(0xFF5E5CE6),
+  Future<void> _handlePinSetup(bool hasExistingPin) async {
+    if (hasExistingPin) {
+      // Önce mevcut PIN'i doğrula
+      final verified = await Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => const PinSetupScreen(isVerifying: true),
+        ),
+      );
+      
+      if (verified != true) return;
+    }
+    
+    // Yeni PIN ayarla
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const PinSetupScreen(),
       ),
     );
+    
+    if (result == true && mounted) {
+      setState(() {});
+    }
   }
 
   Future<void> _showLockTimeoutDialog() async {
@@ -1101,11 +1102,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Future<void> _addNewUser() async {
     final result = await Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (context) => const AddUserScreen(),
-      ),
+      MaterialPageRoute(builder: (context) => const AddUserScreen()),
     );
-    
+
     if (result == true) {
       // Kullanıcı başarıyla eklendi, listeyi yenile
       await _loadUser();
@@ -1155,6 +1154,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
     if (firstConfirm != true) return;
 
+    if (!mounted) return;
+    
     // İkinci onay dialogu (daha ciddi)
     final secondConfirm = await showDialog<bool>(
       context: context,
@@ -1174,19 +1175,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text(
-              'İptal',
-              style: TextStyle(color: Colors.white),
-            ),
+            child: const Text('İptal', style: TextStyle(color: Colors.white)),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            style: TextButton.styleFrom(
-              backgroundColor: Colors.white,
-            ),
+            style: TextButton.styleFrom(backgroundColor: Colors.white),
             child: const Text(
               'Evet, Sıfırla',
-              style: TextStyle(color: Color(0xFFFF3B30), fontWeight: FontWeight.bold),
+              style: TextStyle(
+                color: Color(0xFFFF3B30),
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ),
         ],
@@ -1195,13 +1194,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
     if (secondConfirm != true) return;
 
+    if (!mounted) return;
+    
     // Yükleme göstergesi
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) => const Center(
-        child: CircularProgressIndicator(),
-      ),
+      builder: (context) => const Center(child: CircularProgressIndicator()),
     );
 
     try {
@@ -1235,7 +1234,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     } catch (e) {
       if (mounted) {
         Navigator.pop(context); // Loading dialog'u kapat
-        
+
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Sıfırlama başarısız: $e'),

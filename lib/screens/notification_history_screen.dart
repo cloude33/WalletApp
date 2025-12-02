@@ -143,7 +143,7 @@ class _NotificationHistoryScreenState extends State<NotificationHistoryScreen> {
         margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
         child: ListTile(
           leading: CircleAvatar(
-            backgroundColor: notification.getColor().withOpacity(0.2),
+            backgroundColor: notification.getColor().withValues(alpha: 0.2),
             child: Icon(
               notification.getIcon(),
               color: notification.getColor(),

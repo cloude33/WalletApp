@@ -1,24 +1,27 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:intl/intl.dart';
-import 'package:uuid/uuid.dart';
 import 'dart:convert';
 import '../models/wallet.dart';
 import '../models/category.dart';
 import '../models/transaction.dart';
-import '../models/credit_card_transaction.dart';
 import '../services/data_service.dart';
 import '../services/smart_category_service.dart';
-import '../services/credit_card_service.dart';
 import '../utils/image_helper.dart';
 import '../utils/error_handler.dart';
 import '../utils/transaction_form_validator.dart';
 
 class AddTransactionScreen extends StatefulWidget {
   final List<Wallet> wallets;
+  final List<Category>? categories;
   final String? defaultType;
 
-  const AddTransactionScreen({super.key, required this.wallets, this.defaultType});
+  const AddTransactionScreen({
+    super.key,
+    required this.wallets,
+    this.categories,
+    this.defaultType,
+  });
 
   @override
   State<AddTransactionScreen> createState() => _AddTransactionScreenState();
@@ -27,208 +30,143 @@ class AddTransactionScreen extends StatefulWidget {
 class _AddTransactionScreenState extends State<AddTransactionScreen> {
   final DataService _dataService = DataService();
   final SmartCategoryService _smartService = SmartCategoryService();
-  final CreditCardService _creditCardService = CreditCardService();
-  String _selectedType = 'expense';
-  final TextEditingController _amountController = TextEditingController();
-  final TextEditingController _descriptionController = TextEditingController();
-  final TextEditingController _memoController = TextEditingController();
-  String? _selectedCategory;
-  String? _selectedWalletId;
-  final List<String> _images = [];
-  bool _isInstallment = false;
-  int _installmentCount = 2; // Default to 2 as 1 is single payment
-  DateTime _selectedDate = DateTime.now();
+  late TextEditingController _amountController;
+  late TextEditingController _descriptionController;
+  late DateTime _selectedDate;
+  late String _selectedCategory;
+  late String _selectedWalletId;
+  String? _selectedImage;
+  bool _isIncome = false;
   CategorySuggestion? _suggestion;
-
-  // Türkçe tarih formatı
-  String _formatDateTurkish(DateTime date) {
-    final months = [
-      'Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran',
-      'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'
-    ];
-    return '${date.day} ${months[date.month - 1]} ${date.year}';
-  }
-
-  // Wallet name'den kesim ve ödeme tarihi bilgilerini temizle
-  String _cleanWalletName(String name) {
-    String cleaned = name;
-    
-    // Kesim tarihi bilgisini kaldır
-    if (cleaned.contains('(Kesim: ')) {
-      final start = cleaned.indexOf('(Kesim: ');
-      final end = cleaned.indexOf(')', start);
-      if (end > start) {
-        cleaned = cleaned.substring(0, start).trim() + cleaned.substring(end + 1).trim();
-      }
-    }
-    
-    // Son ödeme tarihi bilgisini kaldır
-    if (cleaned.contains('(Son Ödeme: ')) {
-      final start = cleaned.indexOf('(Son Ödeme: ');
-      final end = cleaned.indexOf(')', start);
-      if (end > start) {
-        cleaned = cleaned.substring(0, start).trim() + cleaned.substring(end + 1).trim();
-      }
-    }
-    
-    return cleaned.trim();
-  }
-
-
   List<Category> _categories = [];
 
   @override
   void initState() {
     super.initState();
-    if (widget.wallets.isNotEmpty) {
-      _selectedWalletId = widget.wallets.first.id;
+    _amountController = TextEditingController();
+    _descriptionController = TextEditingController();
+    _selectedDate = DateTime.now();
+    // Initialize with a default category based on transaction type
+    if (widget.categories != null && widget.categories!.isNotEmpty) {
+      final incomeCategories = widget.categories!
+          .where((c) => c.type == 'income')
+          .toList();
+      final expenseCategories = widget.categories!
+          .where((c) => c.type == 'expense')
+          .toList();
+
+      // Deduplicate categories
+      final uniqueIncomeCategories = <String, Category>{};
+      for (final cat in incomeCategories) {
+        uniqueIncomeCategories[cat.name] = cat;
+      }
+      final uniqueExpenseCategories = <String, Category>{};
+      for (final cat in expenseCategories) {
+        uniqueExpenseCategories[cat.name] = cat;
+      }
+
+      final deduplicatedIncomeCategories = uniqueIncomeCategories.values
+          .toList();
+      final deduplicatedExpenseCategories = uniqueExpenseCategories.values
+          .toList();
+
+      if (_isIncome && deduplicatedIncomeCategories.isNotEmpty) {
+        _selectedCategory = deduplicatedIncomeCategories.first.name;
+      } else if (!_isIncome && deduplicatedExpenseCategories.isNotEmpty) {
+        _selectedCategory = deduplicatedExpenseCategories.first.name;
+      } else {
+        // Deduplicate all categories
+        final uniqueAllCategories = <String, Category>{};
+        for (final cat in widget.categories!) {
+          uniqueAllCategories[cat.name] = cat;
+        }
+        final deduplicatedAllCategories = uniqueAllCategories.values.toList();
+        _selectedCategory = deduplicatedAllCategories.isNotEmpty
+            ? deduplicatedAllCategories.first.name
+            : '';
+      }
+    } else {
+      _selectedCategory = '';
     }
-    if (widget.defaultType != null) {
-      _selectedType = widget.defaultType!;
+    _selectedWalletId = widget.wallets.isNotEmpty
+        ? widget.wallets.first.id
+        : '';
+
+    // Load categories if not provided
+    if (widget.categories == null) {
+      _loadCategories();
     }
-    _loadCategories();
   }
 
   Future<void> _loadCategories() async {
-    final categories = await _dataService.getCategories();
-    setState(() {
-      _categories = categories;
-      _updateCategoryForType();
-    });
+    try {
+      final categories = (await _dataService.getCategories()).cast<Category>();
+      if (mounted) {
+        setState(() {
+          _categories = categories;
+        });
+      }
+    } catch (e) {
+      // Handle error silently
+    }
   }
 
   @override
   void dispose() {
     _amountController.dispose();
     _descriptionController.dispose();
-    _memoController.dispose();
     super.dispose();
   }
 
-  void _updateCategoryForType() {
-    final categories = _categories.where((c) => c.type == _selectedType).toList();
-    if (categories.isNotEmpty) {
-      _selectedCategory = categories.first.name;
-    } else {
-      _selectedCategory = null;
+  // Wallet name'den kesim ve ödeme tarihi bilgilerini temizle
+  String _cleanWalletName(String name) {
+    String cleaned = name;
+
+    // Kesim tarihi bilgisini kaldır
+    if (cleaned.contains('(Kesim: ')) {
+      final start = cleaned.indexOf('(Kesim: ');
+      final end = cleaned.indexOf(')', start);
+      if (end > start) {
+        cleaned =
+            cleaned.substring(0, start).trim() +
+            cleaned.substring(end + 1).trim();
+      }
     }
+
+    // Son ödeme tarihi bilgisini kaldır
+    if (cleaned.contains('(Son Ödeme: ')) {
+      final start = cleaned.indexOf('(Son Ödeme: ');
+      final end = cleaned.indexOf(')', start);
+      if (end > start) {
+        cleaned =
+            cleaned.substring(0, start).trim() +
+            cleaned.substring(end + 1).trim();
+      }
+    }
+
+    return cleaned.trim();
   }
 
-  void _showInstallmentPicker(BuildContext context) {
-    final installmentOptions = List.generate(11, (index) => index + 2); // 2 to 12
-    int tempInstallmentCount = _installmentCount;
+  String _formatDateTurkish(DateTime date) {
+    final months = [
+      'Ocak',
+      'Şubat',
+      'Mart',
+      'Nisan',
+      'Mayıs',
+      'Haziran',
+      'Temmuz',
+      'Ağustos',
+      'Eylül',
+      'Ekim',
+      'Kasım',
+      'Aralık',
+    ];
 
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      builder: (BuildContext context) {
-        return Container(
-          height: 300,
-          decoration: BoxDecoration(
-            color: Theme.of(context).cardColor,
-            borderRadius: const BorderRadius.only(
-              topLeft: Radius.circular(20),
-              topRight: Radius.circular(20),
-            ),
-          ),
-          child: Column(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  border: Border(
-                    bottom: BorderSide(color: Colors.grey.shade200),
-                  ),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    TextButton(
-                      onPressed: () => Navigator.pop(context),
-                      child: const Text(
-                        'İptal',
-                        style: TextStyle(color: Colors.grey),
-                      ),
-                    ),
-                    const Text(
-                      'Taksit Sayısı',
-                      style: TextStyle(
-                        fontSize: 17,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    TextButton(
-                      onPressed: () {
-                        setState(() {
-                          _installmentCount = tempInstallmentCount;
-                        });
-                        Navigator.pop(context);
-                      },
-                      child: const Text(
-                        'Tamam',
-                        style: TextStyle(
-                          color: Color(0xFF5E5CE6),
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Expanded(
-                child: CupertinoPicker(
-                  scrollController: FixedExtentScrollController(
-                    initialItem: _installmentCount - 2,
-                  ),
-                  itemExtent: 50,
-                  onSelectedItemChanged: (int index) {
-                    tempInstallmentCount = installmentOptions[index];
-                  },
-                  children: installmentOptions.map((count) {
-                    final cleanAmountText = _amountController.text.replaceAll('.', '').replaceAll(',', '.');
-                    final monthlyAmount = _amountController.text.isEmpty
-                        ? 0.0
-                        : (double.tryParse(cleanAmountText) ?? 0.0) / count;
-                    
-                    return Center(
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(
-                            '$count Taksit',
-                            style: const TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Text(
-                            '• ₺${NumberFormat('#,##0.00', 'tr_TR').format(monthlyAmount)}',
-                            style: TextStyle(
-                              fontSize: 16,
-                              color: Colors.grey.shade600,
-                            ),
-                          ),
-                        ],
-                      ),
-                    );
-                  }).toList(),
-                ),
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
+    final hours = date.hour.toString().padLeft(2, '0');
+    final minutes = date.minute.toString().padLeft(2, '0');
 
-  bool get _isSelectedWalletCreditCard {
-    if (_selectedWalletId == null) return false;
-    final wallet = widget.wallets.firstWhere(
-      (w) => w.id == _selectedWalletId,
-      orElse: () => widget.wallets.first,
-    );
-    return wallet.type == 'credit_card';
+    return '${date.day} ${months[date.month - 1]} ${date.year} $hours:$minutes';
   }
 
   Future<void> _saveTransaction() async {
@@ -237,10 +175,10 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
       description: _descriptionController.text,
       category: _selectedCategory,
       walletId: _selectedWalletId,
-      selectedType: _selectedType,
-      isInstallment: _isInstallment,
-      installmentCount: _installmentCount,
-      isCreditCardWallet: _isSelectedWalletCreditCard,
+      selectedType: _isIncome ? 'income' : 'expense',
+      isInstallment: false,
+      installmentCount: 1,
+      isCreditCardWallet: false,
     );
     if (error != null) {
       ErrorHandler.showError(context, error);
@@ -249,97 +187,21 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
 
     try {
       // Parse the amount by removing formatting characters
-      final cleanAmountText = _amountController.text.replaceAll('.', '').replaceAll(',', '.');
+      final cleanAmountText = _amountController.text
+          .replaceAll('.', '')
+          .replaceAll(',', '.');
       final totalAmount = double.parse(cleanAmountText);
 
-      // Kredi kartı işlemi kontrolü
-      if (_isSelectedWalletCreditCard && _selectedType == 'expense') {
-        // Wallet ID'sinden kredi kartı ID'sini çıkar (wallet ID formatı: "cc_<cardId>")
-        final cardId = _selectedWalletId!.replaceFirst('cc_', '');
-        
-        // Kredi kartı işlemi oluştur
-        final ccTransaction = CreditCardTransaction(
-          id: const Uuid().v4(),
-          cardId: cardId,
-          amount: totalAmount,
-          description: _descriptionController.text,
-          transactionDate: _selectedDate,
-          category: _selectedCategory ?? 'Diğer',
-          installmentCount: _isInstallment ? _installmentCount : 1,
-          installmentsPaid: 0,
-          createdAt: DateTime.now(),
-        );
-
-        await _creditCardService.addTransaction(ccTransaction);
-
-        if (mounted) {
-          Navigator.pop(context, true);
-          ErrorHandler.showSuccess(context, 'Kredi kartı işlemi başarıyla eklendi');
-        }
-        return;
-      }
-
-      // Taksitli işlem kontrolü (normal cüzdan için)
-      if (_isInstallment && _installmentCount > 1) {
-      final parentId = DateTime.now().millisecondsSinceEpoch.toString();
-      final installmentAmount = totalAmount / _installmentCount;
-      
-      // Her taksit için işlem oluştur
-      for (int i = 0; i < _installmentCount; i++) {
-        final installmentDate = _selectedDate.add(Duration(days: 30 * i));
-        final transaction = Transaction(
-          id: '${parentId}_$i',
-          type: _selectedType,
-          amount: installmentAmount,
-          description: '${_descriptionController.text} (${i + 1}/$_installmentCount)',
-          category: _selectedCategory ?? '',
-          walletId: _selectedWalletId ?? '',
-          date: installmentDate,
-          memo: _memoController.text.isEmpty ? null : _memoController.text,
-          images: _images.isEmpty ? null : _images,
-          installments: _installmentCount,
-          currentInstallment: i + 1,
-          parentTransactionId: parentId,
-        );
-        
-        await _dataService.addTransaction(transaction);
-        
-        // İlk taksit için bakiyeyi güncelle
-        if (i == 0) {
-          final wallets = await _dataService.getWallets();
-          final walletIndex = wallets.indexWhere((w) => w.id == _selectedWalletId);
-          if (walletIndex != -1) {
-            final wallet = wallets[walletIndex];
-            final newBalance = wallet.balance - installmentAmount;
-            
-            wallets[walletIndex] = Wallet(
-              id: wallet.id,
-              name: wallet.name,
-              balance: newBalance,
-              type: wallet.type,
-              color: wallet.color,
-              icon: wallet.icon,
-              cutOffDay: wallet.cutOffDay,
-              paymentDay: wallet.paymentDay,
-              installment: wallet.installment,
-              creditLimit: wallet.creditLimit,
-            );
-            await _dataService.saveWallets(wallets);
-          }
-        }
-      }
-    } else {
-      // Normal işlem
       final transaction = Transaction(
         id: DateTime.now().millisecondsSinceEpoch.toString(),
-        type: _selectedType,
+        type: _isIncome ? 'income' : 'expense',
         amount: totalAmount,
         description: _descriptionController.text,
-        category: _selectedCategory ?? '',
-        walletId: _selectedWalletId ?? '',
+        category: _selectedCategory,
+        walletId: _selectedWalletId,
         date: _selectedDate,
-        memo: _memoController.text.isEmpty ? null : _memoController.text,
-        images: _images.isEmpty ? null : _images,
+        memo: null,
+        images: _selectedImage != null ? [_selectedImage!] : null,
       );
 
       await _dataService.addTransaction(transaction);
@@ -349,10 +211,10 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
       final walletIndex = wallets.indexWhere((w) => w.id == _selectedWalletId);
       if (walletIndex != -1) {
         final wallet = wallets[walletIndex];
-        final newBalance = _selectedType == 'income'
+        final newBalance = _isIncome
             ? wallet.balance + transaction.amount
             : wallet.balance - transaction.amount;
-        
+
         wallets[walletIndex] = Wallet(
           id: wallet.id,
           name: wallet.name,
@@ -367,7 +229,6 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
         );
         await _dataService.saveWallets(wallets);
       }
-    }
 
       if (mounted) {
         Navigator.pop(context, true);
@@ -399,7 +260,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                         Container(
                           padding: const EdgeInsets.all(24),
                           decoration: BoxDecoration(
-                            color: const Color(0xFF5E5CE6).withOpacity(0.1),
+                            color: const Color(0xFF5E5CE6).withValues(alpha: 0.1),
                             shape: BoxShape.circle,
                           ),
                           child: const Icon(
@@ -432,7 +293,10 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                           icon: const Icon(Icons.arrow_back),
                           label: const Text('Ana Sayfaya Dön'),
                           style: ElevatedButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 32,
+                              vertical: 16,
+                            ),
                           ),
                         ),
                       ],
@@ -468,12 +332,6 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                       const SizedBox(height: 20),
                       _buildDateField(),
                       const SizedBox(height: 20),
-                      if (_selectedType == 'expense' && _isSelectedWalletCreditCard)
-                        _buildInstallmentSection(),
-                      if (_selectedType == 'expense' && _isSelectedWalletCreditCard)
-                        const SizedBox(height: 20),
-                      _buildMemoField(),
-                      const SizedBox(height: 20),
                       _buildImageSection(),
                       const SizedBox(height: 20),
                     ],
@@ -507,7 +365,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                 onPressed: () => Navigator.pop(context),
               ),
               Text(
-                _selectedType == 'income' ? 'Gelir' : _selectedType == 'expense' ? 'Gider' : 'Transfer',
+                _isIncome ? 'Gelir' : 'Gider',
                 style: const TextStyle(
                   color: Colors.black,
                   fontSize: 18,
@@ -518,7 +376,10 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                 onPressed: _saveTransaction,
                 child: const Text(
                   'KAYDET',
-                  style: TextStyle(color: Color(0xFF5E5CE6), fontWeight: FontWeight.bold),
+                  style: TextStyle(
+                    color: Color(0xFF5E5CE6),
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
             ],
@@ -526,9 +387,8 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
           const SizedBox(height: 10),
           Row(
             children: [
-              _buildTypeButton('Gelir', 'income'),
-              _buildTypeButton('Gider', 'expense'),
-              _buildTypeButton('Transfer', 'transfer'),
+              _buildTypeButton('Gelir', true),
+              _buildTypeButton('Gider', false),
             ],
           ),
         ],
@@ -536,14 +396,13 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
     );
   }
 
-  Widget _buildTypeButton(String label, String type) {
-    bool isSelected = _selectedType == type;
+  Widget _buildTypeButton(String label, bool isIncome) {
+    bool isSelected = _isIncome == isIncome;
     return Expanded(
       child: GestureDetector(
         onTap: () {
           setState(() {
-            _selectedType = type;
-            _updateCategoryForType();
+            _isIncome = isIncome;
           });
         },
         child: Container(
@@ -581,24 +440,26 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
           ),
           onChanged: (value) {
             if (value.isEmpty) return;
-            
+
             // Remove all dots (thousands separators) first
             String cleanValue = value.replaceAll('.', '');
             // Keep only digits and comma
             cleanValue = cleanValue.replaceAll(RegExp(r'[^0-9,]'), '');
-            
+
             // Prevent multiple commas
             int firstCommaIndex = cleanValue.indexOf(',');
             if (firstCommaIndex != -1) {
-               String integerPart = cleanValue.substring(0, firstCommaIndex);
-               String decimalPart = cleanValue.substring(firstCommaIndex + 1).replaceAll(',', '');
-               cleanValue = '$integerPart,$decimalPart';
+              String integerPart = cleanValue.substring(0, firstCommaIndex);
+              String decimalPart = cleanValue
+                  .substring(firstCommaIndex + 1)
+                  .replaceAll(',', '');
+              cleanValue = '$integerPart,$decimalPart';
             }
-            
+
             // Handle decimal separator
             final parts = cleanValue.split(',');
             String formattedValue;
-            
+
             if (parts.length > 1) {
               final integerPart = parts[0];
               // Ondalık kısmı maksimum 2 haneyle sınırla
@@ -606,29 +467,39 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
               if (decimalPart.length > 2) {
                 decimalPart = decimalPart.substring(0, 2);
               }
-              
+
               // Handle empty integer part (e.g. ",50")
-              final parsedInteger = integerPart.isEmpty ? 0 : (int.tryParse(integerPart) ?? 0);
-              final formattedInteger = NumberFormat('#,##0', 'tr_TR').format(parsedInteger);
-              
+              final parsedInteger = integerPart.isEmpty
+                  ? 0
+                  : (int.tryParse(integerPart) ?? 0);
+              final formattedInteger = NumberFormat(
+                '#,##0',
+                'tr_TR',
+              ).format(parsedInteger);
+
               formattedValue = '$formattedInteger,$decimalPart';
             } else {
               final numericValue = int.tryParse(cleanValue) ?? 0;
-              formattedValue = NumberFormat('#,##0', 'tr_TR').format(numericValue);
+              formattedValue = NumberFormat(
+                '#,##0',
+                'tr_TR',
+              ).format(numericValue);
             }
-            
+
             if (value != formattedValue) {
               _amountController.value = TextEditingValue(
                 text: formattedValue,
-                selection: TextSelection.collapsed(offset: formattedValue.length),
+                selection: TextSelection.collapsed(
+                  offset: formattedValue.length,
+                ),
               );
             }
           },
           onTap: () {
             // Clear the field when tapped if it contains only "0" or "0,00"
-            if (_amountController.text == '0' || _amountController.text == '0,00') {
+            if (_amountController.text == '0' ||
+                _amountController.text == '0,00') {
               _amountController.clear();
-
             }
           },
         ),
@@ -638,7 +509,10 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
 
   Future<void> _onDescriptionChanged(String value) async {
     if (value.length > 3) {
-      final suggestion = await _smartService.suggestCategory(value, _selectedType);
+      final suggestion = await _smartService.suggestCategory(
+        value,
+        _isIncome ? 'income' : 'expense',
+      );
       if (mounted) {
         setState(() {
           _suggestion = suggestion;
@@ -695,7 +569,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: Colors.amber.withOpacity(0.1),
+              color: Colors.amber.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(8),
               border: Border.all(color: Colors.amber, width: 1.5),
             ),
@@ -716,10 +590,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                       ),
                       Text(
                         '${_suggestion!.reason} • %${(_suggestion!.confidence * 100).toInt()} güven',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.grey[700],
-                        ),
+                        style: TextStyle(fontSize: 12, color: Colors.grey[700]),
                       ),
                     ],
                   ),
@@ -728,7 +599,10 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                   onPressed: _applySuggestion,
                   style: TextButton.styleFrom(
                     foregroundColor: Colors.amber[800],
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 8,
+                    ),
                   ),
                   child: const Text('Uygula'),
                 ),
@@ -741,10 +615,25 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
   }
 
   Widget _buildCategoryField() {
-    final filteredCategories = defaultCategories
-        .where((c) => c.type == _selectedType)
+    final allCategories = widget.categories ?? _categories;
+    final filteredCategories = allCategories
+        .where((c) => c.type == (_isIncome ? 'income' : 'expense'))
         .toList();
-    
+
+    // Deduplicate categories by name
+    final uniqueCategories = <String, Category>{};
+    for (final cat in filteredCategories) {
+      uniqueCategories[cat.name] = cat;
+    }
+    final deduplicatedCategories = uniqueCategories.values.toList();
+
+    // Ensure selected category is valid
+    if (deduplicatedCategories.isNotEmpty &&
+        (widget.categories != null || _categories.isNotEmpty) &&
+        !_isValidCategory(_selectedCategory, deduplicatedCategories)) {
+      _selectedCategory = deduplicatedCategories.first.name;
+    }
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -758,37 +647,41 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
           ),
           child: DropdownButtonHideUnderline(
             child: DropdownButton<String>(
-              value: _selectedCategory,
+              value: deduplicatedCategories.isNotEmpty
+                  ? _selectedCategory
+                  : null,
               isExpanded: true,
               icon: const Icon(Icons.arrow_drop_down, color: Colors.grey),
-              items: filteredCategories
-                  .map((cat) => DropdownMenuItem(
-                        value: cat.name,
-                        child: Row(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.all(8),
-                              decoration: BoxDecoration(
-                                color: cat.color.withOpacity(0.2),
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: Icon(cat.icon, color: cat.color, size: 20),
+              items: deduplicatedCategories
+                  .map(
+                    (cat) => DropdownMenuItem(
+                      value: cat.name,
+                      child: Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: cat.color.withValues(alpha: 0.2),
+                              borderRadius: BorderRadius.circular(8),
                             ),
-                            const SizedBox(width: 12),
-                            Text(cat.name, style: const TextStyle(fontSize: 16)),
-                          ],
-                        ),
-                      ))
+                            child: Icon(cat.icon, color: cat.color, size: 20),
+                          ),
+                          const SizedBox(width: 12),
+                          Text(cat.name, style: const TextStyle(fontSize: 16)),
+                        ],
+                      ),
+                    ),
+                  )
                   .toList(),
               onChanged: (value) => setState(() => _selectedCategory = value!),
               selectedItemBuilder: (context) {
-                return filteredCategories.map<Widget>((cat) {
+                return deduplicatedCategories.map<Widget>((cat) {
                   return Row(
                     children: [
                       Container(
                         padding: const EdgeInsets.all(6),
                         decoration: BoxDecoration(
-                          color: cat.color.withOpacity(0.2),
+                          color: cat.color.withValues(alpha: 0.2),
                           borderRadius: BorderRadius.circular(6),
                         ),
                         child: Icon(cat.icon, color: cat.color, size: 16),
@@ -799,11 +692,17 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                   );
                 }).toList();
               },
+              hint: const Text('Bir kategori seçin'),
             ),
           ),
         ),
       ],
     );
+  }
+
+  bool _isValidCategory(String categoryName, List<Category> categories) {
+    if (categoryName.isEmpty) return false;
+    return categories.any((category) => category.name == categoryName);
   }
 
   Widget _buildWalletField() {
@@ -818,251 +717,20 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
           ),
           items: widget.wallets
-              .map((wallet) => DropdownMenuItem(
-                    value: wallet.id,
-                    child: Text('${_cleanWalletName(wallet.name)} • ${NumberFormat('#,##0', 'tr_TR').format(wallet.balance)}'),
-                  ))
+              .map(
+                (wallet) => DropdownMenuItem(
+                  value: wallet.id,
+                  child: Text(
+                    '${_cleanWalletName(wallet.name)} • ${NumberFormat('#,##0', 'tr_TR').format(wallet.balance)}',
+                  ),
+                ),
+              )
               .toList(),
           onChanged: (value) {
             setState(() {
-              _selectedWalletId = value;
-              // Kredi kartı değilse taksit seçeneğini kapat
-              if (!_isSelectedWalletCreditCard) {
-                _isInstallment = false;
-              }
+              _selectedWalletId = value ?? '';
             });
           },
-        ),
-      ],
-    );
-  }
-
-  Widget _buildInstallmentSection() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: const Color(0xFF5E5CE6).withOpacity(0.1),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: const Color(0xFF5E5CE6).withOpacity(0.3),
-          width: 1,
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(
-                Icons.credit_card,
-                color: const Color(0xFF5E5CE6),
-                size: 20,
-              ),
-              const SizedBox(width: 8),
-              const Text(
-                'Taksit Seçenekleri',
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          SwitchListTile(
-            contentPadding: EdgeInsets.zero,
-            title: const Text('Taksitli Ödeme'),
-            subtitle: ValueListenableBuilder<TextEditingValue>(
-              valueListenable: _amountController,
-              builder: (context, value, child) {
-                final amount = value.text.isEmpty 
-                    ? 0.0 
-                    : (double.tryParse(value.text.replaceAll('.', '').replaceAll(',', '.')) ?? 0.0);
-                final monthlyAmount = amount / _installmentCount;
-                
-                return Text(
-                  _isInstallment
-                      ? '$_installmentCount taksit • Aylık ₺${NumberFormat('#,##0.00', 'tr_TR').format(monthlyAmount)}'
-                      : 'Tek çekim',
-                  style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
-                );
-              },
-            ),
-            value: _isInstallment,
-            activeThumbColor: const Color(0xFF5E5CE6),
-            onChanged: (value) {
-              setState(() => _isInstallment = value);
-            },
-          ),
-          if (_isInstallment) ...[
-            const Divider(),
-            const Text(
-              'Taksit Özeti',
-              style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
-            ),
-            const SizedBox(height: 8),
-            Container(
-              height: 120,
-              decoration: BoxDecoration(
-                border: Border.all(color: Colors.grey.shade200),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: ListView.builder(
-                padding: const EdgeInsets.all(8),
-                itemCount: _installmentCount,
-                itemBuilder: (context, index) {
-                  final month = DateTime.now().add(Duration(days: 30 * index));
-                  final amount = _amountController.text.isEmpty 
-                      ? 0.0 
-                      : (double.tryParse(_amountController.text.replaceAll('.', '').replaceAll(',', '.')) ?? 0.0) / _installmentCount;
-                  
-                  return ListTile(
-                    dense: true,
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    leading: Container(
-                      width: 30,
-                      height: 30,
-                      alignment: Alignment.center,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF5E5CE6).withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      child: Text(
-                        '${index + 1}',
-                        style: const TextStyle(
-                          color: Color(0xFF5E5CE6),
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                    title: Text(
-                      DateFormat('MMMM yyyy', 'tr_TR').format(month),
-                      style: const TextStyle(fontSize: 13),
-                    ),
-                    trailing: Text(
-                      '₺${NumberFormat('#,##0.00', 'tr_TR').format(amount)}',
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 13,
-                      ),
-                    ),
-                  );
-                },
-              ),
-            ),
-            const SizedBox(height: 12),
-            const Text(
-              'Taksit Sayısı',
-              style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
-            ),
-            const SizedBox(height: 8),
-            GestureDetector(
-              onTap: () => _showInstallmentPicker(context),
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                decoration: BoxDecoration(
-                  color: Theme.of(context).cardColor,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: const Color(0xFF5E5CE6), width: 2),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF5E5CE6).withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Text(
-                            '$_installmentCount',
-                            style: const TextStyle(
-                              color: Color(0xFF5E5CE6),
-                              fontWeight: FontWeight.bold,
-                              fontSize: 16,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              '$_installmentCount Taksit',
-                              style: const TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 15,
-                              ),
-                            ),
-                              ValueListenableBuilder<TextEditingValue>(
-                                valueListenable: _amountController,
-                                builder: (context, value, child) {
-                                  final amount = value.text.isEmpty 
-                                      ? 0.0 
-                                      : (double.tryParse(value.text.replaceAll('.', '').replaceAll(',', '.')) ?? 0.0);
-                                  final monthlyAmount = amount / _installmentCount;
-                                  
-                                  return Text(
-                                    'Aylık ₺${NumberFormat('#,##0.00', 'tr_TR').format(monthlyAmount)}',
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      color: Colors.grey.shade600,
-                                    ),
-                                  );
-                                },
-                              ),
-                          ],
-                        ),
-                      ],
-                    ),
-                    const Icon(
-                      Icons.arrow_forward_ios,
-                      size: 16,
-                      color: Color(0xFF5E5CE6),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(height: 12),
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Colors.blue.shade50,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Row(
-                children: [
-                  Icon(Icons.info_outline, size: 16, color: Colors.blue.shade700),
-                  const SizedBox(width: 8),
-                  const Expanded(
-                    child: Text(
-                      'Taksitler her ay aynı gün otomatik olarak eklenecektir',
-                      style: TextStyle(fontSize: 11, color: Colors.blue),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-
-  Widget _buildMemoField() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text('Not', style: TextStyle(fontWeight: FontWeight.bold)),
-        const SizedBox(height: 8),
-        TextField(
-          controller: _memoController,
-          decoration: InputDecoration(
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-          ),
         ),
       ],
     );
@@ -1077,13 +745,15 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
           style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
         ),
         const SizedBox(height: 12),
-        if (_images.isEmpty)
+        if (_selectedImage == null)
           GestureDetector(
             onTap: () async {
-              final imagePath = await ImageHelper.showImageSourceDialog(context);
+              final imagePath = await ImageHelper.showImageSourceDialog(
+                context,
+              );
               if (imagePath != null) {
                 setState(() {
-                  _images.add(imagePath);
+                  _selectedImage = imagePath;
                 });
               }
             },
@@ -1133,9 +803,9 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                 height: 120,
                 child: ListView.builder(
                   scrollDirection: Axis.horizontal,
-                  itemCount: _images.length,
+                  itemCount: 1,
                   itemBuilder: (context, index) {
-                    return _buildImagePreview(_images[index], index);
+                    return _buildImagePreview(_selectedImage!, index);
                   },
                 ),
               ),
@@ -1144,10 +814,12 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                 alignment: Alignment.centerLeft,
                 child: TextButton.icon(
                   onPressed: () async {
-                    final imagePath = await ImageHelper.showImageSourceDialog(context);
+                    final imagePath = await ImageHelper.showImageSourceDialog(
+                      context,
+                    );
                     if (imagePath != null) {
                       setState(() {
-                        _images.add(imagePath);
+                        _selectedImage = imagePath;
                       });
                     }
                   },
@@ -1181,7 +853,11 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                   width: 120,
                   height: 120,
                   color: Colors.grey.shade300,
-                  child: const Icon(Icons.broken_image, size: 40, color: Colors.grey),
+                  child: const Icon(
+                    Icons.broken_image,
+                    size: 40,
+                    color: Colors.grey,
+                  ),
                 );
               },
             ),
@@ -1192,13 +868,13 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
             child: GestureDetector(
               onTap: () {
                 setState(() {
-                  _images.removeAt(index);
+                  _selectedImage = null;
                 });
               },
               child: Container(
                 padding: const EdgeInsets.all(6),
                 decoration: BoxDecoration(
-                  color: Colors.black.withOpacity(0.6),
+                  color: Colors.black.withValues(alpha: 0.6),
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(Icons.close, color: Colors.white, size: 18),
@@ -1225,7 +901,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
               context: context,
               builder: (BuildContext context) {
                 return Container(
-                  height: 300,
+                  height: 400,
                   decoration: BoxDecoration(
                     color: Theme.of(context).cardColor,
                     borderRadius: const BorderRadius.only(
@@ -1253,7 +929,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                               ),
                             ),
                             const Text(
-                              'Tarih Seç',
+                              'Tarih ve Saat Seç',
                               style: TextStyle(
                                 fontSize: 17,
                                 fontWeight: FontWeight.w600,
@@ -1273,16 +949,57 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                         ),
                       ),
                       Expanded(
-                        child: CupertinoDatePicker(
-                          mode: CupertinoDatePickerMode.date,
-                          initialDateTime: _selectedDate,
-                          minimumDate: DateTime(2020),
-                          maximumDate: DateTime.now(),
-                          onDateTimeChanged: (DateTime newDate) {
-                            setState(() {
-                              _selectedDate = newDate;
-                            });
-                          },
+                        child: Column(
+                          children: [
+                            // Date picker
+                            Expanded(
+                              child: CupertinoDatePicker(
+                                mode: CupertinoDatePickerMode.date,
+                                initialDateTime:
+                                    _selectedDate.isAfter(DateTime.now())
+                                    ? DateTime.now()
+                                    : _selectedDate,
+                                minimumDate: DateTime(2020),
+                                maximumDate: DateTime.now(),
+                                onDateTimeChanged: (DateTime newDate) {
+                                  setState(() {
+                                    // Preserve time when changing date
+                                    _selectedDate = DateTime(
+                                      newDate.year,
+                                      newDate.month,
+                                      newDate.day,
+                                      _selectedDate.hour,
+                                      _selectedDate.minute,
+                                    );
+                                  });
+                                },
+                              ),
+                            ),
+                            // Time picker
+                            SizedBox(
+                              height: 100,
+                              child: CupertinoDatePicker(
+                                mode: CupertinoDatePickerMode.time,
+                                initialDateTime:
+                                    _selectedDate.isAfter(DateTime.now())
+                                    ? DateTime.now()
+                                    : _selectedDate,
+                                use24hFormat: true,
+                                onDateTimeChanged: (DateTime newTime) {
+                                  setState(() {
+                                    // Preserve date when changing time
+                                    _selectedDate = DateTime(
+                                      _selectedDate.year,
+                                      _selectedDate.month,
+                                      _selectedDate.day,
+                                      newTime.hour,
+                                      newTime.minute,
+                                    );
+                                  });
+                                },
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ],

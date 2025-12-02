@@ -30,6 +30,9 @@ class _ThemeToggleButtonState extends State<ThemeToggleButton>
 
   Future<void> _loadTheme() async {
     final theme = await _themeService.getThemeMode();
+    
+    if (!mounted) return;
+    
     final brightness = MediaQuery.of(context).platformBrightness;
     final isDark = theme == ThemeMode.dark ||
         (theme == ThemeMode.system && brightness == Brightness.dark);
@@ -120,7 +123,7 @@ class _ThemeToggleButtonState extends State<ThemeToggleButton>
                       color: Colors.white,
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.2),
+                          color: Colors.black.withValues(alpha: 0.2),
                           blurRadius: 4,
                           offset: const Offset(0, 2),
                         ),

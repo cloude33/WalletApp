@@ -58,7 +58,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: [
-              const Color(0xFFFDB32A).withOpacity(0.8),
+              const Color(0xFFFDB32A).withValues(alpha: 0.8),
               const Color(0xFFFDB32A),
               const Color(0xFFFF9800),
             ],
@@ -77,22 +77,35 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                   child: Column(
                     children: [
                       Container(
-                        padding: const EdgeInsets.all(20),
+                        width: 120,
+                        height: 120,
                         decoration: BoxDecoration(
                           color: Colors.white,
                           shape: BoxShape.circle,
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withOpacity(0.1),
+                              color: Colors.black.withValues(alpha: 0.1),
                               blurRadius: 20,
                               spreadRadius: 5,
                             ),
                           ],
                         ),
-                        child: const Icon(
-                          Icons.account_balance_wallet,
-                          size: 80,
-                          color: Color(0xFFFDB32A),
+                        child: ClipOval(
+                          child: Padding(
+                            padding: const EdgeInsets.all(10),
+                            child: Image.asset(
+                              'assets/images/logo.png',
+                              fit: BoxFit.contain,
+                              errorBuilder: (context, error, stackTrace) {
+                                // Fallback to icon if image fails to load
+                                return const Icon(
+                                  Icons.account_balance_wallet,
+                                  size: 80,
+                                  color: Color(0xFFFDB32A),
+                                );
+                              },
+                            ),
+                          ),
                         ),
                       ),
                       const SizedBox(height: 32),
@@ -110,7 +123,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                         'Finansal özgürlüğünüze giden yolda\nyardımcınız',
                         style: TextStyle(
                           fontSize: 16,
-                          color: Colors.white.withOpacity(0.9),
+                          color: Colors.white.withValues(alpha: 0.9),
                           height: 1.5,
                         ),
                         textAlign: TextAlign.center,
@@ -186,7 +199,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                           'Giriş yaparak Kullanım Koşulları ve\nGizlilik Politikası\'nı kabul etmiş olursunuz',
                           style: TextStyle(
                             fontSize: 12,
-                            color: Colors.white.withOpacity(0.8),
+                            color: Colors.white.withValues(alpha: 0.8),
                           ),
                           textAlign: TextAlign.center,
                         ),

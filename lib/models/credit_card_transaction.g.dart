@@ -26,13 +26,14 @@ class CreditCardTransactionAdapter extends TypeAdapter<CreditCardTransaction> {
       installmentCount: fields[6] as int,
       installmentsPaid: fields[7] as int,
       createdAt: fields[8] as DateTime,
+      images: (fields[9] as List?)?.cast<String>(),
     );
   }
 
   @override
   void write(BinaryWriter writer, CreditCardTransaction obj) {
     writer
-      ..writeByte(9)
+      ..writeByte(10)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -50,7 +51,9 @@ class CreditCardTransactionAdapter extends TypeAdapter<CreditCardTransaction> {
       ..writeByte(7)
       ..write(obj.installmentsPaid)
       ..writeByte(8)
-      ..write(obj.createdAt);
+      ..write(obj.createdAt)
+      ..writeByte(9)
+      ..write(obj.images);
   }
 
   @override

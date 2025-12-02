@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:intl/intl.dart';
 import 'package:uuid/uuid.dart';
+import 'package:image_picker/image_picker.dart';
+import 'dart:convert';
 import '../models/credit_card.dart';
 import '../models/credit_card_transaction.dart';
 import '../services/credit_card_service.dart';
+import '../utils/image_helper.dart';
 
 class AddCreditCardTransactionScreen extends StatefulWidget {
   final CreditCard card;
@@ -36,6 +40,7 @@ class _AddCreditCardTransactionScreenState
   bool _isLoading = false;
   double _availableCredit = 0;
   double _installmentAmount = 0;
+  final List<String> _images = [];
 
   // Common categories
   final List<String> _categories = [
@@ -102,9 +107,7 @@ class _AddCreditCardTransactionScreenState
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('İşlem Ekle'),
-      ),
+      appBar: AppBar(title: const Text('İşlem Ekle')),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : Form(
@@ -128,6 +131,8 @@ class _AddCreditCardTransactionScreenState
                     _buildInstallmentInfo(),
                   ],
                   const SizedBox(height: 24),
+                  _buildImageSection(),
+                  const SizedBox(height: 24),
                   _buildAvailableCreditWarning(),
                   const SizedBox(height: 16),
                   _buildSaveButton(),
@@ -139,16 +144,12 @@ class _AddCreditCardTransactionScreenState
 
   Widget _buildCardInfo() {
     return Card(
-      color: widget.card.color.withOpacity(0.1),
+      color: widget.card.color.withValues(alpha: 0.1),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Row(
           children: [
-            Icon(
-              Icons.credit_card,
-              color: widget.card.color,
-              size: 32,
-            ),
+            Icon(Icons.credit_card, color: widget.card.color, size: 32),
             const SizedBox(width: 12),
             Expanded(
               child: Column(
@@ -163,10 +164,7 @@ class _AddCreditCardTransactionScreenState
                   ),
                   Text(
                     '•••• ${widget.card.last4Digits}',
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.grey[600],
-                    ),
+                    style: TextStyle(fontSize: 14, color: Colors.grey[600]),
                   ),
                   const SizedBox(height: 4),
                   Text(
@@ -237,12 +235,12 @@ class _AddCreditCardTransactionScreenState
       onTap: _selectDate,
       child: InputDecorator(
         decoration: const InputDecoration(
-          labelText: 'İşlem Tarihi',
+          labelText: 'İşlem Tarihi ve Saati',
           prefixIcon: Icon(Icons.calendar_today),
           border: OutlineInputBorder(),
         ),
         child: Text(
-          DateFormat('dd MMMM yyyy', 'tr_TR').format(_selectedDate),
+          _formatDateWithTime(_selectedDate),
           style: const TextStyle(fontSize: 16),
         ),
       ),
@@ -251,17 +249,14 @@ class _AddCreditCardTransactionScreenState
 
   Widget _buildCategoryField() {
     return DropdownButtonFormField<String>(
-      value: _selectedCategory,
+      initialValue: _selectedCategory,
       decoration: const InputDecoration(
         labelText: 'Kategori',
         prefixIcon: Icon(Icons.category),
         border: OutlineInputBorder(),
       ),
       items: _categories.map((category) {
-        return DropdownMenuItem(
-          value: category,
-          child: Text(category),
-        );
+        return DropdownMenuItem(value: category, child: Text(category));
       }).toList(),
       onChanged: (value) {
         if (value != null) {
@@ -303,11 +298,12 @@ class _AddCreditCardTransactionScreenState
   }
 
   Widget _buildInstallmentInfo() {
-    final installmentCount = int.tryParse(_installmentCountController.text) ?? 1;
+    final installmentCount =
+        int.tryParse(_installmentCountController.text) ?? 1;
     final isInstallment = installmentCount > 1;
 
     return Card(
-      color: Colors.blue.withOpacity(0.1),
+      color: Colors.blue.withValues(alpha: 0.1),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -335,18 +331,12 @@ class _AddCreditCardTransactionScreenState
               const SizedBox(height: 4),
               Text(
                 '$installmentCount ay boyunca her ekstre döneminde ${_currencyFormat.format(_installmentAmount)} ödenecek',
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Colors.grey[700],
-                ),
+                style: TextStyle(fontSize: 14, color: Colors.grey[700]),
               ),
             ] else ...[
               Text(
                 'Bu işlem peşin olarak kaydedilecek',
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Colors.grey[700],
-                ),
+                style: TextStyle(fontSize: 14, color: Colors.grey[700]),
               ),
             ],
           ],
@@ -357,10 +347,10 @@ class _AddCreditCardTransactionScreenState
 
   Widget _buildAvailableCreditWarning() {
     final amount = double.tryParse(_amountController.text) ?? 0;
-    
+
     if (amount > _availableCredit) {
       return Card(
-        color: Colors.red.withOpacity(0.1),
+        color: Colors.red.withValues(alpha: 0.1),
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Row(
@@ -382,10 +372,7 @@ class _AddCreditCardTransactionScreenState
                     const SizedBox(height: 4),
                     Text(
                       'Bu işlem kullanılabilir limitinizi (${_currencyFormat.format(_availableCredit)}) aşıyor!',
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Colors.red[700],
-                      ),
+                      style: TextStyle(fontSize: 14, color: Colors.red[700]),
                     ),
                   ],
                 ),
@@ -404,31 +391,143 @@ class _AddCreditCardTransactionScreenState
       onPressed: _saveTransaction,
       style: ElevatedButton.styleFrom(
         padding: const EdgeInsets.symmetric(vertical: 16),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
       ),
-      child: const Text(
-        'Kaydet',
-        style: TextStyle(fontSize: 16),
-      ),
+      child: const Text('Kaydet', style: TextStyle(fontSize: 16)),
     );
   }
 
-  Future<void> _selectDate() async {
-    final picked = await showDatePicker(
-      context: context,
-      initialDate: _selectedDate,
-      firstDate: DateTime(2020),
-      lastDate: DateTime.now(),
-      locale: const Locale('tr', 'TR'),
-    );
+  String _formatDateWithTime(DateTime date) {
+    final months = [
+      'Ocak',
+      'Şubat',
+      'Mart',
+      'Nisan',
+      'Mayıs',
+      'Haziran',
+      'Temmuz',
+      'Ağustos',
+      'Eylül',
+      'Ekim',
+      'Kasım',
+      'Aralık',
+    ];
 
-    if (picked != null && picked != _selectedDate) {
-      setState(() {
-        _selectedDate = picked;
-      });
-    }
+    final hours = date.hour.toString().padLeft(2, '0');
+    final minutes = date.minute.toString().padLeft(2, '0');
+
+    return '${date.day} ${months[date.month - 1]} ${date.year} $hours:$minutes';
+  }
+
+  Future<void> _selectDate() async {
+    showModalBottomSheet(
+      context: context,
+      builder: (BuildContext context) {
+        return Container(
+          height: 400,
+          decoration: BoxDecoration(
+            color: Theme.of(context).cardColor,
+            borderRadius: const BorderRadius.only(
+              topLeft: Radius.circular(20),
+              topRight: Radius.circular(20),
+            ),
+          ),
+          child: Column(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  border: Border(
+                    bottom: BorderSide(color: Colors.grey.shade200),
+                  ),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: const Text(
+                        'İptal',
+                        style: TextStyle(color: Colors.grey),
+                      ),
+                    ),
+                    const Text(
+                      'Tarih ve Saat Seç',
+                      style: TextStyle(
+                        fontSize: 17,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: const Text(
+                        'Tamam',
+                        style: TextStyle(
+                          color: Color(0xFF5E5CE6),
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Expanded(
+                child: Column(
+                  children: [
+                    // Date picker
+                    Expanded(
+                      child: CupertinoDatePicker(
+                        mode: CupertinoDatePickerMode.date,
+                        initialDateTime: _selectedDate.isAfter(DateTime.now())
+                            ? DateTime.now()
+                            : _selectedDate,
+                        minimumDate: DateTime(2020),
+                        maximumDate: DateTime.now(),
+                        onDateTimeChanged: (DateTime newDate) {
+                          setState(() {
+                            // Preserve time when changing date
+                            _selectedDate = DateTime(
+                              newDate.year,
+                              newDate.month,
+                              newDate.day,
+                              _selectedDate.hour,
+                              _selectedDate.minute,
+                            );
+                          });
+                        },
+                      ),
+                    ),
+                    // Time picker
+                    SizedBox(
+                      height: 100,
+                      child: CupertinoDatePicker(
+                        mode: CupertinoDatePickerMode.time,
+                        initialDateTime: _selectedDate.isAfter(DateTime.now())
+                            ? DateTime.now()
+                            : _selectedDate,
+                        use24hFormat: true,
+                        onDateTimeChanged: (DateTime newTime) {
+                          setState(() {
+                            // Preserve date when changing time
+                            _selectedDate = DateTime(
+                              _selectedDate.year,
+                              _selectedDate.month,
+                              _selectedDate.day,
+                              newTime.hour,
+                              newTime.minute,
+                            );
+                          });
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
   }
 
   Future<void> _saveTransaction() async {
@@ -437,7 +536,7 @@ class _AddCreditCardTransactionScreenState
     }
 
     final amount = double.parse(_amountController.text);
-    
+
     // Show confirmation if exceeding limit
     if (amount > _availableCredit) {
       final confirm = await showDialog<bool>(
@@ -478,6 +577,7 @@ class _AddCreditCardTransactionScreenState
         installmentCount: int.parse(_installmentCountController.text),
         installmentsPaid: 0,
         createdAt: DateTime.now(),
+        images: _images,
       );
 
       await _cardService.addTransaction(transaction);
@@ -494,10 +594,7 @@ class _AddCreditCardTransactionScreenState
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Hata: $e'),
-            backgroundColor: Colors.red,
-          ),
+          SnackBar(content: Text('Hata: $e'), backgroundColor: Colors.red),
         );
       }
     } finally {
@@ -505,5 +602,120 @@ class _AddCreditCardTransactionScreenState
         setState(() => _isLoading = false);
       }
     }
+  }
+
+  Widget _buildImageSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Fiş/Fatura Ekle (Opsiyonel)',
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 12),
+        if (_images.isEmpty)
+          OutlinedButton.icon(
+            onPressed: _pickImage,
+            icon: const Icon(Icons.add_photo_alternate),
+            label: const Text('Fiş Ekle'),
+            style: OutlinedButton.styleFrom(
+              minimumSize: const Size(double.infinity, 50),
+            ),
+          )
+        else
+          Column(
+            children: [
+              SizedBox(
+                height: 120,
+                child: ListView.builder(
+                  scrollDirection: Axis.horizontal,
+                  itemCount: _images.length + 1,
+                  itemBuilder: (context, index) {
+                    if (index == _images.length) {
+                      return GestureDetector(
+                        onTap: _pickImage,
+                        child: Container(
+                          width: 100,
+                          margin: const EdgeInsets.only(right: 8),
+                          decoration: BoxDecoration(
+                            border: Border.all(color: Colors.grey),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: const Icon(
+                            Icons.add_photo_alternate,
+                            size: 40,
+                          ),
+                        ),
+                      );
+                    }
+                    return Stack(
+                      children: [
+                        Container(
+                          width: 100,
+                          margin: const EdgeInsets.only(right: 8),
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(8),
+                            image: DecorationImage(
+                              image: MemoryImage(base64Decode(_images[index])),
+                              fit: BoxFit.cover,
+                            ),
+                          ),
+                        ),
+                        Positioned(
+                          top: 4,
+                          right: 12,
+                          child: GestureDetector(
+                            onTap: () => _removeImage(index),
+                            child: Container(
+                              padding: const EdgeInsets.all(4),
+                              decoration: const BoxDecoration(
+                                color: Colors.red,
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(
+                                Icons.close,
+                                color: Colors.white,
+                                size: 16,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+      ],
+    );
+  }
+
+  Future<void> _pickImage() async {
+    try {
+      final base64Image = await ImageHelper.pickImage(
+        source: ImageSource.gallery,
+      );
+      if (base64Image != null) {
+        setState(() {
+          _images.add(base64Image);
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Resim eklenirken hata: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  void _removeImage(int index) {
+    setState(() {
+      _images.removeAt(index);
+    });
   }
 }

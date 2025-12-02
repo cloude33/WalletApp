@@ -233,7 +233,7 @@ class PdfExportService {
           ),
         ),
         pw.SizedBox(height: 12),
-        pw.Table.fromTextArray(
+        pw.TableHelper.fromTextArray(
           headerStyle: pw.TextStyle(
             fontWeight: pw.FontWeight.bold,
             fontSize: 10,

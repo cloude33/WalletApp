@@ -14,7 +14,7 @@ class SmartCategoryService {
     if (description.trim().isEmpty) return null;
 
     final transactions = await _dataService.getTransactions();
-    final categories = await _dataService.getCategories();
+    final categories = (await _dataService.getCategories()).cast<Category>();
 
     // Filter transactions by type
     final relevantTransactions = transactions

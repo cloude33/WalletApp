@@ -165,7 +165,7 @@ class _EditWalletScreenState extends State<EditWalletScreen> {
         name: walletName,
         balance: _balanceController.text.isEmpty ? 0.0 : double.parse(_balanceController.text),
         type: _selectedType,
-        color: '0x${_selectedColor.value.toRadixString(16).toUpperCase()}',
+        color: '0x${_selectedColor.toARGB32().toRadixString(16).toUpperCase()}',
         icon: _selectedType,
         cutOffDay: _cutOffDayController.text.isEmpty ? 0 : int.parse(_cutOffDayController.text),
         paymentDay: _paymentDayController.text.isEmpty ? 0 : int.parse(_paymentDayController.text),

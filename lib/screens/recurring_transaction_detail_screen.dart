@@ -1,3 +1,5 @@
+// ignore_for_file: use_build_context_synchronously
+
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../models/recurring_transaction.dart';
@@ -44,7 +46,7 @@ class _RecurringTransactionDetailScreenState
                   ),
                 ),
               );
-              if (result == true) {
+              if (result == true && mounted) {
                 setState(() {});
                 Navigator.pop(context, true);
               }

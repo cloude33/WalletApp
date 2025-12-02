@@ -17,13 +17,13 @@ class ExportDialog extends StatefulWidget {
 
 class _ExportDialogState extends State<ExportDialog> {
   final DataService _dataService = DataService();
-  
+
   ExportFormat _selectedFormat = ExportFormat.excel;
   DateTime? _startDate;
   DateTime? _endDate;
-  List<String> _selectedCategories = [];
-  List<String> _selectedWallets = [];
-  List<String> _selectedTypes = [];
+  final List<String> _selectedCategories = [];
+  final List<String> _selectedWallets = [];
+  final List<String> _selectedTypes = [];
   bool _isExporting = false;
 
   @override
@@ -195,7 +195,9 @@ class _ExportDialogState extends State<ExportDialog> {
       if (_startDate != null && _endDate != null) {
         filter = ExportFilter(
           dateRange: DateRange(start: _startDate!, end: _endDate!),
-          categories: _selectedCategories.isNotEmpty ? _selectedCategories : null,
+          categories: _selectedCategories.isNotEmpty
+              ? _selectedCategories
+              : null,
           wallets: _selectedWallets.isNotEmpty ? _selectedWallets : null,
           transactionTypes: _selectedTypes.isNotEmpty ? _selectedTypes : null,
         );
@@ -239,10 +241,7 @@ class _ExportDialogState extends State<ExportDialog> {
       }
 
       // Share the file
-      await Share.shareXFiles(
-        [XFile(filePath)],
-        subject: 'Transaction Export',
-      );
+      await Share.shareXFiles([XFile(filePath)], subject: 'Transaction Export');
 
       if (mounted) {
         Navigator.pop(context);
@@ -270,18 +269,6 @@ class _ExportDialogState extends State<ExportDialog> {
       }
     }
   }
-
-  // ignore: unused_element
-  static Future<void> show(BuildContext context) async {
-    return showDialog(
-      context: context,
-      builder: (context) => const ExportDialog(),
-    );
-  }
 }
 
-enum ExportFormat {
-  excel,
-  csv,
-  pdf,
-}
+enum ExportFormat { excel, csv, pdf }

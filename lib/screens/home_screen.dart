@@ -1,4 +1,8 @@
+// ignore_for_file: use_build_context_synchronously
+
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+import 'dart:convert';
 
 import '../models/wallet.dart';
 import '../models/transaction.dart';
@@ -20,12 +24,14 @@ import 'manage_budgets_screen.dart';
 import 'calendar_screen.dart';
 import 'statistics_screen.dart';
 import 'settings_screen.dart';
-import 'recurring_transaction_list_screen.dart';
-import '../services/recurring_transaction_service.dart';
-import '../repositories/recurring_transaction_repository.dart';
-import 'credit_card_list_screen.dart';
-import 'debt_list_screen.dart';
+import 'bill_history_screen.dart';
+import 'add_bill_payment_screen.dart';
+import 'bill_templates_screen.dart';
 import '../services/credit_card_service.dart';
+import '../services/bill_payment_service.dart';
+import '../services/bill_template_service.dart';
+import '../models/bill_payment.dart';
+import '../models/bill_template.dart';
 import '../models/credit_card_transaction.dart';
 import '../models/credit_card.dart';
 import 'edit_credit_card_transaction_screen.dart';
@@ -37,7 +43,7 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   int _selectedIndex = 0;
   final DataService _dataService = DataService();
   final BudgetAlertService _budgetAlertService = BudgetAlertService();
@@ -59,7 +65,23 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _loadData();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    // Uygulama ön plana geldiğinde verileri yenile
+    if (state == AppLifecycleState.resumed) {
+      _loadData();
+    }
   }
 
   Future<void> _loadData() async {
@@ -88,11 +110,12 @@ class _HomeScreenState extends State<HomeScreen> {
     final loadedTransactions = await _dataService.getTransactions();
     final loadedBudgets = await _dataService.getBudgets();
     final warnings = await _budgetAlertService.checkBudgets();
-    final loadedCategories = await _dataService.getCategories();
+    final loadedCategories = (await _dataService.getCategories()).cast<Category>();
     final unreadCount = await _notificationService.getUnreadCount();
 
     // Load credit card transactions
     final cards = await _creditCardService.getAllCards();
+    debugPrint('DEBUG _loadData: Found ${cards.length} credit cards');
     final Map<String, CreditCard> cardMap = {};
     final List<CreditCardTransaction> allCCTransactions = [];
 
@@ -101,8 +124,14 @@ class _HomeScreenState extends State<HomeScreen> {
       final ccTransactions = await _creditCardService.getCardTransactions(
         card.id,
       );
+      debugPrint(
+        'DEBUG _loadData: Card ${card.bankName} has ${ccTransactions.length} transactions',
+      );
       allCCTransactions.addAll(ccTransactions);
     }
+    debugPrint(
+      'DEBUG _loadData: Total CC transactions: ${allCCTransactions.length}',
+    );
 
     setState(() {
       _currentUser = user;
@@ -194,7 +223,7 @@ class _HomeScreenState extends State<HomeScreen> {
           color: Theme.of(context).bottomNavigationBarTheme.backgroundColor,
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
+              color: Colors.black.withValues(alpha: 0.05),
               blurRadius: 10,
               offset: const Offset(0, -5),
             ),
@@ -251,7 +280,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 ), // İstatistik ile aynı yeşil renk
                 boxShadow: [
                   BoxShadow(
-                    color: const Color(0xFF00BFA5).withOpacity(0.4),
+                    color: const Color(0xFF00BFA5).withValues(alpha: 0.4),
                     blurRadius: 20,
                     offset: const Offset(0, 10),
                   ),
@@ -321,6 +350,16 @@ class _HomeScreenState extends State<HomeScreen> {
                                 Navigator.pop(context, 'budget');
                               },
                             ),
+                            ListTile(
+                              leading: const Icon(
+                                Icons.receipt_long,
+                                color: Color(0xFFFDB32A),
+                              ),
+                              title: const Text('Fatura Ekle'),
+                              onTap: () {
+                                Navigator.pop(context, 'bill');
+                              },
+                            ),
                             const Divider(),
                             ListTile(
                               leading: const Icon(
@@ -342,16 +381,21 @@ class _HomeScreenState extends State<HomeScreen> {
                     switch (result) {
                       case 'expense':
                       case 'income':
-                        // Reload wallets before opening transaction screen
-                        final freshWallets = await _dataService.getWallets();
+                        // Get wallets with credit cards for expense, only wallets for income
+                        final allWallets = result == 'expense'
+                            ? await _getWalletsWithCreditCards()
+                            : await _dataService.getWallets();
+
                         if (!mounted) return;
 
                         // Quick add transaction
+                        if (!mounted) return;
                         final transactionResult = await Navigator.push(
                           context,
                           MaterialPageRoute(
                             builder: (context) => AddTransactionScreen(
-                              wallets: freshWallets,
+                              wallets: allWallets,
+                              categories: _categories,
                               defaultType: result,
                             ),
                           ),
@@ -362,6 +406,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         break;
                       case 'wallet':
                         // Add wallet
+                        if (!mounted) return;
                         final walletResult = await Navigator.push(
                           context,
                           MaterialPageRoute(
@@ -374,6 +419,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         break;
                       case 'budget':
                         // Add budget
+                        if (!mounted) return;
                         final budgetResult = await Navigator.push(
                           context,
                           MaterialPageRoute(
@@ -384,17 +430,34 @@ class _HomeScreenState extends State<HomeScreen> {
                           _loadData();
                         }
                         break;
+                      case 'bill':
+                        // Add bill payment with new screen
+                        if (!mounted) return;
+                        final billResult = await Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const AddBillPaymentScreen(),
+                          ),
+                        );
+                        if (billResult == true) {
+                          _loadData();
+                        }
+                        break;
+
                       case 'detailed':
-                        // Reload wallets before opening transaction screen
-                        final freshWallets = await _dataService.getWallets();
+                        // Get wallets with credit cards
+                        final allWallets = await _getWalletsWithCreditCards();
+
                         if (!mounted) return;
 
                         // Detailed add
                         final detailedResult = await Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) =>
-                                AddTransactionScreen(wallets: freshWallets),
+                            builder: (context) => AddTransactionScreen(
+                              wallets: allWallets,
+                              categories: _categories,
+                            ),
                           ),
                         );
                         if (detailedResult == true) {
@@ -414,27 +477,33 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildHomeContent() {
-    return SafeArea(
-      child: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const SizedBox(height: 10),
-            // _buildHeader() removed
-            const SizedBox(height: 20),
-            _buildSummaryCard(),
-            const SizedBox(height: 20),
-            if (budgetWarnings.isNotEmpty) ...[
-              _buildBudgetWarnings(),
+    return RefreshIndicator(
+      onRefresh: _loadData,
+      color: const Color(0xFF00BFA5),
+      child: SafeArea(
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const SizedBox(height: 10),
+              const SizedBox(height: 20),
+              _buildSummaryCard(),
+              const SizedBox(height: 20),
+              if (budgetWarnings.isNotEmpty) ...[
+                _buildBudgetWarnings(),
+                const SizedBox(height: 20),
+              ],
+              _buildBudgetsSection(), // Bütçeler
+              const SizedBox(height: 20),
+              _buildBillsSection(), // Faturalar
+              const SizedBox(height: 20),
+              _buildAllTransactions(), // Tüm işlemler (normal + kredi kartı)
+              const SizedBox(height: 20),
+              _buildGoalsSection(), // Hedeflerim
               const SizedBox(height: 20),
             ],
-            _buildBudgetsSection(), // Bütçeler
-            const SizedBox(height: 20),
-            _buildAllTransactions(), // Tüm işlemler (normal + kredi kartı)
-            const SizedBox(height: 20),
-            _buildGoalsSection(), // Hedeflerim
-            const SizedBox(height: 20),
-          ],
+          ),
         ),
       ),
     );
@@ -593,12 +662,17 @@ class _HomeScreenState extends State<HomeScreen> {
 
     return GestureDetector(
       onTap: () async {
+        // Get wallets with credit cards for editing
+        final allWallets = await _getWalletsWithCreditCards();
+
+        if (!mounted) return;
+        
         final result = await Navigator.push(
           context,
           MaterialPageRoute(
             builder: (context) => EditTransactionScreen(
               transaction: transaction,
-              wallets: wallets,
+              wallets: allWallets,
             ),
           ),
         );
@@ -614,7 +688,7 @@ class _HomeScreenState extends State<HomeScreen> {
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
+              color: Colors.black.withValues(alpha: 0.05),
               blurRadius: 10,
               offset: const Offset(0, 2),
             ),
@@ -625,7 +699,7 @@ class _HomeScreenState extends State<HomeScreen> {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: color.withOpacity(0.1),
+                color: color.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Icon(category.icon, color: color, size: 24),
@@ -682,6 +756,53 @@ class _HomeScreenState extends State<HomeScreen> {
                     color: color,
                   ),
                 ),
+                if (transaction.images != null &&
+                    transaction.images!.isNotEmpty) ...[
+                  const SizedBox(height: 8),
+                  GestureDetector(
+                    onTap: () {
+                      _showImagePreview(context, transaction.images!);
+                    },
+                    child: Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: Colors.grey.shade300),
+                        image: DecorationImage(
+                          image: MemoryImage(
+                            base64Decode(transaction.images!.first),
+                          ),
+                          fit: BoxFit.cover,
+                        ),
+                      ),
+                      child: transaction.images!.length > 1
+                          ? Container(
+                              alignment: Alignment.bottomRight,
+                              padding: const EdgeInsets.all(2),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 4,
+                                  vertical: 2,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: Colors.black.withValues(alpha: 0.7),
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                                child: Text(
+                                  '+${transaction.images!.length - 1}',
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            )
+                          : null,
+                    ),
+                  ),
+                ],
               ],
             ),
           ],
@@ -722,7 +843,7 @@ class _HomeScreenState extends State<HomeScreen> {
           border: Border.all(color: card?.color ?? Colors.blue, width: 1.5),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
+              color: Colors.black.withValues(alpha: 0.05),
               blurRadius: 10,
               offset: const Offset(0, 2),
             ),
@@ -733,7 +854,7 @@ class _HomeScreenState extends State<HomeScreen> {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: (card?.color ?? Colors.blue).withOpacity(0.1),
+                color: (card?.color ?? Colors.blue).withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Icon(
@@ -769,13 +890,19 @@ class _HomeScreenState extends State<HomeScreen> {
                         if (isInstallment) ...[
                           Text(
                             ' • ',
-                            style: TextStyle(color: Theme.of(context).textTheme.bodySmall?.color),
+                            style: TextStyle(
+                              color: Theme.of(
+                                context,
+                              ).textTheme.bodySmall?.color,
+                            ),
                           ),
                           Text(
                             '${transaction.installmentsPaid}/${transaction.installmentCount} Taksit',
                             style: TextStyle(
                               fontSize: 13,
-                              color: Theme.of(context).textTheme.bodySmall?.color,
+                              color: Theme.of(
+                                context,
+                              ).textTheme.bodySmall?.color,
                             ),
                           ),
                         ],
@@ -804,6 +931,52 @@ class _HomeScreenState extends State<HomeScreen> {
                     color: color,
                   ),
                 ),
+                if (transaction.images.isNotEmpty) ...[
+                  const SizedBox(height: 8),
+                  GestureDetector(
+                    onTap: () {
+                      _showImagePreview(context, transaction.images);
+                    },
+                    child: Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: Colors.grey.shade300),
+                        image: DecorationImage(
+                          image: MemoryImage(
+                            base64Decode(transaction.images.first),
+                          ),
+                          fit: BoxFit.cover,
+                        ),
+                      ),
+                      child: transaction.images.length > 1
+                          ? Container(
+                              alignment: Alignment.bottomRight,
+                              padding: const EdgeInsets.all(2),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 4,
+                                  vertical: 2,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: Colors.black.withValues(alpha: 0.7),
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                                child: Text(
+                                  '+${transaction.images.length - 1}',
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            )
+                          : null,
+                    ),
+                  ),
+                ],
               ],
             ),
           ],
@@ -916,7 +1089,7 @@ class _HomeScreenState extends State<HomeScreen> {
           borderRadius: BorderRadius.circular(24),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
+              color: Colors.black.withValues(alpha: 0.05),
               blurRadius: 20,
               offset: const Offset(0, 10),
             ),
@@ -959,7 +1132,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           vertical: 6,
                         ),
                         decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.2),
+                          color: Colors.white.withValues(alpha: 0.2),
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Text(
@@ -996,7 +1169,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               ? 'Toplam Harcama'
                               : (remainingBudget >= 0 ? 'Kalan' : 'Aşım'),
                           style: TextStyle(
-                            color: Colors.white.withOpacity(0.9),
+                            color: Colors.white.withValues(alpha: 0.9),
                             fontSize: 12,
                             fontWeight: FontWeight.w500,
                           ),
@@ -1011,7 +1184,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       Text(
                         '${(usagePercentage * 100).toStringAsFixed(1)}% Kullanıldı',
                         style: TextStyle(
-                          color: Colors.white.withOpacity(0.9),
+                          color: Colors.white.withValues(alpha: 0.9),
                           fontSize: 11,
                           fontWeight: FontWeight.w500,
                         ),
@@ -1019,7 +1192,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       Text(
                         '${CurrencyHelper.formatAmount(totalSpent, _currentUser)} / ${CurrencyHelper.formatAmount(totalBudget, _currentUser)}',
                         style: TextStyle(
-                          color: Colors.white.withOpacity(0.9),
+                          color: Colors.white.withValues(alpha: 0.9),
                           fontSize: 11,
                           fontWeight: FontWeight.w500,
                         ),
@@ -1031,7 +1204,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     borderRadius: BorderRadius.circular(10),
                     child: LinearProgressIndicator(
                       value: clampedPercentage,
-                      backgroundColor: Colors.white.withOpacity(0.2),
+                      backgroundColor: Colors.white.withValues(alpha: 0.2),
                       valueColor: const AlwaysStoppedAnimation<Color>(
                         Colors.white,
                       ),
@@ -1046,7 +1219,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         vertical: 8,
                       ),
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.15),
+                        color: Colors.white.withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Row(
@@ -1078,8 +1251,8 @@ class _HomeScreenState extends State<HomeScreen> {
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
                 color: netBalance >= 0
-                    ? const Color(0xFF34C759).withOpacity(0.1)
-                    : const Color(0xFFFF3B30).withOpacity(0.1),
+                    ? const Color(0xFF34C759).withValues(alpha: 0.1)
+                    : const Color(0xFFFF3B30).withValues(alpha: 0.1),
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -1292,7 +1465,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     borderRadius: BorderRadius.circular(16),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.05),
+                        color: Colors.black.withValues(alpha: 0.05),
                         blurRadius: 10,
                         offset: const Offset(0, 4),
                       ),
@@ -1421,7 +1594,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         borderRadius: BorderRadius.circular(16),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.05),
+                            color: Colors.black.withValues(alpha: 0.05),
                             blurRadius: 10,
                             offset: const Offset(0, 4),
                           ),
@@ -1441,7 +1614,9 @@ class _HomeScreenState extends State<HomeScreen> {
                                     style: TextStyle(
                                       fontSize: 16,
                                       fontWeight: FontWeight.bold,
-                                      color: Theme.of(context).brightness == Brightness.dark
+                                      color:
+                                          Theme.of(context).brightness ==
+                                              Brightness.dark
                                           ? Colors.grey[200]
                                           : const Color(0xFF1C1C1E),
                                     ),
@@ -1456,10 +1631,10 @@ class _HomeScreenState extends State<HomeScreen> {
                                   ),
                                   decoration: BoxDecoration(
                                     color: percentage > 90
-                                        ? Colors.red.withOpacity(0.2)
+                                        ? Colors.red.withValues(alpha: 0.2)
                                         : percentage > 75
-                                        ? Colors.orange.withOpacity(0.2)
-                                        : Colors.green.withOpacity(0.2),
+                                        ? Colors.orange.withValues(alpha: 0.2)
+                                        : Colors.green.withValues(alpha: 0.2),
                                     borderRadius: BorderRadius.circular(12),
                                   ),
                                   child: Text(
@@ -1567,17 +1742,17 @@ class _HomeScreenState extends State<HomeScreen> {
               case BudgetWarningSeverity.exceeded:
                 color = const Color(0xFFFF3B30);
                 icon = Icons.error;
-                bgColor = const Color(0xFFFF3B30).withOpacity(0.1);
+                bgColor = const Color(0xFFFF3B30).withValues(alpha: 0.1);
                 break;
               case BudgetWarningSeverity.critical:
                 color = const Color(0xFFFF9500);
                 icon = Icons.warning;
-                bgColor = const Color(0xFFFF9500).withOpacity(0.1);
+                bgColor = const Color(0xFFFF9500).withValues(alpha: 0.1);
                 break;
               case BudgetWarningSeverity.warning:
                 color = const Color(0xFFFFCC00);
                 icon = Icons.info;
-                bgColor = const Color(0xFFFFCC00).withOpacity(0.1);
+                bgColor = const Color(0xFFFFCC00).withValues(alpha: 0.1);
                 break;
             }
 
@@ -1587,7 +1762,7 @@ class _HomeScreenState extends State<HomeScreen> {
               decoration: BoxDecoration(
                 color: bgColor,
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: color.withOpacity(0.3)),
+                border: Border.all(color: color.withValues(alpha: 0.3)),
               ),
               child: Row(
                 children: [
@@ -1607,7 +1782,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          '${warning.currentSpending.toStringAsFixed(0)} / ${warning.budgetAmount.toStringAsFixed(0)} ₺',
+                          '${NumberFormat('#,##0', 'tr_TR').format(warning.currentSpending)} / ${NumberFormat('#,##0', 'tr_TR').format(warning.budgetAmount)} ₺',
                           style: const TextStyle(
                             fontSize: 14,
                             color: Color(0xFF8E8E93),
@@ -1633,343 +1808,304 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // Unused - kept for future use
-  // ignore: unused_element
-  Widget _buildRecurringTransactionsSection() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text(
-                'Tekrarlayan İşlemler',
-                style: TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF1C1C1E),
-                ),
-              ),
-              TextButton(
-                onPressed: () => _navigateToRecurringTransactions(),
-                child: const Text('Tümünü Gör'),
-              ),
-            ],
+  Future<List<Wallet>> _getWalletsWithCreditCards() async {
+    final freshWallets = await _dataService.getWallets();
+
+    // Remove any existing credit card wallets (they might be outdated)
+    final List<Wallet> allWallets = freshWallets
+        .where((w) => !w.id.startsWith('cc_'))
+        .toList();
+
+    // Add credit cards as wallets
+    final cards = await _creditCardService.getAllCards();
+    for (var card in cards) {
+      if (card.isActive) {
+        allWallets.add(
+          Wallet(
+            id: 'cc_${card.id}',
+            name: '${card.bankName} ${card.cardName} •••• ${card.last4Digits}',
+            balance: 0,
+            type: 'credit_card',
+            color: card.cardColor.toString(),
+            icon: 'credit_card',
+            creditLimit: card.creditLimit,
           ),
-          const SizedBox(height: 12),
-          InkWell(
-            onTap: () => _navigateToRecurringTransactions(),
-            borderRadius: BorderRadius.circular(16),
-            child: Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Theme.of(context).cardColor,
-                borderRadius: BorderRadius.circular(16),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
-                    blurRadius: 10,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
-              child: Column(
-                children: [
-                  Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF00BFA5).withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: const Icon(
-                          Icons.repeat,
-                          color: Color(0xFF00BFA5),
-                          size: 24,
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      const Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Otomatik İşlemler',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                                color: Color(0xFF1C1C1E),
-                              ),
-                            ),
-                            SizedBox(height: 4),
-                            Text(
-                              'Düzenli ödemelerinizi otomatikleştirin',
-                              style: TextStyle(
-                                fontSize: 14,
-                                color: Color(0xFF8E8E93),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const Icon(
-                        Icons.arrow_forward_ios,
-                        size: 16,
-                        color: Color(0xFF8E8E93),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Future<void> _navigateToRecurringTransactions() async {
-    final repository = RecurringTransactionRepository();
-    await repository.init();
-
-    final service = RecurringTransactionService(
-      repository,
-      _dataService,
-      _notificationService,
-    );
-
-    if (!mounted) return;
-
-    final result = await Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => RecurringTransactionListScreen(service: service),
-      ),
-    );
-
-    if (result == true) {
-      _loadData();
+        );
+      }
     }
+
+    return allWallets;
   }
 
-  // Unused - kept for future use
-  // ignore: unused_element
-  Widget _buildCreditCardsSection() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text(
-                'Kredi Kartları',
-                style: TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF1C1C1E),
+  void _showImagePreview(BuildContext context, List<String> images) {
+    showDialog(
+      context: context,
+      builder: (context) => Dialog(
+        backgroundColor: Colors.transparent,
+        child: Stack(
+          children: [
+            PageView.builder(
+              itemCount: images.length,
+              itemBuilder: (context, index) {
+                return InteractiveViewer(
+                  minScale: 0.5,
+                  maxScale: 4.0,
+                  child: Center(
+                    child: Image.memory(
+                      base64Decode(images[index]),
+                      fit: BoxFit.contain,
+                    ),
+                  ),
+                );
+              },
+            ),
+            Positioned(
+              top: 16,
+              right: 16,
+              child: IconButton(
+                icon: const Icon(Icons.close, color: Colors.white, size: 32),
+                onPressed: () => Navigator.pop(context),
+              ),
+            ),
+            if (images.length > 1)
+              Positioned(
+                bottom: 16,
+                left: 0,
+                right: 0,
+                child: Center(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withValues(alpha: 0.7),
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Text(
+                      '${images.length} Fiş',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
                 ),
               ),
-              TextButton(
-                onPressed: () => _navigateToCreditCards(),
-                child: const Text('Tümünü Gör'),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          InkWell(
-            onTap: () => _navigateToCreditCards(),
-            borderRadius: BorderRadius.circular(16),
-            child: Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Theme.of(context).cardColor,
-                borderRadius: BorderRadius.circular(16),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
-                    blurRadius: 10,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
-              child: Column(
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildBillsSection() {
+    return FutureBuilder(
+      future: _loadBillsData(),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) {
+          return const SizedBox.shrink();
+        }
+
+        final data = snapshot.data as Map<String, dynamic>;
+        final pendingPayments = data['pendingPayments'] as List<BillPayment>;
+        final overduePayments = data['overduePayments'] as List<BillPayment>;
+        final templates = data['templates'] as Map<String, BillTemplate>;
+
+        if (pendingPayments.isEmpty && overduePayments.isEmpty) {
+          return const SizedBox.shrink();
+        }
+
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
+                  Text(
+                    'Faturalar',
+                    style: TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                      color: Theme.of(context).textTheme.displayLarge?.color,
+                    ),
+                  ),
                   Row(
                     children: [
-                      Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF667eea).withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: const Icon(
-                          Icons.credit_card,
-                          color: Color(0xFF667eea),
-                          size: 24,
+                      TextButton.icon(
+                        onPressed: () async {
+                          final result = await Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const BillHistoryScreen(),
+                            ),
+                          );
+                          if (result == true) {
+                            _loadData();
+                          }
+                        },
+                        icon: const Icon(Icons.history, size: 18),
+                        label: const Text('Geçmiş'),
+                        style: TextButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(horizontal: 8),
                         ),
                       ),
-                      const SizedBox(width: 12),
-                      const Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Kredi Kartı Takibi',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                                color: Color(0xFF1C1C1E),
-                              ),
+                      TextButton(
+                        onPressed: () async {
+                          await Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const BillTemplatesScreen(),
                             ),
-                            SizedBox(height: 4),
-                            Text(
-                              'Kartlarınızı ve borçlarınızı yönetin',
-                              style: TextStyle(
-                                fontSize: 14,
-                                color: Color(0xFF8E8E93),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const Icon(
-                        Icons.arrow_forward_ios,
-                        size: 16,
-                        color: Color(0xFF8E8E93),
+                          );
+                          _loadData();
+                        },
+                        child: const Text('Faturalarım'),
                       ),
                     ],
                   ),
                 ],
               ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+              const SizedBox(height: 12),
 
-  Future<void> _navigateToCreditCards() async {
-    final result = await Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => const CreditCardListScreen()),
-    );
+              // Vadesi geçmiş faturalar
+              ...overduePayments
+                  .take(3)
+                  .map(
+                    (payment) => Padding(
+                      padding: const EdgeInsets.only(bottom: 8),
+                      child: _buildBillPaymentCard(
+                        payment,
+                        templates[payment.templateId],
+                        isOverdue: true,
+                      ),
+                    ),
+                  ),
 
-    if (result == true) {
-      _loadData();
-    }
-  }
-
-  // Unused - kept for future use
-  // ignore: unused_element
-  Widget _buildDebtTrackingSection() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text(
-                'Borç/Alacak Takibi',
-                style: TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF1C1C1E),
-                ),
-              ),
-              TextButton(
-                onPressed: () => _navigateToDebtTracking(),
-                child: const Text('Tümünü Gör'),
-              ),
+              // Bekleyen faturalar
+              ...pendingPayments
+                  .take(3)
+                  .map(
+                    (payment) => Padding(
+                      padding: const EdgeInsets.only(bottom: 8),
+                      child: _buildBillPaymentCard(
+                        payment,
+                        templates[payment.templateId],
+                        isOverdue: false,
+                      ),
+                    ),
+                  ),
             ],
           ),
-          const SizedBox(height: 12),
-          InkWell(
-            onTap: () => _navigateToDebtTracking(),
-            borderRadius: BorderRadius.circular(16),
-            child: Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Theme.of(context).cardColor,
-                borderRadius: BorderRadius.circular(16),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
-                    blurRadius: 10,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
-              child: Column(
-                children: [
-                  Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFFF9500).withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: const Icon(
-                          Icons.account_balance_wallet_outlined,
-                          color: Color(0xFFFF9500),
-                          size: 24,
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      const Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Borç ve Alacak Yönetimi',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                                color: Color(0xFF1C1C1E),
-                              ),
-                            ),
-                            SizedBox(height: 4),
-                            Text(
-                              'Borçlarınızı ve alacaklarınızı takip edin',
-                              style: TextStyle(
-                                fontSize: 14,
-                                color: Color(0xFF8E8E93),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const Icon(
-                        Icons.arrow_forward_ios,
-                        size: 16,
-                        color: Color(0xFF8E8E93),
-                      ),
-                    ],
-                  ),
-                ],
+        );
+      },
+    );
+  }
+
+  Widget _buildBillPaymentCard(
+    BillPayment payment,
+    BillTemplate? template,
+    {required bool isOverdue}
+  ) {
+    final color = isOverdue ? Colors.red : Colors.orange;
+    final icon = isOverdue ? Icons.warning : Icons.schedule;
+
+    final templateName = template?.name ?? 'Bilinmeyen Fatura';
+    final provider = template?.provider;
+
+    return Card(
+      color: color.withValues(alpha: 0.1),
+      child: ListTile(
+        leading: Icon(icon, color: color),
+        title: Text(
+          templateName,
+          style: TextStyle(fontWeight: FontWeight.bold, color: color),
+        ),
+        subtitle: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Vade: ${_formatDate(payment.dueDate)}${provider != null ? ' • $provider' : ''}',
+              style: TextStyle(fontSize: 12, color: Colors.grey[700]),
+            ),
+            Text(
+              'Tutar: ${CurrencyHelper.formatAmount(payment.amount, _currentUser)}',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: color,
               ),
             ),
-          ),
-        ],
+            Text(
+              payment.periodDisplayName,
+              style: TextStyle(
+                fontSize: 11,
+                fontStyle: FontStyle.italic,
+                color: Colors.grey[600],
+              ),
+            ),
+          ],
+        ),
+        trailing: IconButton(
+          icon: const Icon(Icons.payment, size: 20),
+          color: color,
+          onPressed: () async {
+            // TODO: Ödeme ekranına yönlendir
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Ödeme özelliği yakında eklenecek'),
+              ),
+            );
+          },
+          tooltip: 'Öde',
+        ),
+        onTap: () {
+          // TODO: Detay ekranına yönlendir
+        },
       ),
     );
   }
 
-  Future<void> _navigateToDebtTracking() async {
-    final result = await Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => const DebtListScreen()),
-    );
+  String _formatDate(DateTime? date) {
+    if (date == null) return 'Tarih girilmedi';
+    final day = date.day.toString().padLeft(2, '0');
+    final month = date.month.toString().padLeft(2, '0');
+    return '$day.$month.${date.year}';
+  }
 
-    if (result == true) {
-      _loadData();
+  Future<Map<String, dynamic>> _loadBillsData() async {
+    try {
+      final paymentService = BillPaymentService();
+      final templateService = BillTemplateService();
+
+      // Bekleyen ve vadesi geçmiş ödemeleri getir
+      final pendingPayments = await paymentService.getPendingPayments();
+      final overduePayments = await paymentService.getOverduePayments();
+
+      // Template bilgilerini ekle
+      final Map<String, BillTemplate> templates = {};
+      for (var payment in [...pendingPayments, ...overduePayments]) {
+        if (!templates.containsKey(payment.templateId)) {
+          final template = await templateService.getTemplate(payment.templateId);
+          if (template != null) {
+            templates[payment.templateId] = template;
+          }
+        }
+      }
+
+      return {
+        'pendingPayments': pendingPayments,
+        'overduePayments': overduePayments,
+        'templates': templates,
+      };
+    } catch (e) {
+      return {
+        'pendingPayments': <BillPayment>[],
+        'overduePayments': <BillPayment>[],
+        'templates': <String, BillTemplate>{},
+      };
     }
   }
 }

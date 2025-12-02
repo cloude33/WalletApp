@@ -15,23 +15,30 @@ class DecimalInputFormatter extends TextInputFormatter {
       return newValue;
     }
 
-    // Allow digits, comma, and dot
+    // Sadece rakam, virgül ve nokta kabul et
     String newText = newValue.text.replaceAll(RegExp(r'[^0-9,.]'), '');
 
     if (newText.isEmpty) {
       return const TextEditingValue();
     }
 
-    // Replace comma with dot for decimal separator
+    // Türkiye formatı: 100.000,28
+    // Nokta (.) binlik ayırıcı, virgül (,) ondalık ayırıcı
+    // Ancak hesaplama için hepsini standart formata çevireceğiz
+    
+    // Önce tüm noktaları (binlik ayırıcı) kaldır
+    newText = newText.replaceAll('.', '');
+    
+    // Virgülü noktaya çevir (ondalık ayırıcı)
     newText = newText.replaceAll(',', '.');
 
-    // Ensure only one decimal point
+    // Sadece bir ondalık nokta olsun
     final parts = newText.split('.');
     if (parts.length > 2) {
       newText = '${parts[0]}.${parts.sublist(1).join('')}';
     }
 
-    // Limit decimal places to 2
+    // Ondalık kısmı maksimum 2 basamak
     if (parts.length == 2 && parts[1].length > 2) {
       newText = '${parts[0]}.${parts[1].substring(0, 2)}';
     }
@@ -46,7 +53,7 @@ class DecimalInputFormatter extends TextInputFormatter {
 class AddWalletScreen extends StatefulWidget {
   final Function(Wallet)? onWalletAdded;
 
-  const AddWalletScreen({Key? key, this.onWalletAdded}) : super(key: key);
+  const AddWalletScreen({super.key, this.onWalletAdded});
 
   @override
   State<AddWalletScreen> createState() => _AddWalletScreenState();
@@ -553,7 +560,7 @@ class _AddWalletScreenState extends State<AddWalletScreen> {
                                   ),
                                   boxShadow: [
                                     BoxShadow(
-                                      color: Colors.grey.withOpacity(0.2),
+                                      color: Colors.grey.withValues(alpha: 0.2),
                                       spreadRadius: 1,
                                       blurRadius: 4,
                                       offset: const Offset(0, 2),

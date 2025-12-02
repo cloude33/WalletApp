@@ -172,7 +172,7 @@ class _DebtListScreenState extends State<DebtListScreen>
                     filled: true,
                     fillColor: Theme.of(context).brightness == Brightness.dark
                         ? Colors.grey[800]
-                        : Colors.white.withOpacity(0.9),
+                        : Colors.white.withValues(alpha: 0.9),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                       borderSide: BorderSide.none,
@@ -348,7 +348,7 @@ class _DebtListScreenState extends State<DebtListScreen>
               Row(
                 children: [
                   CircleAvatar(
-                    backgroundColor: color.withOpacity(0.1),
+                    backgroundColor: color.withValues(alpha: 0.1),
                     child: Icon(icon, color: color),
                   ),
                   const SizedBox(width: 12),

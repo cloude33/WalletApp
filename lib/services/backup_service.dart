@@ -7,6 +7,7 @@ import 'package:path/path.dart' as path;
 import 'package:share_plus/share_plus.dart';
 import '../models/backup_metadata.dart';
 import 'data_service.dart';
+import '../repositories/recurring_transaction_repository.dart';
 
 /// Service for creating and restoring backups
 class BackupService {
@@ -18,7 +19,12 @@ class BackupService {
     final transactions = await _dataService.getTransactions();
     final budgets = await _dataService.getBudgets();
     final wallets = await _dataService.getWallets();
-    final recurringTransactions = await _dataService.getRecurringTransactions();
+
+    // Get recurring transactions from repository
+    final recurringRepo = RecurringTransactionRepository();
+    await recurringRepo.init();
+    final recurringTransactions = recurringRepo.getAll();
+
     final categories = await _dataService.getCategories();
 
     // Create metadata
@@ -36,8 +42,9 @@ class BackupService {
       'transactions': transactions.map((t) => t.toJson()).toList(),
       'budgets': budgets.map((b) => b.toJson()).toList(),
       'wallets': wallets.map((w) => w.toJson()).toList(),
-      'recurringTransactions':
-          recurringTransactions.map((rt) => rt.toJson()).toList(),
+      'recurringTransactions': recurringTransactions
+          .map((rt) => rt.toJson())
+          .toList(),
       'categories': categories,
     };
 
@@ -81,16 +88,9 @@ class BackupService {
         throw Exception('Invalid backup file format');
       }
 
-      // Parse metadata
-      final metadata = BackupMetadata.fromJson(backupData['metadata']);
-
       // Restore data (this will replace existing data)
       await _dataService.restoreFromBackup(backupData);
-
-      // Log successful restore
-      print('Backup restored successfully: ${metadata.transactionCount} transactions');
     } catch (e) {
-      print('Error restoring backup: $e');
       rethrow;
     }
   }
@@ -102,12 +102,12 @@ class BackupService {
       final result = await Share.shareXFiles(
         [XFile(backupFile.path)],
         subject: 'Money App Backup',
-        text: 'Backup created on ${DateFormat('yyyy-MM-dd HH:mm').format(DateTime.now())}',
+        text:
+            'Backup created on ${DateFormat('yyyy-MM-dd HH:mm').format(DateTime.now())}',
       );
 
       return result.status == ShareResultStatus.success;
     } catch (e) {
-      print('Error sharing backup: $e');
       return false;
     }
   }
@@ -146,7 +146,6 @@ class BackupService {
       final toDelete = backups.sublist(7);
       for (final file in toDelete) {
         await file.delete();
-        print('Deleted old backup: ${path.basename(file.path)}');
       }
     }
   }
@@ -164,7 +163,6 @@ class BackupService {
       }
       return null;
     } catch (e) {
-      print('Error reading backup metadata: $e');
       return null;
     }
   }
@@ -173,8 +171,6 @@ class BackupService {
   Future<void> scheduleAutomaticBackup(TimeOfDay time) async {
     // This would integrate with WorkManager for Android
     // and Background Fetch for iOS
-    // For now, just log the intent
-    print('Automatic backup scheduled for ${time.hour}:${time.minute}');
   }
 }
 

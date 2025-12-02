@@ -40,7 +40,7 @@ class _EditTransactionScreenState extends State<EditTransactionScreen> {
   late DateTime _selectedDate;
   CategorySuggestion? _suggestion;
 
-  // Türkçe tarih formatı
+  // Türkçe tarih formatı (saat ile birlikte)
   String _formatDateTurkish(DateTime date) {
     final months = [
       'Ocak',
@@ -56,7 +56,11 @@ class _EditTransactionScreenState extends State<EditTransactionScreen> {
       'Kasım',
       'Aralık',
     ];
-    return '${date.day} ${months[date.month - 1]} ${date.year}';
+
+    final hours = date.hour.toString().padLeft(2, '0');
+    final minutes = date.minute.toString().padLeft(2, '0');
+
+    return '${date.day} ${months[date.month - 1]} ${date.year} $hours:$minutes';
   }
 
   // Wallet name'den kesim ve ödeme tarihi bilgilerini temizle
@@ -119,7 +123,7 @@ class _EditTransactionScreenState extends State<EditTransactionScreen> {
   }
 
   Future<void> _loadCategories() async {
-    final categories = await _dataService.getCategories();
+    final categories = (await _dataService.getCategories()).cast<Category>();
     if (mounted) {
       setState(() {
         _categories = categories;
@@ -152,7 +156,16 @@ class _EditTransactionScreenState extends State<EditTransactionScreen> {
     if (_selectedWalletId != null) {
       final wallet = widget.wallets.firstWhere(
         (w) => w.id == _selectedWalletId,
-        orElse: () => widget.wallets.isNotEmpty ? widget.wallets.first : Wallet(id: '', name: '', balance: 0, type: 'cash', color: '0xFF5E5CE6', icon: 'wallet'),
+        orElse: () => widget.wallets.isNotEmpty
+            ? widget.wallets.first
+            : Wallet(
+                id: '',
+                name: '',
+                balance: 0,
+                type: 'cash',
+                color: '0xFF5E5CE6',
+                icon: 'wallet',
+              ),
       );
       isCreditCardWallet = wallet.type == 'credit_card';
     }
@@ -454,7 +467,10 @@ class _EditTransactionScreenState extends State<EditTransactionScreen> {
 
   Future<void> _onDescriptionChanged(String value) async {
     if (value.length > 3) {
-      final suggestion = await _smartService.suggestCategory(value, _selectedType);
+      final suggestion = await _smartService.suggestCategory(
+        value,
+        _selectedType,
+      );
       if (mounted) {
         setState(() {
           _suggestion = suggestion;
@@ -510,7 +526,7 @@ class _EditTransactionScreenState extends State<EditTransactionScreen> {
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: Colors.amber.withOpacity(0.1),
+              color: Colors.amber.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(8),
               border: Border.all(color: Colors.amber, width: 1.5),
             ),
@@ -531,10 +547,7 @@ class _EditTransactionScreenState extends State<EditTransactionScreen> {
                       ),
                       Text(
                         '${_suggestion!.reason} • %${(_suggestion!.confidence * 100).toInt()} güven',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.grey[700],
-                        ),
+                        style: TextStyle(fontSize: 12, color: Colors.grey[700]),
                       ),
                     ],
                   ),
@@ -543,7 +556,10 @@ class _EditTransactionScreenState extends State<EditTransactionScreen> {
                   onPressed: _applySuggestion,
                   style: TextButton.styleFrom(
                     foregroundColor: Colors.amber[800],
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 8,
+                    ),
                   ),
                   child: const Text('Uygula'),
                 ),
@@ -600,7 +616,7 @@ class _EditTransactionScreenState extends State<EditTransactionScreen> {
                           Container(
                             padding: const EdgeInsets.all(8),
                             decoration: BoxDecoration(
-                              color: cat.color.withOpacity(0.2),
+                              color: cat.color.withValues(alpha: 0.2),
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: Icon(cat.icon, color: cat.color, size: 20),
@@ -620,7 +636,7 @@ class _EditTransactionScreenState extends State<EditTransactionScreen> {
                       Container(
                         padding: const EdgeInsets.all(6),
                         decoration: BoxDecoration(
-                          color: cat.color.withOpacity(0.2),
+                          color: cat.color.withValues(alpha: 0.2),
                           borderRadius: BorderRadius.circular(6),
                         ),
                         child: Icon(cat.icon, color: cat.color, size: 16),
@@ -645,7 +661,7 @@ class _EditTransactionScreenState extends State<EditTransactionScreen> {
         const Text('Cüzdan', style: TextStyle(fontWeight: FontWeight.bold)),
         const SizedBox(height: 8),
         DropdownButtonFormField<String>(
-          value: _selectedWalletId,
+          initialValue: _selectedWalletId,
           decoration: InputDecoration(
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
           ),
@@ -808,7 +824,7 @@ class _EditTransactionScreenState extends State<EditTransactionScreen> {
               child: Container(
                 padding: const EdgeInsets.all(6),
                 decoration: BoxDecoration(
-                  color: Colors.black.withOpacity(0.6),
+                  color: Colors.black.withValues(alpha: 0.6),
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(Icons.close, color: Colors.white, size: 18),
@@ -835,7 +851,7 @@ class _EditTransactionScreenState extends State<EditTransactionScreen> {
               context: context,
               builder: (BuildContext context) {
                 return Container(
-                  height: 300,
+                  height: 400,
                   decoration: BoxDecoration(
                     color: Theme.of(context).cardColor,
                     borderRadius: const BorderRadius.only(
@@ -863,7 +879,7 @@ class _EditTransactionScreenState extends State<EditTransactionScreen> {
                               ),
                             ),
                             const Text(
-                              'Tarih Seç',
+                              'Tarih ve Saat Seç',
                               style: TextStyle(
                                 fontSize: 17,
                                 fontWeight: FontWeight.w600,
@@ -883,16 +899,57 @@ class _EditTransactionScreenState extends State<EditTransactionScreen> {
                         ),
                       ),
                       Expanded(
-                        child: CupertinoDatePicker(
-                          mode: CupertinoDatePickerMode.date,
-                          initialDateTime: _selectedDate,
-                          minimumDate: DateTime(2020),
-                          maximumDate: DateTime.now(),
-                          onDateTimeChanged: (DateTime newDate) {
-                            setState(() {
-                              _selectedDate = newDate;
-                            });
-                          },
+                        child: Column(
+                          children: [
+                            // Date picker
+                            Expanded(
+                              child: CupertinoDatePicker(
+                                mode: CupertinoDatePickerMode.date,
+                                initialDateTime:
+                                    _selectedDate.isAfter(DateTime.now())
+                                    ? DateTime.now()
+                                    : _selectedDate,
+                                minimumDate: DateTime(2020),
+                                maximumDate: DateTime.now(),
+                                onDateTimeChanged: (DateTime newDate) {
+                                  setState(() {
+                                    // Preserve time when changing date
+                                    _selectedDate = DateTime(
+                                      newDate.year,
+                                      newDate.month,
+                                      newDate.day,
+                                      _selectedDate.hour,
+                                      _selectedDate.minute,
+                                    );
+                                  });
+                                },
+                              ),
+                            ),
+                            // Time picker
+                            SizedBox(
+                              height: 100,
+                              child: CupertinoDatePicker(
+                                mode: CupertinoDatePickerMode.time,
+                                initialDateTime:
+                                    _selectedDate.isAfter(DateTime.now())
+                                    ? DateTime.now()
+                                    : _selectedDate,
+                                use24hFormat: true,
+                                onDateTimeChanged: (DateTime newTime) {
+                                  setState(() {
+                                    // Preserve date when changing time
+                                    _selectedDate = DateTime(
+                                      _selectedDate.year,
+                                      _selectedDate.month,
+                                      _selectedDate.day,
+                                      newTime.hour,
+                                      newTime.minute,
+                                    );
+                                  });
+                                },
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ],
