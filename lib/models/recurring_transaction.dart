@@ -74,21 +74,29 @@ class RecurringTransaction extends HiveObject {
 
   DateTime? get nextDate {
     if (!isActive) return null;
-    
+
     // Eğer hiç işlem oluşturulmadıysa, başlangıç tarihini kullan
     if (lastCreatedDate == null) {
       final next = startDate;
-      if (endDate != null && next.isAfter(endDate!)) return null;
-      if (occurrenceCount != null && createdCount >= occurrenceCount!) return null;
+      if (endDate != null && next.isAfter(endDate!)) {
+        return null;
+      }
+      if (occurrenceCount != null && createdCount >= occurrenceCount!) {
+        return null;
+      }
       return next;
     }
-    
+
     // Son oluşturulan tarihten sonraki tarihi hesapla
     final next = _calculateNextDate(lastCreatedDate!);
-    
-    if (endDate != null && next.isAfter(endDate!)) return null;
-    if (occurrenceCount != null && createdCount >= occurrenceCount!) return null;
-    
+
+    if (endDate != null && next.isAfter(endDate!)) {
+      return null;
+    }
+    if (occurrenceCount != null && createdCount >= occurrenceCount!) {
+      return null;
+    }
+
     return next;
   }
 
@@ -106,17 +114,21 @@ class RecurringTransaction extends HiveObject {
   }
 
   bool get shouldDeactivate {
-    if (endDate != null && DateTime.now().isAfter(endDate!)) return true;
-    if (occurrenceCount != null && createdCount >= occurrenceCount!) return true;
+    if (endDate != null && DateTime.now().isAfter(endDate!)) {
+      return true;
+    }
+    if (occurrenceCount != null && createdCount >= occurrenceCount!) {
+      return true;
+    }
     return false;
   }
 
   bool shouldProcess(DateTime currentDate) {
     if (!isActive) return false;
-    
+
     final next = nextDate;
     if (next == null) return false;
-    
+
     return next.isBefore(currentDate) || next.isAtSameMomentAs(currentDate);
   }
 
@@ -188,10 +200,14 @@ class RecurringTransaction extends HiveObject {
       description: json['description'] as String?,
       frequency: RecurrenceFrequency.values[json['frequency'] as int],
       startDate: DateTime.parse(json['startDate'] as String),
-      endDate: json['endDate'] != null ? DateTime.parse(json['endDate'] as String) : null,
+      endDate: json['endDate'] != null
+          ? DateTime.parse(json['endDate'] as String)
+          : null,
       occurrenceCount: json['occurrenceCount'] as int?,
       createdCount: json['createdCount'] as int? ?? 0,
-      lastCreatedDate: json['lastCreatedDate'] != null ? DateTime.parse(json['lastCreatedDate'] as String) : null,
+      lastCreatedDate: json['lastCreatedDate'] != null
+          ? DateTime.parse(json['lastCreatedDate'] as String)
+          : null,
       isActive: json['isActive'] as bool? ?? true,
       isIncome: json['isIncome'] as bool,
       createdAt: DateTime.parse(json['createdAt'] as String),

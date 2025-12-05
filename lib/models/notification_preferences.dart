@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 
 class NotificationPreferences {
-  final bool budgetAlertsEnabled;
-  final int budgetAlertThreshold; // percentage (default 80)
   final bool dailySummaryEnabled;
   final TimeOfDay dailySummaryTime;
   final bool weeklySummaryEnabled;
@@ -11,10 +9,22 @@ class NotificationPreferences {
   final int billReminderDays; // days before due date (default 3)
   final bool installmentRemindersEnabled;
   final int installmentReminderDays; // days before due date (default 5)
+  
+  // Credit card payment reminders
+  final bool paymentRemindersEnabled;
+  final List<int> paymentReminderDays; // days before due date (3, 5, 7)
+  
+  // Limit alerts
+  final bool limitAlertsEnabled;
+  final List<double> limitAlertThresholds; // thresholds (80%, 90%, 100%)
+  
+  // Statement cut notifications
+  final bool statementCutNotificationsEnabled;
+  
+  // Installment ending notifications
+  final bool installmentEndingNotificationsEnabled;
 
   const NotificationPreferences({
-    required this.budgetAlertsEnabled,
-    required this.budgetAlertThreshold,
     required this.dailySummaryEnabled,
     required this.dailySummaryTime,
     required this.weeklySummaryEnabled,
@@ -23,45 +33,57 @@ class NotificationPreferences {
     required this.billReminderDays,
     required this.installmentRemindersEnabled,
     required this.installmentReminderDays,
+    required this.paymentRemindersEnabled,
+    required this.paymentReminderDays,
+    required this.limitAlertsEnabled,
+    required this.limitAlertThresholds,
+    required this.statementCutNotificationsEnabled,
+    required this.installmentEndingNotificationsEnabled,
   });
 
   /// Default preferences
   static NotificationPreferences get defaults => const NotificationPreferences(
-        budgetAlertsEnabled: true,
-        budgetAlertThreshold: 80,
-        dailySummaryEnabled: false,
-        dailySummaryTime: TimeOfDay(hour: 20, minute: 0), // 8 PM
-        weeklySummaryEnabled: false,
-        weeklySummaryTime: TimeOfDay(hour: 9, minute: 0), // 9 AM Monday
-        billRemindersEnabled: true,
-        billReminderDays: 3,
-        installmentRemindersEnabled: true,
-        installmentReminderDays: 5,
-      );
+    dailySummaryEnabled: false,
+    dailySummaryTime: TimeOfDay(hour: 20, minute: 0), // 8 PM
+    weeklySummaryEnabled: false,
+    weeklySummaryTime: TimeOfDay(hour: 9, minute: 0), // 9 AM Monday
+    billRemindersEnabled: true,
+    billReminderDays: 3,
+    installmentRemindersEnabled: true,
+    installmentReminderDays: 5,
+    paymentRemindersEnabled: true,
+    paymentReminderDays: [3, 7], // 3 and 7 days before
+    limitAlertsEnabled: true,
+    limitAlertThresholds: [80.0, 90.0, 100.0], // 80%, 90%, 100%
+    statementCutNotificationsEnabled: true,
+    installmentEndingNotificationsEnabled: true,
+  );
 
   Map<String, dynamic> toJson() => {
-        'budgetAlertsEnabled': budgetAlertsEnabled,
-        'budgetAlertThreshold': budgetAlertThreshold,
-        'dailySummaryEnabled': dailySummaryEnabled,
-        'dailySummaryTime': {
-          'hour': dailySummaryTime.hour,
-          'minute': dailySummaryTime.minute,
-        },
-        'weeklySummaryEnabled': weeklySummaryEnabled,
-        'weeklySummaryTime': {
-          'hour': weeklySummaryTime.hour,
-          'minute': weeklySummaryTime.minute,
-        },
-        'billRemindersEnabled': billRemindersEnabled,
-        'billReminderDays': billReminderDays,
-        'installmentRemindersEnabled': installmentRemindersEnabled,
-        'installmentReminderDays': installmentReminderDays,
-      };
+    'dailySummaryEnabled': dailySummaryEnabled,
+    'dailySummaryTime': {
+      'hour': dailySummaryTime.hour,
+      'minute': dailySummaryTime.minute,
+    },
+    'weeklySummaryEnabled': weeklySummaryEnabled,
+    'weeklySummaryTime': {
+      'hour': weeklySummaryTime.hour,
+      'minute': weeklySummaryTime.minute,
+    },
+    'billRemindersEnabled': billRemindersEnabled,
+    'billReminderDays': billReminderDays,
+    'installmentRemindersEnabled': installmentRemindersEnabled,
+    'installmentReminderDays': installmentReminderDays,
+    'paymentRemindersEnabled': paymentRemindersEnabled,
+    'paymentReminderDays': paymentReminderDays,
+    'limitAlertsEnabled': limitAlertsEnabled,
+    'limitAlertThresholds': limitAlertThresholds,
+    'statementCutNotificationsEnabled': statementCutNotificationsEnabled,
+    'installmentEndingNotificationsEnabled': installmentEndingNotificationsEnabled,
+  };
 
   factory NotificationPreferences.fromJson(Map<String, dynamic> json) {
     return NotificationPreferences(
-      budgetAlertsEnabled: json['budgetAlertsEnabled'] ?? true,
-      budgetAlertThreshold: json['budgetAlertThreshold'] ?? 80,
       dailySummaryEnabled: json['dailySummaryEnabled'] ?? false,
       dailySummaryTime: json['dailySummaryTime'] != null
           ? TimeOfDay(
@@ -80,12 +102,20 @@ class NotificationPreferences {
       billReminderDays: json['billReminderDays'] ?? 3,
       installmentRemindersEnabled: json['installmentRemindersEnabled'] ?? true,
       installmentReminderDays: json['installmentReminderDays'] ?? 5,
+      paymentRemindersEnabled: json['paymentRemindersEnabled'] ?? true,
+      paymentReminderDays: json['paymentReminderDays'] != null
+          ? List<int>.from(json['paymentReminderDays'])
+          : [3, 7],
+      limitAlertsEnabled: json['limitAlertsEnabled'] ?? true,
+      limitAlertThresholds: json['limitAlertThresholds'] != null
+          ? List<double>.from(json['limitAlertThresholds'])
+          : [80.0, 90.0, 100.0],
+      statementCutNotificationsEnabled: json['statementCutNotificationsEnabled'] ?? true,
+      installmentEndingNotificationsEnabled: json['installmentEndingNotificationsEnabled'] ?? true,
     );
   }
 
   NotificationPreferences copyWith({
-    bool? budgetAlertsEnabled,
-    int? budgetAlertThreshold,
     bool? dailySummaryEnabled,
     TimeOfDay? dailySummaryTime,
     bool? weeklySummaryEnabled,
@@ -94,10 +124,14 @@ class NotificationPreferences {
     int? billReminderDays,
     bool? installmentRemindersEnabled,
     int? installmentReminderDays,
+    bool? paymentRemindersEnabled,
+    List<int>? paymentReminderDays,
+    bool? limitAlertsEnabled,
+    List<double>? limitAlertThresholds,
+    bool? statementCutNotificationsEnabled,
+    bool? installmentEndingNotificationsEnabled,
   }) {
     return NotificationPreferences(
-      budgetAlertsEnabled: budgetAlertsEnabled ?? this.budgetAlertsEnabled,
-      budgetAlertThreshold: budgetAlertThreshold ?? this.budgetAlertThreshold,
       dailySummaryEnabled: dailySummaryEnabled ?? this.dailySummaryEnabled,
       dailySummaryTime: dailySummaryTime ?? this.dailySummaryTime,
       weeklySummaryEnabled: weeklySummaryEnabled ?? this.weeklySummaryEnabled,
@@ -108,6 +142,12 @@ class NotificationPreferences {
           installmentRemindersEnabled ?? this.installmentRemindersEnabled,
       installmentReminderDays:
           installmentReminderDays ?? this.installmentReminderDays,
+      paymentRemindersEnabled: paymentRemindersEnabled ?? this.paymentRemindersEnabled,
+      paymentReminderDays: paymentReminderDays ?? this.paymentReminderDays,
+      limitAlertsEnabled: limitAlertsEnabled ?? this.limitAlertsEnabled,
+      limitAlertThresholds: limitAlertThresholds ?? this.limitAlertThresholds,
+      statementCutNotificationsEnabled: statementCutNotificationsEnabled ?? this.statementCutNotificationsEnabled,
+      installmentEndingNotificationsEnabled: installmentEndingNotificationsEnabled ?? this.installmentEndingNotificationsEnabled,
     );
   }
 }

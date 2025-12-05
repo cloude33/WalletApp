@@ -3,13 +3,16 @@ import '../repositories/credit_card_transaction_repository.dart';
 import '../repositories/credit_card_repository.dart';
 
 class InstallmentTrackerService {
-  final CreditCardTransactionRepository _transactionRepo = CreditCardTransactionRepository();
+  final CreditCardTransactionRepository _transactionRepo =
+      CreditCardTransactionRepository();
   final CreditCardRepository _cardRepo = CreditCardRepository();
 
   // ==================== INSTALLMENT TRACKING ====================
 
   /// Get active installments for a specific card
-  Future<List<CreditCardTransaction>> getActiveInstallments(String cardId) async {
+  Future<List<CreditCardTransaction>> getActiveInstallments(
+    String cardId,
+  ) async {
     return await _transactionRepo.findActiveInstallments(cardId);
   }
 
@@ -64,8 +67,11 @@ class InstallmentTrackerService {
 
     // Aggregate projections from all cards
     for (var card in cards) {
-      final cardProjection = await getFutureInstallmentProjection(card.id, months);
-      
+      final cardProjection = await getFutureInstallmentProjection(
+        card.id,
+        months,
+      );
+
       for (var entry in cardProjection.entries) {
         projection[entry.key] = (projection[entry.key] ?? 0) + entry.value;
       }
@@ -94,7 +100,8 @@ class InstallmentTrackerService {
 
       // Add to total
       for (var entry in projection.entries) {
-        totalProjection[entry.key] = (totalProjection[entry.key] ?? 0) + entry.value;
+        totalProjection[entry.key] =
+            (totalProjection[entry.key] ?? 0) + entry.value;
       }
     }
 
@@ -132,12 +139,15 @@ class InstallmentTrackerService {
     DateTime statementDate,
   ) async {
     final allTransactions = await _transactionRepo.findByCardId(cardId);
-    
+
     // Find installment transactions that need processing
-    final installmentTransactions = allTransactions.where((t) =>
-      t.installmentCount > 1 &&
-      !t.isCompleted &&
-      t.transactionDate.isBefore(statementDate.add(const Duration(days: 1)))
+    final installmentTransactions = allTransactions.where(
+      (t) =>
+          t.installmentCount > 1 &&
+          !t.isCompleted &&
+          t.transactionDate.isBefore(
+            statementDate.add(const Duration(days: 1)),
+          ),
     );
 
     for (var transaction in installmentTransactions) {
@@ -165,7 +175,7 @@ class InstallmentTrackerService {
   /// Get installment summary for a card
   Future<Map<String, dynamic>> getInstallmentSummary(String cardId) async {
     final activeInstallments = await getActiveInstallments(cardId);
-    
+
     if (activeInstallments.isEmpty) {
       return {
         'activeCount': 0,
@@ -195,7 +205,9 @@ class InstallmentTrackerService {
   }
 
   /// Get installment details with payment schedule
-  Future<Map<String, dynamic>> getInstallmentDetails(String transactionId) async {
+  Future<Map<String, dynamic>> getInstallmentDetails(
+    String transactionId,
+  ) async {
     final transaction = await _transactionRepo.findById(transactionId);
     if (transaction == null) {
       throw Exception('İşlem bulunamadı');
@@ -259,14 +271,14 @@ class InstallmentTrackerService {
   /// Calculate when all installments will be paid off
   Future<DateTime?> calculatePayoffDate(String cardId) async {
     final activeInstallments = await getActiveInstallments(cardId);
-    
+
     if (activeInstallments.isEmpty) {
       return null;
     }
 
     // Find the installment with the most remaining payments
     int maxRemainingMonths = 0;
-    
+
     for (var transaction in activeInstallments) {
       if (transaction.remainingInstallments > maxRemainingMonths) {
         maxRemainingMonths = transaction.remainingInstallments;
@@ -280,10 +292,16 @@ class InstallmentTrackerService {
   /// Get installment statistics
   Future<Map<String, dynamic>> getInstallmentStatistics(String cardId) async {
     final allTransactions = await _transactionRepo.findByCardId(cardId);
-    
-    final installmentTransactions = allTransactions.where((t) => t.installmentCount > 1);
-    final completedInstallments = installmentTransactions.where((t) => t.isCompleted);
-    final activeInstallments = installmentTransactions.where((t) => !t.isCompleted);
+
+    final installmentTransactions = allTransactions.where(
+      (t) => t.installmentCount > 1,
+    );
+    final completedInstallments = installmentTransactions.where(
+      (t) => t.isCompleted,
+    );
+    final activeInstallments = installmentTransactions.where(
+      (t) => !t.isCompleted,
+    );
 
     final totalInstallmentPurchases = installmentTransactions.fold<double>(
       0,
@@ -314,16 +332,23 @@ class InstallmentTrackerService {
   /// Compare installment vs cash purchases
   Future<Map<String, dynamic>> compareInstallmentVsCash(String cardId) async {
     final allTransactions = await _transactionRepo.findByCardId(cardId);
-    
+
     final cashPurchases = allTransactions.where((t) => t.installmentCount == 1);
-    final installmentPurchases = allTransactions.where((t) => t.installmentCount > 1);
+    final installmentPurchases = allTransactions.where(
+      (t) => t.installmentCount > 1,
+    );
 
     final cashTotal = cashPurchases.fold<double>(0, (sum, t) => sum + t.amount);
-    final installmentTotal = installmentPurchases.fold<double>(0, (sum, t) => sum + t.amount);
+    final installmentTotal = installmentPurchases.fold<double>(
+      0,
+      (sum, t) => sum + t.amount,
+    );
     final grandTotal = cashTotal + installmentTotal;
 
     final cashPercentage = grandTotal > 0 ? (cashTotal / grandTotal) * 100 : 0;
-    final installmentPercentage = grandTotal > 0 ? (installmentTotal / grandTotal) * 100 : 0;
+    final installmentPercentage = grandTotal > 0
+        ? (installmentTotal / grandTotal) * 100
+        : 0;
 
     return {
       'cashCount': cashPurchases.length,

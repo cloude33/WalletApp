@@ -44,6 +44,24 @@ class CreditCard extends HiveObject {
   @HiveField(12)
   double initialDebt; // Başlangıç borcu (önceki aydan kalan)
 
+  @HiveField(13)
+  String? cardImagePath; // Kullanıcı yüklediği fotoğraf
+
+  @HiveField(14)
+  String? iconName; // Seçilen ikon
+
+  @HiveField(15)
+  String? rewardType; // 'bonus', 'worldpuan', 'miles', 'cashback'
+
+  @HiveField(16)
+  double? pointsConversionRate; // 1 puan = X TL
+
+  @HiveField(17)
+  double? cashAdvanceRate; // Nakit avans faiz oranı
+
+  @HiveField(18)
+  double? cashAdvanceLimit; // Nakit avans limiti
+
   CreditCard({
     required this.id,
     required this.bankName,
@@ -58,6 +76,12 @@ class CreditCard extends HiveObject {
     required this.createdAt,
     this.isActive = true,
     this.initialDebt = 0,
+    this.cardImagePath,
+    this.iconName,
+    this.rewardType,
+    this.pointsConversionRate,
+    this.cashAdvanceRate,
+    this.cashAdvanceLimit,
   });
 
   // Computed properties
@@ -106,6 +130,12 @@ class CreditCard extends HiveObject {
     DateTime? createdAt,
     bool? isActive,
     double? initialDebt,
+    String? cardImagePath,
+    String? iconName,
+    String? rewardType,
+    double? pointsConversionRate,
+    double? cashAdvanceRate,
+    double? cashAdvanceLimit,
   }) {
     return CreditCard(
       id: id ?? this.id,
@@ -121,6 +151,12 @@ class CreditCard extends HiveObject {
       createdAt: createdAt ?? this.createdAt,
       isActive: isActive ?? this.isActive,
       initialDebt: initialDebt ?? this.initialDebt,
+      cardImagePath: cardImagePath ?? this.cardImagePath,
+      iconName: iconName ?? this.iconName,
+      rewardType: rewardType ?? this.rewardType,
+      pointsConversionRate: pointsConversionRate ?? this.pointsConversionRate,
+      cashAdvanceRate: cashAdvanceRate ?? this.cashAdvanceRate,
+      cashAdvanceLimit: cashAdvanceLimit ?? this.cashAdvanceLimit,
     );
   }
 

@@ -44,7 +44,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
     try {
       final uuid = const Uuid().v4();
-      
+
       // Create user profile for authentication
       final profile = UserProfile(
         id: uuid,
@@ -109,7 +109,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       final account = await _authService.signInWithGoogle();
       if (account != null) {
         final uuid = const Uuid().v4();
-        
+
         // Create user profile from Google account
         final profile = UserProfile(
           id: uuid,
@@ -252,10 +252,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 const SizedBox(height: 8),
                 const Text(
                   'Finansal yolculuğunuza başlayın',
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: Color(0xFF8E8E93),
-                  ),
+                  style: TextStyle(fontSize: 16, color: Color(0xFF8E8E93)),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 32),
@@ -273,9 +270,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: Color(0xFFFDB32A), width: 2),
+                      borderSide: const BorderSide(
+                        color: Color(0xFFFDB32A),
+                        width: 2,
+                      ),
                     ),
-                    prefixIcon: const Icon(Icons.person, color: Color(0xFF8E8E93)),
+                    prefixIcon: const Icon(
+                      Icons.person,
+                      color: Color(0xFF8E8E93),
+                    ),
                   ),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
@@ -299,9 +302,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: Color(0xFFFDB32A), width: 2),
+                      borderSide: const BorderSide(
+                        color: Color(0xFFFDB32A),
+                        width: 2,
+                      ),
                     ),
-                    prefixIcon: const Icon(Icons.email, color: Color(0xFF8E8E93)),
+                    prefixIcon: const Icon(
+                      Icons.email,
+                      color: Color(0xFF8E8E93),
+                    ),
                   ),
                   keyboardType: TextInputType.emailAddress,
                   validator: (value) {
@@ -329,9 +338,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: Color(0xFFFDB32A), width: 2),
+                      borderSide: const BorderSide(
+                        color: Color(0xFFFDB32A),
+                        width: 2,
+                      ),
                     ),
-                    prefixIcon: const Icon(Icons.lock, color: Color(0xFF8E8E93)),
+                    prefixIcon: const Icon(
+                      Icons.lock,
+                      color: Color(0xFF8E8E93),
+                    ),
                     suffixIcon: IconButton(
                       icon: Icon(
                         _showPassword ? Icons.visibility : Icons.visibility_off,
@@ -368,9 +383,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: Color(0xFFFDB32A), width: 2),
+                      borderSide: const BorderSide(
+                        color: Color(0xFFFDB32A),
+                        width: 2,
+                      ),
                     ),
-                    prefixIcon: const Icon(Icons.lock_outline, color: Color(0xFF8E8E93)),
+                    prefixIcon: const Icon(
+                      Icons.lock_outline,
+                      color: Color(0xFF8E8E93),
+                    ),
                     suffixIcon: IconButton(
                       icon: Icon(
                         _showConfirmPassword
@@ -379,8 +400,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         color: const Color(0xFF8E8E93),
                       ),
                       onPressed: () {
-                        setState(() =>
-                            _showConfirmPassword = !_showConfirmPassword);
+                        setState(
+                          () => _showConfirmPassword = !_showConfirmPassword,
+                        );
                       },
                     ),
                   ),
@@ -414,8 +436,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             width: 24,
                             child: CircularProgressIndicator(
                               strokeWidth: 2,
-                              valueColor:
-                                  AlwaysStoppedAnimation<Color>(Colors.white),
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                Colors.white,
+                              ),
                             ),
                           )
                         : const Text(
@@ -477,7 +500,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     Expanded(
                       child: OutlinedButton.icon(
                         onPressed: _isLoading ? null : _handleAppleSignIn,
-                        icon: const Icon(Icons.apple, size: 24, color: Color(0xFF1C1C1E)),
+                        icon: const Icon(
+                          Icons.apple,
+                          size: 24,
+                          color: Color(0xFF1C1C1E),
+                        ),
                         label: const Text(
                           'Apple',
                           style: TextStyle(color: Color(0xFF1C1C1E)),

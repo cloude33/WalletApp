@@ -94,7 +94,8 @@ class Transaction {
       installments: installments ?? this.installments,
       currentInstallment: currentInstallment ?? this.currentInstallment,
       parentTransactionId: parentTransactionId ?? this.parentTransactionId,
-      recurringTransactionId: recurringTransactionId ?? this.recurringTransactionId,
+      recurringTransactionId:
+          recurringTransactionId ?? this.recurringTransactionId,
       isIncome: isIncome ?? this.isIncome,
     );
   }

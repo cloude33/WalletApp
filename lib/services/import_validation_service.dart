@@ -12,7 +12,7 @@ class ImportValidationService {
   /// Detect file format from extension
   String detectFileFormat(String filePath) {
     final extension = filePath.split('.').last.toLowerCase();
-    
+
     switch (extension) {
       case 'csv':
         return 'csv';
@@ -32,7 +32,7 @@ class ImportValidationService {
   /// Validate file exists and is readable
   Future<bool> validateFile(String filePath) async {
     final file = File(filePath);
-    
+
     if (!await file.exists()) {
       throw Exception('File not found: $filePath');
     }
@@ -54,40 +54,48 @@ class ImportValidationService {
 
     // Validate amount
     if (transaction.amount <= 0) {
-      errors.add(ImportError(
-        rowNumber: rowNumber,
-        field: 'amount',
-        message: 'Amount must be greater than 0',
-        value: transaction.amount.toString(),
-      ));
+      errors.add(
+        ImportError(
+          rowNumber: rowNumber,
+          field: 'amount',
+          message: 'Amount must be greater than 0',
+          value: transaction.amount.toString(),
+        ),
+      );
     }
 
     // Validate description
     if (transaction.description.isEmpty) {
-      errors.add(ImportError(
-        rowNumber: rowNumber,
-        field: 'description',
-        message: 'Description is required',
-      ));
+      errors.add(
+        ImportError(
+          rowNumber: rowNumber,
+          field: 'description',
+          message: 'Description is required',
+        ),
+      );
     }
 
     // Validate category
     if (transaction.category.isEmpty) {
-      errors.add(ImportError(
-        rowNumber: rowNumber,
-        field: 'category',
-        message: 'Category is required',
-      ));
+      errors.add(
+        ImportError(
+          rowNumber: rowNumber,
+          field: 'category',
+          message: 'Category is required',
+        ),
+      );
     }
 
     // Validate type
     if (transaction.type != 'income' && transaction.type != 'expense') {
-      errors.add(ImportError(
-        rowNumber: rowNumber,
-        field: 'type',
-        message: 'Type must be "income" or "expense"',
-        value: transaction.type,
-      ));
+      errors.add(
+        ImportError(
+          rowNumber: rowNumber,
+          field: 'type',
+          message: 'Type must be "income" or "expense"',
+          value: transaction.type,
+        ),
+      );
     }
 
     // Validate date
@@ -96,21 +104,25 @@ class ImportValidationService {
     final pastLimit = now.subtract(const Duration(days: 365 * 10));
 
     if (transaction.date.isAfter(futureLimit)) {
-      errors.add(ImportError(
-        rowNumber: rowNumber,
-        field: 'date',
-        message: 'Date is too far in the future',
-        value: transaction.date.toString(),
-      ));
+      errors.add(
+        ImportError(
+          rowNumber: rowNumber,
+          field: 'date',
+          message: 'Date is too far in the future',
+          value: transaction.date.toString(),
+        ),
+      );
     }
 
     if (transaction.date.isBefore(pastLimit)) {
-      errors.add(ImportError(
-        rowNumber: rowNumber,
-        field: 'date',
-        message: 'Date is too far in the past',
-        value: transaction.date.toString(),
-      ));
+      errors.add(
+        ImportError(
+          rowNumber: rowNumber,
+          field: 'date',
+          message: 'Date is too far in the past',
+          value: transaction.date.toString(),
+        ),
+      );
     }
 
     return errors;
@@ -187,7 +199,7 @@ class ImportValidationService {
     // Similar description (case-insensitive)
     final desc1 = tx1.description.toLowerCase().trim();
     final desc2 = tx2.description.toLowerCase().trim();
-    
+
     if (desc1 == desc2) {
       return true;
     }

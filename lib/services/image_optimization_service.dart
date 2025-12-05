@@ -55,7 +55,9 @@ class ImageOptimizationService {
       final file = File(filePath);
       await file.writeAsBytes(compressed);
 
-      debugPrint('Image compressed: ${bytes.length} -> ${compressed.length} bytes');
+      debugPrint(
+        'Image compressed: ${bytes.length} -> ${compressed.length} bytes',
+      );
 
       return filePath;
     } catch (e) {
@@ -138,14 +140,10 @@ class ImageOptimizationService {
       // Get all image files
       final imageFiles = <File>[];
       if (await imageDir.exists()) {
-        imageFiles.addAll(
-          imageDir.listSync().whereType<File>().toList(),
-        );
+        imageFiles.addAll(imageDir.listSync().whereType<File>().toList());
       }
       if (await thumbDir.exists()) {
-        imageFiles.addAll(
-          thumbDir.listSync().whereType<File>().toList(),
-        );
+        imageFiles.addAll(thumbDir.listSync().whereType<File>().toList());
       }
 
       // Sort by modification time

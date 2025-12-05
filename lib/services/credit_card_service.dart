@@ -7,12 +7,17 @@ import '../repositories/credit_card_statement_repository.dart';
 import '../repositories/credit_card_payment_repository.dart';
 import 'installment_tracker_service.dart';
 import 'statement_generator_service.dart';
+import 'reward_points_service.dart';
+import 'limit_alert_service.dart';
 
 class CreditCardService {
   final CreditCardRepository _cardRepo = CreditCardRepository();
-  final CreditCardTransactionRepository _transactionRepo = CreditCardTransactionRepository();
-  final CreditCardStatementRepository _statementRepo = CreditCardStatementRepository();
-  final CreditCardPaymentRepository _paymentRepo = CreditCardPaymentRepository();
+  final CreditCardTransactionRepository _transactionRepo =
+      CreditCardTransactionRepository();
+  final CreditCardStatementRepository _statementRepo =
+      CreditCardStatementRepository();
+  final CreditCardPaymentRepository _paymentRepo =
+      CreditCardPaymentRepository();
 
   // ==================== CREDIT CARD OPERATIONS ====================
 
@@ -80,7 +85,9 @@ class CreditCardService {
   // ==================== TRANSACTION OPERATIONS ====================
 
   /// Add a new transaction
-  Future<CreditCardTransaction> addTransaction(CreditCardTransaction transaction) async {
+  Future<CreditCardTransaction> addTransaction(
+    CreditCardTransaction transaction,
+  ) async {
     // Validate
     final error = transaction.validate();
     if (error != null) {
@@ -96,14 +103,43 @@ class CreditCardService {
     // Check credit limit
     final currentDebt = await getCurrentDebt(transaction.cardId);
     final availableCredit = card.creditLimit - currentDebt;
-    
+
     if (transaction.amount > availableCredit) {
       throw Exception(
-        'Kredi limiti aşıldı! Kullanılabilir limit: ₺${availableCredit.toStringAsFixed(2)}'
+        'Kredi limiti aşıldı! Kullanılabilir limit: ₺${availableCredit.toStringAsFixed(2)}',
       );
     }
 
+    // Save transaction
     await _transactionRepo.save(transaction);
+
+    // Award points for transaction (if reward system is set up)
+    try {
+      final rewardPointsService = RewardPointsService();
+      final points = await rewardPointsService.calculatePointsForTransaction(
+        transaction.cardId,
+        transaction.amount,
+      );
+      
+      if (points > 0 && !transaction.isCashAdvance) {
+        await rewardPointsService.addPoints(
+          transaction.cardId,
+          points,
+          'Harcama: ${transaction.description}',
+        );
+      }
+    } catch (e) {
+      // Reward system might not be initialized for this card, continue
+    }
+
+    // Check and trigger limit alerts
+    try {
+      final limitAlertService = LimitAlertService();
+      await limitAlertService.checkAndTriggerAlerts(transaction.cardId);
+    } catch (e) {
+      // Limit alerts might not be initialized, continue
+    }
+
     return transaction;
   }
 
@@ -147,7 +183,9 @@ class CreditCardService {
   }
 
   /// Get active installments for a card
-  Future<List<CreditCardTransaction>> getActiveInstallments(String cardId) async {
+  Future<List<CreditCardTransaction>> getActiveInstallments(
+    String cardId,
+  ) async {
     return await _transactionRepo.findActiveInstallments(cardId);
   }
 
@@ -176,14 +214,22 @@ class CreditCardService {
 
     // Save payment
     await _paymentRepo.save(payment);
-    
+
     // Apply payment to statement and get overpayment
     final statementGenerator = StatementGeneratorService();
     final overpayment = await statementGenerator.applyPaymentToStatement(
       payment.statementId,
       payment.amount,
     );
-    
+
+    // Reset limit alerts after payment
+    try {
+      final limitAlertService = LimitAlertService();
+      await limitAlertService.resetAlertsAfterPayment(payment.cardId);
+    } catch (e) {
+      // Limit alerts might not be initialized, continue
+    }
+
     return {
       'payment': payment,
       'overpayment': overpayment,
@@ -205,29 +251,33 @@ class CreditCardService {
     if (card == null) {
       return 0;
     }
-    
+
     // Get all unpaid statements
     final statements = await _statementRepo.findByCardId(cardId);
     final unpaidStatements = statements.where((s) => !s.isPaidFully);
-    
+
     // Sum remaining debt from statements
-    double statementDebt = unpaidStatements.fold<double>(0, (sum, s) => sum + s.remainingDebt);
-    
+    double statementDebt = unpaidStatements.fold<double>(
+      0,
+      (sum, s) => sum + s.remainingDebt,
+    );
+
     // Get all transactions that haven't been included in any statement yet
     final allTransactions = await _transactionRepo.findByCardId(cardId);
-    
+
     // Get the latest statement date, or use card creation date if no statements
     DateTime? latestStatementDate;
     if (statements.isNotEmpty) {
       statements.sort((a, b) => b.periodEnd.compareTo(a.periodEnd));
       latestStatementDate = statements.first.periodEnd;
     }
-    
+
     // Calculate debt from transactions not yet in any statement
     double pendingTransactionDebt = 0;
     for (var transaction in allTransactions) {
       // If transaction is after latest statement (or no statement exists), include it
-      if (latestStatementDate == null || transaction.transactionDate.isAfter(latestStatementDate)) {
+      if (latestStatementDate == null ||
+          transaction.transactionDate.isAfter(latestStatementDate)) {
         // For installment transactions, only count remaining installments
         if (transaction.installmentCount > 1) {
           pendingTransactionDebt += transaction.remainingAmount;
@@ -237,14 +287,14 @@ class CreditCardService {
         }
       }
     }
-    
+
     // Add initial debt if no statements exist yet
     // Once statements are generated, initialDebt should be included in the first statement
     double initialDebtAmount = 0;
     if (statements.isEmpty) {
       initialDebtAmount = card.initialDebt;
     }
-    
+
     return statementDebt + pendingTransactionDebt + initialDebtAmount;
   }
 
@@ -289,15 +339,21 @@ class CreditCardService {
 
     for (var card in cards) {
       final statements = await _statementRepo.findByCardId(card.id);
-      
+
       // Find statements with due date in this month
-      final thisMonthStatements = statements.where((s) =>
-        s.dueDate.isAfter(startOfMonth.subtract(const Duration(seconds: 1))) &&
-        s.dueDate.isBefore(endOfMonth.add(const Duration(days: 1))) &&
-        !s.isPaidFully
+      final thisMonthStatements = statements.where(
+        (s) =>
+            s.dueDate.isAfter(
+              startOfMonth.subtract(const Duration(seconds: 1)),
+            ) &&
+            s.dueDate.isBefore(endOfMonth.add(const Duration(days: 1))) &&
+            !s.isPaidFully,
       );
 
-      totalDue += thisMonthStatements.fold<double>(0, (sum, s) => sum + s.remainingDebt);
+      totalDue += thisMonthStatements.fold<double>(
+        0,
+        (sum, s) => sum + s.remainingDebt,
+      );
     }
 
     return totalDue;
@@ -329,7 +385,7 @@ class CreditCardService {
     // If date has passed, move to next month
     if (nextDate.isBefore(now) || nextDate.isAtSameMomentAs(now)) {
       nextDate = DateTime(now.year, now.month + 1, card.statementDay);
-      
+
       // Handle edge case for next month too
       if (card.statementDay > 28) {
         final lastDayOfNextMonth = DateTime(now.year, now.month + 2, 0).day;
@@ -395,8 +451,9 @@ class CreditCardService {
 
     // Add installment projections
     final installmentTracker = InstallmentTrackerService();
-    final installmentProjection = await installmentTracker.getAllCardsFutureProjection(months);
-    
+    final installmentProjection = await installmentTracker
+        .getAllCardsFutureProjection(months);
+
     for (var entry in installmentProjection.entries) {
       projection[entry.key] = (projection[entry.key] ?? 0) + entry.value;
     }
@@ -407,7 +464,7 @@ class CreditCardService {
       if (currentDebt > 0) {
         // Assume minimum payment for projection
         final minimumPayment = currentDebt * 0.33;
-        
+
         // Add to next month's projection
         final nextMonth = DateTime(now.year, now.month + 1, 1);
         if (projection.containsKey(nextMonth)) {

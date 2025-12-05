@@ -25,7 +25,9 @@ class AboutScreen extends StatelessWidget {
                         borderRadius: BorderRadius.circular(20),
                         boxShadow: [
                           BoxShadow(
-                            color: const Color(0xFF00BFA5).withValues(alpha: 0.3),
+                            color: const Color(
+                              0xFF00BFA5,
+                            ).withValues(alpha: 0.3),
                             blurRadius: 20,
                             offset: const Offset(0, 10),
                           ),
@@ -52,17 +54,18 @@ class AboutScreen extends StatelessWidget {
                   const Center(
                     child: Text(
                       'Versiyon 1.0.0',
-                      style: TextStyle(
-                        fontSize: 16,
-                        color: Color(0xFF8E8E93),
-                      ),
+                      style: TextStyle(fontSize: 16, color: Color(0xFF8E8E93)),
                     ),
                   ),
                   const SizedBox(height: 40),
                   _buildSection(context, 'Geliştirici', [
                     _buildInfoItem(context, 'Geliştirici', 'WalletApp Team'),
                     _buildInfoItem(context, 'Web Sitesi', 'www.walletapp.com'),
-                    _buildInfoItem(context, 'İletişim', 'contact@walletapp.com'),
+                    _buildInfoItem(
+                      context,
+                      'İletişim',
+                      'contact@walletapp.com',
+                    ),
                   ]),
                   const SizedBox(height: 20),
                   _buildSection(context, 'Yasal', [
@@ -74,10 +77,7 @@ class AboutScreen extends StatelessWidget {
                   const Center(
                     child: Text(
                       '© 2025 WalletApp. Tüm hakları saklıdır.',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Color(0xFF8E8E93),
-                      ),
+                      style: TextStyle(fontSize: 12, color: Color(0xFF8E8E93)),
                     ),
                   ),
                 ],
@@ -179,7 +179,9 @@ class AboutScreen extends StatelessWidget {
             value,
             style: TextStyle(
               fontSize: 16,
-              color: Theme.of(context).textTheme.bodyMedium?.color?.withValues(alpha: 0.6),
+              color: Theme.of(
+                context,
+              ).textTheme.bodyMedium?.color?.withValues(alpha: 0.6),
             ),
           ),
         ],

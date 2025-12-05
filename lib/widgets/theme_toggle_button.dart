@@ -30,13 +30,14 @@ class _ThemeToggleButtonState extends State<ThemeToggleButton>
 
   Future<void> _loadTheme() async {
     final theme = await _themeService.getThemeMode();
-    
+
     if (!mounted) return;
-    
+
     final brightness = MediaQuery.of(context).platformBrightness;
-    final isDark = theme == ThemeMode.dark ||
+    final isDark =
+        theme == ThemeMode.dark ||
         (theme == ThemeMode.system && brightness == Brightness.dark);
-    
+
     setState(() {
       _isDark = isDark;
       if (_isDark) {

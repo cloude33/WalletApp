@@ -3,7 +3,7 @@ import '../services/auth_service.dart';
 
 class PinSetupScreen extends StatefulWidget {
   final bool isVerifying;
-  
+
   const PinSetupScreen({super.key, this.isVerifying = false});
 
   @override
@@ -15,7 +15,7 @@ class _PinSetupScreenState extends State<PinSetupScreen> {
   String _pin = '';
   String _confirmPin = '';
   bool _isConfirming = false;
-  
+
   void _onNumberPress(String number) {
     setState(() {
       if (!_isConfirming && !widget.isVerifying) {
@@ -116,7 +116,7 @@ class _PinSetupScreenState extends State<PinSetupScreen> {
     String title;
     String subtitle;
     String currentPin;
-    
+
     if (widget.isVerifying) {
       title = 'PIN Girin';
       subtitle = 'Devam etmek için PIN kodunuzu girin';
@@ -163,7 +163,7 @@ class _PinSetupScreenState extends State<PinSetupScreen> {
               ),
             ),
             const SizedBox(height: 60),
-            
+
             // PIN Dots
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -177,17 +177,14 @@ class _PinSetupScreenState extends State<PinSetupScreen> {
                     color: index < currentPin.length
                         ? Colors.white
                         : Colors.white.withValues(alpha: 0.3),
-                    border: Border.all(
-                      color: Colors.white,
-                      width: 2,
-                    ),
+                    border: Border.all(color: Colors.white, width: 2),
                   ),
                 );
               }),
             ),
-            
+
             const Spacer(),
-            
+
             // Number Pad
             Padding(
               padding: const EdgeInsets.all(20),
@@ -203,7 +200,7 @@ class _PinSetupScreenState extends State<PinSetupScreen> {
                 ],
               ),
             ),
-            
+
             const SizedBox(height: 40),
           ],
         ),

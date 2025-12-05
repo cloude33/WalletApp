@@ -72,16 +72,16 @@ class CreditCardStatement extends HiveObject {
   });
 
   // Computed properties
-  bool get isPaidFully => remainingDebt <= 0.01; // Small tolerance for floating point
-  
-  bool get isOverdue => 
-      DateTime.now().isAfter(dueDate) && !isPaidFully;
-  
+  bool get isPaidFully =>
+      remainingDebt <= 0.01; // Small tolerance for floating point
+
+  bool get isOverdue => DateTime.now().isAfter(dueDate) && !isPaidFully;
+
   bool get isPartiallyPaid => paidAmount > 0 && !isPaidFully;
-  
+
   int get daysUntilDue => dueDate.difference(DateTime.now()).inDays;
-  
-  int get daysOverdue => 
+
+  int get daysOverdue =>
       isOverdue ? DateTime.now().difference(dueDate).inDays : 0;
 
   String get statusText {

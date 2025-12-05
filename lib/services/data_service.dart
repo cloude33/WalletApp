@@ -5,7 +5,6 @@ import '../models/user.dart';
 import '../models/wallet.dart';
 import '../models/transaction.dart';
 import '../models/goal.dart';
-import '../models/budget.dart';
 import '../models/loan.dart';
 import '../models/category.dart';
 import '../models/recurring_transaction.dart';
@@ -24,6 +23,13 @@ class DataService {
 
   Future<void> init() async {
     _prefs = await SharedPreferences.getInstance();
+  }
+
+  Future<SharedPreferences> getPrefs() async {
+    if (_prefs == null) {
+      await init();
+    }
+    return _prefs!;
   }
 
   // User methods
@@ -178,7 +184,7 @@ class DataService {
     final transactions = await getTransactions();
     transactions.add(transaction);
     await saveTransactions(transactions);
-    
+
     // İşlemin etkisini cüzdana uygula
     await _applyTransactionEffect(transaction);
   }
@@ -403,39 +409,6 @@ class DataService {
     }
   }
 
-  // Budget methods
-  Future<List<Budget>> getBudgets() async {
-    final budgetsJson = _prefs?.getString('budgets') ?? '[]';
-    final List<dynamic> budgetsList = json.decode(budgetsJson);
-    return budgetsList.map((b) => Budget.fromJson(b)).toList();
-  }
-
-  Future<void> saveBudgets(List<Budget> budgets) async {
-    final budgetsJson = json.encode(budgets.map((b) => b.toJson()).toList());
-    await _prefs?.setString('budgets', budgetsJson);
-  }
-
-  Future<void> addBudget(Budget budget) async {
-    final budgets = await getBudgets();
-    budgets.add(budget);
-    await saveBudgets(budgets);
-  }
-
-  Future<void> deleteBudget(String id) async {
-    final budgets = await getBudgets();
-    budgets.removeWhere((b) => b.id == id);
-    await saveBudgets(budgets);
-  }
-
-  Future<void> updateBudget(Budget budget) async {
-    final budgets = await getBudgets();
-    final index = budgets.indexWhere((b) => b.id == budget.id);
-    if (index != -1) {
-      budgets[index] = budget;
-      await saveBudgets(budgets);
-    }
-  }
-
   // Category methods
   Future<List<Category>> getCategories() async {
     final categoriesJson = _prefs?.getString('categories');
@@ -480,8 +453,6 @@ class DataService {
   Future<List<User>> getUsers() async {
     return await getAllUsers();
   }
-
-
 
   // Loan methods
   Future<List<Loan>> getLoans() async {
@@ -561,14 +532,6 @@ class DataService {
             .map((t) => Transaction.fromJson(t))
             .toList();
         await saveTransactions(transactions);
-      }
-
-      // Restore budgets
-      if (backupData.containsKey('budgets')) {
-        final budgets = (backupData['budgets'] as List)
-            .map((b) => Budget.fromJson(b))
-            .toList();
-        await saveBudgets(budgets);
       }
 
       // Restore wallets

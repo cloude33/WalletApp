@@ -61,7 +61,11 @@ class HelpScreen extends StatelessWidget {
                     ),
                     child: Column(
                       children: [
-                        const Icon(Icons.support_agent, size: 48, color: Color(0xFF00BFA5)),
+                        const Icon(
+                          Icons.support_agent,
+                          size: 48,
+                          color: Color(0xFF00BFA5),
+                        ),
                         const SizedBox(height: 16),
                         Text(
                           'Daha fazla yardıma mı ihtiyacınız var?',
@@ -78,7 +82,8 @@ class HelpScreen extends StatelessWidget {
                           textAlign: TextAlign.center,
                           style: TextStyle(
                             fontSize: 14,
-                            color: Theme.of(context).textTheme.bodyMedium?.color?.withValues(alpha: 0.7),
+                            color: Theme.of(context).textTheme.bodyMedium?.color
+                                ?.withValues(alpha: 0.7),
                           ),
                         ),
                         const SizedBox(height: 16),
@@ -86,7 +91,11 @@ class HelpScreen extends StatelessWidget {
                           onPressed: () {
                             // İletişim eylemi (örn: mail atma)
                             ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('Destek ekibine yönlendiriliyorsunuz...')),
+                              const SnackBar(
+                                content: Text(
+                                  'Destek ekibine yönlendiriliyorsunuz...',
+                                ),
+                              ),
                             );
                           },
                           style: ElevatedButton.styleFrom(
@@ -94,11 +103,17 @@ class HelpScreen extends StatelessWidget {
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12),
                             ),
-                            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 24,
+                              vertical: 12,
+                            ),
                           ),
                           child: const Text(
                             'İletişime Geç',
-                            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                         ),
                       ],
@@ -174,7 +189,9 @@ class HelpScreen extends StatelessWidget {
               child: Text(
                 answer,
                 style: TextStyle(
-                  color: Theme.of(context).textTheme.bodyMedium?.color?.withValues(alpha: 0.7),
+                  color: Theme.of(
+                    context,
+                  ).textTheme.bodyMedium?.color?.withValues(alpha: 0.7),
                   height: 1.5,
                 ),
               ),

@@ -16,36 +16,60 @@ class DecimalInputFormatter extends TextInputFormatter {
     }
 
     // Sadece rakam, virgül ve nokta kabul et
-    String newText = newValue.text.replaceAll(RegExp(r'[^0-9,.]'), '');
+    String text = newValue.text.replaceAll(RegExp(r'[^0-9,.]'), '');
 
-    if (newText.isEmpty) {
+    if (text.isEmpty) {
       return const TextEditingValue();
     }
 
-    // Türkiye formatı: 100.000,28
-    // Nokta (.) binlik ayırıcı, virgül (,) ondalık ayırıcı
-    // Ancak hesaplama için hepsini standart formata çevireceğiz
-    
-    // Önce tüm noktaları (binlik ayırıcı) kaldır
-    newText = newText.replaceAll('.', '');
-    
-    // Virgülü noktaya çevir (ondalık ayırıcı)
-    newText = newText.replaceAll(',', '.');
+    // Tüm binlik ayırıcıları (nokta) kaldır
+    text = text.replaceAll('.', '');
 
-    // Sadece bir ondalık nokta olsun
-    final parts = newText.split('.');
+    // Virgülü ayır (ondalık ayırıcı)
+    List<String> parts = text.split(',');
+
+    // Sadece bir virgül olsun
     if (parts.length > 2) {
-      newText = '${parts[0]}.${parts.sublist(1).join('')}';
+      text = '${parts[0]},${parts.sublist(1).join('')}';
+      parts = text.split(',');
     }
 
-    // Ondalık kısmı maksimum 2 basamak
-    if (parts.length == 2 && parts[1].length > 2) {
-      newText = '${parts[0]}.${parts[1].substring(0, 2)}';
+    // Tam sayı kısmı
+    String integerPart = parts[0];
+
+    // Ondalık kısmı (varsa, maksimum 2 basamak)
+    String decimalPart = '';
+    if (parts.length > 1) {
+      decimalPart = parts[1];
+      if (decimalPart.length > 2) {
+        decimalPart = decimalPart.substring(0, 2);
+      }
     }
+
+    // Binlik ayırıcı ekle (Türkiye formatı: nokta)
+    String formattedInteger = '';
+    int count = 0;
+    for (int i = integerPart.length - 1; i >= 0; i--) {
+      if (count == 3) {
+        formattedInteger = '.$formattedInteger';
+        count = 0;
+      }
+      formattedInteger = integerPart[i] + formattedInteger;
+      count++;
+    }
+
+    // Sonucu birleştir
+    String formattedText = formattedInteger;
+    if (parts.length > 1) {
+      formattedText += ',$decimalPart';
+    }
+
+    // Cursor pozisyonunu ayarla
+    int selectionIndex = formattedText.length;
 
     return TextEditingValue(
-      text: newText,
-      selection: TextSelection.collapsed(offset: newText.length),
+      text: formattedText,
+      selection: TextSelection.collapsed(offset: selectionIndex),
     );
   }
 }
@@ -129,8 +153,10 @@ class _AddWalletScreenState extends State<AddWalletScreen> {
       // Parse balance
       double initialBalance = 0.0;
       if (_balanceController.text.isNotEmpty) {
-        // Replace comma with dot and parse
-        String cleanBalance = _balanceController.text.replaceAll(',', '.');
+        // Remove thousand separators (dots) and replace decimal separator (comma) with dot
+        String cleanBalance = _balanceController.text
+            .replaceAll('.', '') // Remove thousand separators
+            .replaceAll(',', '.'); // Replace decimal separator
         initialBalance = double.tryParse(cleanBalance) ?? 0.0;
 
         // For credit cards and overdraft, make it negative
@@ -142,8 +168,10 @@ class _AddWalletScreenState extends State<AddWalletScreen> {
       // Parse limit for overdraft
       double limit = 0.0;
       if (_selectedType == 'overdraft' && _limitController.text.isNotEmpty) {
-        // Replace comma with dot and parse
-        String cleanLimit = _limitController.text.replaceAll(',', '.');
+        // Remove thousand separators (dots) and replace decimal separator (comma) with dot
+        String cleanLimit = _limitController.text
+            .replaceAll('.', '') // Remove thousand separators
+            .replaceAll(',', '.'); // Replace decimal separator
         limit = double.tryParse(cleanLimit) ?? 0.0;
       }
 
@@ -390,10 +418,10 @@ class _AddWalletScreenState extends State<AddWalletScreen> {
                         const SizedBox(height: 8),
                         TextFormField(
                           controller: _balanceController,
-                          keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                          inputFormatters: [
-                            DecimalInputFormatter(),
-                          ],
+                          keyboardType: const TextInputType.numberWithOptions(
+                            decimal: true,
+                          ),
+                          inputFormatters: [DecimalInputFormatter()],
                           decoration: InputDecoration(
                             prefixText: '₺ ',
                             hintText: '0',
@@ -418,8 +446,10 @@ class _AddWalletScreenState extends State<AddWalletScreen> {
                           ),
                           validator: (value) {
                             if (value != null && value.isNotEmpty) {
-                              // Replace comma with dot for validation
-                              String cleanValue = value.replaceAll(',', '.');
+                              // Remove thousand separators and replace decimal separator
+                              String cleanValue = value
+                                  .replaceAll('.', '')
+                                  .replaceAll(',', '.');
                               if (double.tryParse(cleanValue) == null) {
                                 return 'Geçerli bir sayı girin';
                               }
@@ -446,10 +476,10 @@ class _AddWalletScreenState extends State<AddWalletScreen> {
                           const SizedBox(height: 8),
                           TextFormField(
                             controller: _limitController,
-                            keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                            inputFormatters: [
-                              DecimalInputFormatter(),
-                            ],
+                            keyboardType: const TextInputType.numberWithOptions(
+                              decimal: true,
+                            ),
+                            inputFormatters: [DecimalInputFormatter()],
                             decoration: InputDecoration(
                               prefixText: '₺ ',
                               hintText: '0',

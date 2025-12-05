@@ -5,10 +5,10 @@ part 'debt_payment.g.dart';
 enum PaymentType {
   @JsonValue('partial')
   partial,
-  
+
   @JsonValue('full')
   full,
-  
+
   @JsonValue('adjustment')
   adjustment,
 }
@@ -37,7 +37,8 @@ class DebtPayment {
     this.isDeleted = false,
   });
 
-  factory DebtPayment.fromJson(Map<String, dynamic> json) => _$DebtPaymentFromJson(json);
+  factory DebtPayment.fromJson(Map<String, dynamic> json) =>
+      _$DebtPaymentFromJson(json);
   Map<String, dynamic> toJson() => _$DebtPaymentToJson(this);
 
   DebtPayment copyWith({

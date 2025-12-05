@@ -25,13 +25,15 @@ class CreditCardPaymentAdapter extends TypeAdapter<CreditCardPayment> {
       paymentMethod: fields[5] as String,
       note: fields[6] as String,
       createdAt: fields[7] as DateTime,
+      paymentType: fields[8] as String,
+      remainingDebtAfterPayment: fields[9] as double,
     );
   }
 
   @override
   void write(BinaryWriter writer, CreditCardPayment obj) {
     writer
-      ..writeByte(8)
+      ..writeByte(10)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -47,7 +49,11 @@ class CreditCardPaymentAdapter extends TypeAdapter<CreditCardPayment> {
       ..writeByte(6)
       ..write(obj.note)
       ..writeByte(7)
-      ..write(obj.createdAt);
+      ..write(obj.createdAt)
+      ..writeByte(8)
+      ..write(obj.paymentType)
+      ..writeByte(9)
+      ..write(obj.remainingDebtAfterPayment);
   }
 
   @override

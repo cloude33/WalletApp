@@ -30,15 +30,13 @@ class _WelcomeScreenState extends State<WelcomeScreen>
       ),
     );
 
-    _slideAnimation = Tween<Offset>(
-      begin: const Offset(0, 0.3),
-      end: Offset.zero,
-    ).animate(
-      CurvedAnimation(
-        parent: _animationController,
-        curve: const Interval(0.3, 1.0, curve: Curves.easeOut),
-      ),
-    );
+    _slideAnimation =
+        Tween<Offset>(begin: const Offset(0, 0.3), end: Offset.zero).animate(
+          CurvedAnimation(
+            parent: _animationController,
+            curve: const Interval(0.3, 1.0, curve: Curves.easeOut),
+          ),
+        );
 
     _animationController.forward();
   }
@@ -53,14 +51,14 @@ class _WelcomeScreenState extends State<WelcomeScreen>
   Widget build(BuildContext context) {
     return Scaffold(
       body: Container(
-        decoration: BoxDecoration(
+        decoration: const BoxDecoration(
           gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
             colors: [
-              const Color(0xFFFDB32A).withValues(alpha: 0.8),
-              const Color(0xFFFDB32A),
-              const Color(0xFFFF9800),
+              Color(0xFF1E3A3A),
+              Color(0xFF2C4F4F),
+              Color(0xFF1E3A3A),
             ],
           ),
         ),
@@ -149,8 +147,8 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                             );
                           },
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.white,
-                            foregroundColor: const Color(0xFFFDB32A),
+                            backgroundColor: const Color(0xFFFDB32A),
+                            foregroundColor: const Color(0xFF1E3A3A),
                             padding: const EdgeInsets.symmetric(vertical: 16),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12),
@@ -176,13 +174,13 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                             );
                           },
                           style: OutlinedButton.styleFrom(
-                            foregroundColor: Colors.white,
+                            foregroundColor: const Color(0xFFFDB32A),
                             padding: const EdgeInsets.symmetric(vertical: 16),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12),
                             ),
                             side: const BorderSide(
-                              color: Colors.white,
+                              color: Color(0xFFFDB32A),
                               width: 2,
                             ),
                           ),

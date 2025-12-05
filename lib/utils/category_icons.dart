@@ -13,7 +13,7 @@ class CategoryIcons {
     Icons.credit_card,
     Icons.payment,
     Icons.wallet,
-    
+
     // Shopping & Commerce
     Icons.shopping_cart,
     Icons.shopping_bag,
@@ -21,7 +21,7 @@ class CategoryIcons {
     Icons.local_mall,
     Icons.local_grocery_store,
     Icons.add_shopping_cart,
-    
+
     // Food & Dining
     Icons.restaurant,
     Icons.local_dining,
@@ -34,7 +34,7 @@ class CategoryIcons {
     Icons.breakfast_dining,
     Icons.cake,
     Icons.icecream,
-    
+
     // Transportation
     Icons.directions_car,
     Icons.directions_bus,
@@ -46,7 +46,7 @@ class CategoryIcons {
     Icons.electric_car,
     Icons.local_gas_station,
     Icons.local_parking,
-    
+
     // Home & Living
     Icons.home,
     Icons.house,
@@ -59,7 +59,7 @@ class CategoryIcons {
     Icons.countertops,
     Icons.light,
     Icons.lightbulb,
-    
+
     // Utilities & Bills
     Icons.water_drop,
     Icons.electric_bolt,
@@ -68,7 +68,7 @@ class CategoryIcons {
     Icons.smartphone,
     Icons.router,
     Icons.cable,
-    
+
     // Health & Fitness
     Icons.local_hospital,
     Icons.medical_services,
@@ -80,7 +80,7 @@ class CategoryIcons {
     Icons.spa,
     Icons.favorite,
     Icons.monitor_heart,
-    
+
     // Education
     Icons.school,
     Icons.menu_book,
@@ -89,7 +89,7 @@ class CategoryIcons {
     Icons.class_,
     Icons.science,
     Icons.calculate,
-    
+
     // Entertainment
     Icons.celebration,
     Icons.movie,
@@ -100,18 +100,18 @@ class CategoryIcons {
     Icons.videogame_asset,
     Icons.casino,
     Icons.attractions,
-    
+
     // Clothing & Fashion
     Icons.checkroom,
     Icons.dry_cleaning,
     Icons.watch,
     Icons.diamond,
-    
+
     // Gifts & Special
     Icons.card_giftcard,
     Icons.redeem,
     Icons.volunteer_activism,
-    
+
     // Work & Business
     Icons.work,
     Icons.business,
@@ -119,7 +119,7 @@ class CategoryIcons {
     Icons.badge,
     Icons.engineering,
     Icons.construction,
-    
+
     // Sports & Recreation
     Icons.sports_soccer,
     Icons.sports_basketball,
@@ -129,10 +129,10 @@ class CategoryIcons {
     Icons.hiking,
     Icons.downhill_skiing,
     Icons.surfing,
-    
+
     // Pets & Animals
     Icons.pets,
-    
+
     // Travel & Tourism
     Icons.luggage,
     Icons.beach_access,
@@ -140,7 +140,7 @@ class CategoryIcons {
     Icons.local_activity,
     Icons.tour,
     Icons.landscape,
-    
+
     // Technology
     Icons.computer,
     Icons.laptop,
@@ -149,12 +149,12 @@ class CategoryIcons {
     Icons.headset,
     Icons.camera,
     Icons.photo_camera,
-    
+
     // Personal Care
     Icons.face,
     Icons.face_retouching_natural,
     Icons.content_cut,
-    
+
     // Miscellaneous
     Icons.category,
     Icons.label,

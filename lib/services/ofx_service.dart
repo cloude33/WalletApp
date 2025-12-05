@@ -21,10 +21,10 @@ class OfxService {
     }
 
     final content = await file.readAsString();
-    
+
     // Parse XML
     final document = XmlDocument.parse(content);
-    
+
     final transactions = <Transaction>[];
     final errors = <ImportError>[];
     final duplicateIds = <String>{};
@@ -50,12 +50,14 @@ class OfxService {
         if (fitId != null && existingTransactionIds != null) {
           if (existingTransactionIds.contains(fitId)) {
             duplicateIds.add(fitId);
-            errors.add(ImportError(
-              rowNumber: rowNumber,
-              field: 'FITID',
-              message: 'Duplicate transaction ID',
-              value: fitId,
-            ));
+            errors.add(
+              ImportError(
+                rowNumber: rowNumber,
+                field: 'FITID',
+                message: 'Duplicate transaction ID',
+                value: fitId,
+              ),
+            );
             failureCount++;
             continue;
           }
@@ -65,19 +67,23 @@ class OfxService {
           transactions.add(transaction);
           successCount++;
         } else {
-          errors.add(ImportError(
-            rowNumber: rowNumber,
-            field: 'Transaction',
-            message: 'Invalid transaction data',
-          ));
+          errors.add(
+            ImportError(
+              rowNumber: rowNumber,
+              field: 'Transaction',
+              message: 'Invalid transaction data',
+            ),
+          );
           failureCount++;
         }
       } catch (e) {
-        errors.add(ImportError(
-          rowNumber: rowNumber,
-          field: 'Transaction',
-          message: 'Error parsing transaction: $e',
-        ));
+        errors.add(
+          ImportError(
+            rowNumber: rowNumber,
+            field: 'Transaction',
+            message: 'Error parsing transaction: $e',
+          ),
+        );
         failureCount++;
       }
     }
@@ -160,7 +166,7 @@ class OfxService {
     // OFX date format: YYYYMMDDHHMMSS[.XXX][+/-TZ]
     // Extract just the date part
     final cleanDate = dateStr.substring(0, 8);
-    
+
     final year = int.parse(cleanDate.substring(0, 4));
     final month = int.parse(cleanDate.substring(4, 6));
     final day = int.parse(cleanDate.substring(6, 8));
@@ -216,7 +222,7 @@ class OfxService {
   /// Validate transaction data
   bool _validateTransaction(Transaction transaction) {
     return transaction.amount > 0 &&
-           transaction.description.isNotEmpty &&
-           transaction.category.isNotEmpty;
+        transaction.description.isNotEmpty &&
+        transaction.category.isNotEmpty;
   }
 }

@@ -43,11 +43,11 @@ class DebtService {
 
     final prefs = await SharedPreferences.getInstance();
     final jsonString = prefs.getString('debts');
-    
+
     final debts = jsonString != null
         ? (jsonDecode(jsonString) as List<dynamic>)
-            .map((json) => Debt.fromJson(json as Map<String, dynamic>))
-            .toList()
+              .map((json) => Debt.fromJson(json as Map<String, dynamic>))
+              .toList()
         : <Debt>[];
 
     _cachedDebts = debts;
@@ -176,7 +176,7 @@ class DebtService {
     // İlgili ödemeleri ve hatırlatmaları da sil
     _cachedPayments.remove(id);
     _cachedReminders.remove(id);
-    
+
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove('debt_payments_$id');
     await prefs.remove('debt_reminders_$id');
@@ -243,12 +243,12 @@ class DebtService {
 
     final prefs = await SharedPreferences.getInstance();
     final jsonString = prefs.getString('debt_payments_$debtId');
-    
+
     final payments = jsonString != null
         ? (jsonDecode(jsonString) as List<dynamic>)
-            .map((json) => DebtPayment.fromJson(json as Map<String, dynamic>))
-            .where((p) => !p.isDeleted)
-            .toList()
+              .map((json) => DebtPayment.fromJson(json as Map<String, dynamic>))
+              .where((p) => !p.isDeleted)
+              .toList()
         : <DebtPayment>[];
 
     _cachedPayments[debtId] = payments;
@@ -367,12 +367,14 @@ class DebtService {
 
     final prefs = await SharedPreferences.getInstance();
     final jsonString = prefs.getString('debt_reminders_$debtId');
-    
+
     final reminders = jsonString != null
         ? (jsonDecode(jsonString) as List<dynamic>)
-            .map((json) => DebtReminder.fromJson(json as Map<String, dynamic>))
-            .where((r) => r.isActive)
-            .toList()
+              .map(
+                (json) => DebtReminder.fromJson(json as Map<String, dynamic>),
+              )
+              .where((r) => r.isActive)
+              .toList()
         : <DebtReminder>[];
 
     _cachedReminders[debtId] = reminders;
@@ -467,7 +469,8 @@ class DebtService {
     final debts = await getDebts();
     return debts
         .where(
-            (d) => d.type == DebtType.borrowed && d.status != DebtStatus.paid)
+          (d) => d.type == DebtType.borrowed && d.status != DebtStatus.paid,
+        )
         .fold<double>(0, (sum, d) => sum + d.remainingAmount);
   }
 
@@ -496,7 +499,7 @@ class DebtService {
     final prefs = await SharedPreferences.getInstance();
     final jsonString = jsonEncode(debts.map((d) => d.toJson()).toList());
     await prefs.setString('debts', jsonString);
-    
+
     _cachedDebts = debts;
     _lastCacheUpdate = DateTime.now();
   }
@@ -505,16 +508,18 @@ class DebtService {
     final prefs = await SharedPreferences.getInstance();
     final jsonString = jsonEncode(payments.map((p) => p.toJson()).toList());
     await prefs.setString('debt_payments_$debtId', jsonString);
-    
+
     _cachedPayments[debtId] = payments.where((p) => !p.isDeleted).toList();
   }
 
   Future<void> _saveReminders(
-      String debtId, List<DebtReminder> reminders) async {
+    String debtId,
+    List<DebtReminder> reminders,
+  ) async {
     final prefs = await SharedPreferences.getInstance();
     final jsonString = jsonEncode(reminders.map((r) => r.toJson()).toList());
     await prefs.setString('debt_reminders_$debtId', jsonString);
-    
+
     _cachedReminders[debtId] = reminders.where((r) => r.isActive).toList();
   }
 }

@@ -30,8 +30,9 @@ class _EditDebtScreenState extends State<EditDebtScreen> {
     super.initState();
     _personNameController = TextEditingController(text: widget.debt.personName);
     _phoneController = TextEditingController(text: widget.debt.phone ?? '');
-    _descriptionController =
-        TextEditingController(text: widget.debt.description ?? '');
+    _descriptionController = TextEditingController(
+      text: widget.debt.description ?? '',
+    );
     _selectedCategory = widget.debt.category;
     _selectedDueDate = widget.debt.dueDate;
   }
@@ -47,7 +48,8 @@ class _EditDebtScreenState extends State<EditDebtScreen> {
   Future<void> _selectDueDate() async {
     final date = await showDatePicker(
       context: context,
-      initialDate: _selectedDueDate ?? DateTime.now().add(const Duration(days: 30)),
+      initialDate:
+          _selectedDueDate ?? DateTime.now().add(const Duration(days: 30)),
       firstDate: DateTime.now(),
       lastDate: DateTime.now().add(const Duration(days: 365 * 5)),
       locale: const Locale('tr', 'TR'),
@@ -87,9 +89,9 @@ class _EditDebtScreenState extends State<EditDebtScreen> {
     } catch (e) {
       setState(() => _isLoading = false);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Hata: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Hata: $e')));
       }
     }
   }
@@ -97,9 +99,7 @@ class _EditDebtScreenState extends State<EditDebtScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Borç/Alacak Düzenle'),
-      ),
+      appBar: AppBar(title: const Text('Borç/Alacak Düzenle')),
       body: Form(
         key: _formKey,
         child: ListView(
@@ -128,9 +128,7 @@ class _EditDebtScreenState extends State<EditDebtScreen> {
       decoration: InputDecoration(
         labelText: 'Kişi Adı *',
         prefixIcon: const Icon(Icons.person),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
       ),
       textCapitalization: TextCapitalization.words,
       validator: (value) {
@@ -148,9 +146,7 @@ class _EditDebtScreenState extends State<EditDebtScreen> {
       decoration: InputDecoration(
         labelText: 'Telefon',
         prefixIcon: const Icon(Icons.phone),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
       ),
       keyboardType: TextInputType.phone,
       inputFormatters: [
@@ -165,9 +161,7 @@ class _EditDebtScreenState extends State<EditDebtScreen> {
       decoration: InputDecoration(
         labelText: 'Kategori',
         prefixIcon: const Icon(Icons.category),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
       ),
       items: DebtCategory.values.map((category) {
         String label;
@@ -224,9 +218,7 @@ class _EditDebtScreenState extends State<EditDebtScreen> {
                   onPressed: () => setState(() => _selectedDueDate = null),
                 )
               : null,
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
         ),
         child: Text(
           _selectedDueDate != null
@@ -246,9 +238,7 @@ class _EditDebtScreenState extends State<EditDebtScreen> {
       decoration: InputDecoration(
         labelText: 'Açıklama',
         prefixIcon: const Icon(Icons.notes),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
       ),
       maxLines: 3,
       textCapitalization: TextCapitalization.sentences,
@@ -260,9 +250,7 @@ class _EditDebtScreenState extends State<EditDebtScreen> {
       onPressed: _isLoading ? null : _saveDebt,
       style: ElevatedButton.styleFrom(
         padding: const EdgeInsets.symmetric(vertical: 16),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
       child: _isLoading
           ? const SizedBox(
@@ -270,10 +258,7 @@ class _EditDebtScreenState extends State<EditDebtScreen> {
               width: 20,
               child: CircularProgressIndicator(strokeWidth: 2),
             )
-          : const Text(
-              'Güncelle',
-              style: TextStyle(fontSize: 16),
-            ),
+          : const Text('Güncelle', style: TextStyle(fontSize: 16)),
     );
   }
 }

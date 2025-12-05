@@ -48,7 +48,8 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
   Map<String, int> _getCategoryUsageCount() {
     final usageMap = <String, int>{};
     for (var transaction in _transactions) {
-      usageMap[transaction.category] = (usageMap[transaction.category] ?? 0) + 1;
+      usageMap[transaction.category] =
+          (usageMap[transaction.category] ?? 0) + 1;
     }
     return usageMap;
   }
@@ -56,7 +57,8 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
   Map<String, double> _getCategoryTotalAmount() {
     final amountMap = <String, double>{};
     for (var transaction in _transactions) {
-      amountMap[transaction.category] = (amountMap[transaction.category] ?? 0) + transaction.amount;
+      amountMap[transaction.category] =
+          (amountMap[transaction.category] ?? 0) + transaction.amount;
     }
     return amountMap;
   }
@@ -69,7 +71,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
       context,
       MaterialPageRoute(builder: (context) => const AddCategoryScreen()),
     );
-    
+
     if (result == true) {
       _loadCategories();
     }
@@ -82,7 +84,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
         builder: (context) => EditCategoryScreen(category: category),
       ),
     );
-    
+
     if (result == true) {
       _loadCategories();
     }
@@ -91,7 +93,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
   Future<void> _deleteCategory(Category category) async {
     // Check if category is used in transactions
     final usageCount = _getCategoryUsageCount()[category.name] ?? 0;
-    
+
     if (usageCount > 0) {
       final confirmed = await showDialog<bool>(
         context: context,
@@ -115,14 +117,16 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
           ],
         ),
       );
-      
+
       if (confirmed != true) return;
     } else {
       final confirmed = await showDialog<bool>(
         context: context,
         builder: (context) => AlertDialog(
           title: const Text('Kategoriyi Sil'),
-          content: Text('${category.name} kategorisini silmek istediğinizden emin misiniz?'),
+          content: Text(
+            '${category.name} kategorisini silmek istediğinizden emin misiniz?',
+          ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context, false),
@@ -136,7 +140,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
           ],
         ),
       );
-      
+
       if (confirmed != true) return;
     }
 
@@ -149,18 +153,18 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
       if (newIndex > oldIndex) {
         newIndex -= 1;
       }
-      
+
       final filteredCategories = _categories
           .where((c) => _showIncome ? c.type == 'expense' : c.type == 'income')
           .toList();
-      
+
       final item = filteredCategories.removeAt(oldIndex);
       filteredCategories.insert(newIndex, item);
-      
+
       final otherCategories = _categories
           .where((c) => _showIncome ? c.type != 'expense' : c.type != 'income')
           .toList();
-      
+
       _categories = [...otherCategories, ...filteredCategories];
       _dataService.saveCategories(_categories);
     });
@@ -239,8 +243,8 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                       color: !_showIncome
                           ? const Color(0xFF00BFA5)
                           : (Theme.of(context).brightness == Brightness.dark
-                              ? Colors.grey.shade800
-                              : Colors.grey.shade100),
+                                ? Colors.grey.shade800
+                                : Colors.grey.shade100),
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Text(
@@ -264,8 +268,8 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                       color: _showIncome
                           ? const Color(0xFF00BFA5)
                           : (Theme.of(context).brightness == Brightness.dark
-                              ? Colors.grey.shade800
-                              : Colors.grey.shade100),
+                                ? Colors.grey.shade800
+                                : Colors.grey.shade100),
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Text(
@@ -329,7 +333,8 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
               ? Colors.grey.shade800
               : Colors.grey.shade50,
         ),
-        onChanged: (value) => setState(() => _searchQuery = value.toLowerCase()),
+        onChanged: (value) =>
+            setState(() => _searchQuery = value.toLowerCase()),
       ),
     );
   }
@@ -338,33 +343,32 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
     var filteredCategories = _categories
         .where((c) => _showIncome ? c.type == 'expense' : c.type == 'income')
         .toList();
-    
+
     // Apply search filter
     if (_searchQuery.isNotEmpty) {
       filteredCategories = filteredCategories
           .where((c) => c.name.toLowerCase().contains(_searchQuery))
           .toList();
     }
-    
+
     if (filteredCategories.isEmpty) {
       return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(
-              _searchQuery.isNotEmpty ? Icons.search_off : Icons.category_outlined,
+              _searchQuery.isNotEmpty
+                  ? Icons.search_off
+                  : Icons.category_outlined,
               size: 64,
               color: Colors.grey.shade300,
             ),
             const SizedBox(height: 16),
             Text(
-              _searchQuery.isNotEmpty 
+              _searchQuery.isNotEmpty
                   ? 'Kategori bulunamadı'
                   : 'Henüz kategori eklenmemiş',
-              style: TextStyle(
-                fontSize: 16,
-                color: Colors.grey.shade600,
-              ),
+              style: TextStyle(fontSize: 16, color: Colors.grey.shade600),
             ),
             if (_searchQuery.isEmpty) ...[
               const SizedBox(height: 8),
@@ -378,19 +382,21 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
         ),
       );
     }
-    
+
     final usageCount = _getCategoryUsageCount();
     final totalAmount = _getCategoryTotalAmount();
-    
+
     return ReorderableListView.builder(
       padding: const EdgeInsets.all(20),
       itemCount: filteredCategories.length,
-      onReorder: _searchQuery.isEmpty ? _reorderCategories : (oldIndex, newIndex) {},
+      onReorder: _searchQuery.isEmpty
+          ? _reorderCategories
+          : (oldIndex, newIndex) {},
       itemBuilder: (context, index) {
         final category = filteredCategories[index];
         final count = usageCount[category.name] ?? 0;
         final amount = totalAmount[category.name] ?? 0;
-        
+
         return Container(
           key: ValueKey(category.id),
           margin: const EdgeInsets.only(bottom: 10),
@@ -413,8 +419,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                   children: [
                     if (_searchQuery.isEmpty)
                       const Icon(Icons.drag_handle, color: Colors.grey),
-                    if (_searchQuery.isEmpty)
-                      const SizedBox(width: 10),
+                    if (_searchQuery.isEmpty) const SizedBox(width: 10),
                     Container(
                       padding: const EdgeInsets.all(10),
                       decoration: BoxDecoration(
@@ -433,7 +438,9 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.w600,
-                              color: Theme.of(context).textTheme.bodyLarge?.color,
+                              color: Theme.of(
+                                context,
+                              ).textTheme.bodyLarge?.color,
                             ),
                           ),
                           if (_showStats && count > 0) ...[
@@ -442,7 +449,11 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                               '$count işlem • ₺${NumberFormat('#,##0', 'tr_TR').format(amount)}',
                               style: TextStyle(
                                 fontSize: 12,
-                                color: Theme.of(context).textTheme.bodyMedium?.color?.withValues(alpha: 0.6),
+                                color: Theme.of(context)
+                                    .textTheme
+                                    .bodyMedium
+                                    ?.color
+                                    ?.withValues(alpha: 0.6),
                               ),
                             ),
                           ],
@@ -462,7 +473,10 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
               ),
               if (_showStats && count > 0)
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 15,
+                    vertical: 10,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.grey.shade50,
                     borderRadius: const BorderRadius.only(
@@ -516,17 +530,19 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
     );
   }
 
-  Widget _buildStatItem(String label, String value, IconData icon, Color color) {
+  Widget _buildStatItem(
+    String label,
+    String value,
+    IconData icon,
+    Color color,
+  ) {
     return Column(
       children: [
         Icon(icon, size: 16, color: color),
         const SizedBox(height: 4),
         Text(
           label,
-          style: TextStyle(
-            fontSize: 10,
-            color: Colors.grey.shade600,
-          ),
+          style: TextStyle(fontSize: 10, color: Colors.grey.shade600),
         ),
         const SizedBox(height: 2),
         Text(

@@ -4,7 +4,6 @@ import 'package:intl/intl.dart';
 import '../models/transaction.dart';
 import '../models/category.dart';
 import '../models/wallet.dart';
-import '../models/budget.dart';
 import '../models/loan.dart';
 import '../models/credit_card_transaction.dart';
 import '../services/data_service.dart';
@@ -15,7 +14,6 @@ import '../utils/currency_helper.dart';
 class StatisticsScreen extends StatefulWidget {
   final List<Transaction> transactions;
   final List<Wallet> wallets;
-  final List<Budget> budgets;
   final List<Loan> loans;
   final List<CreditCardTransaction> creditCardTransactions;
 
@@ -23,7 +21,6 @@ class StatisticsScreen extends StatefulWidget {
     super.key,
     required this.transactions,
     required this.wallets,
-    required this.budgets,
     this.loans = const [],
     this.creditCardTransactions = const [],
   });
@@ -673,11 +670,6 @@ class _StatisticsScreenState extends State<StatisticsScreen>
           final color =
               Colors.primaries[e.key.hashCode % Colors.primaries.length];
 
-          // Find budget for this category
-          final budget = widget.budgets
-              .where((b) => b.category == e.key && b.isActive)
-              .firstOrNull;
-
           return Card(
             margin: const EdgeInsets.only(bottom: 8),
             child: InkWell(
@@ -685,83 +677,33 @@ class _StatisticsScreenState extends State<StatisticsScreen>
               borderRadius: BorderRadius.circular(12),
               child: Padding(
                 padding: const EdgeInsets.symmetric(vertical: 8),
-                child: Column(
-                  children: [
-                    ListTile(
-                      leading: CircleAvatar(
-                        backgroundColor: color,
-                        child: Icon(
-                          _getCategoryIcon(e.key),
-                          color: Colors.white,
-                          size: 20,
-                        ),
-                      ),
-                      title: Text(e.key),
-                      trailing: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                          Text(
-                            '₺${NumberFormat('#,##0', 'tr_TR').format(e.value)}',
-                            style: const TextStyle(fontWeight: FontWeight.bold),
-                          ),
-                          Text(
-                            '${percentage.toStringAsFixed(1)}%',
-                            style: const TextStyle(
-                              fontSize: 12,
-                              color: Colors.grey,
-                            ),
-                          ),
-                        ],
-                      ),
+                child: ListTile(
+                  leading: CircleAvatar(
+                    backgroundColor: color,
+                    child: Icon(
+                      _getCategoryIcon(e.key),
+                      color: Colors.white,
+                      size: 20,
                     ),
-                    if (budget != null)
-                      Padding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 4,
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text(
-                                  'Bütçe: ₺${budget.amount.toStringAsFixed(0)}',
-                                  style: const TextStyle(
-                                    fontSize: 12,
-                                    color: Colors.grey,
-                                  ),
-                                ),
-                                Text(
-                                  '%${((e.value / budget.amount) * 100).toStringAsFixed(0)}',
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.bold,
-                                    color: e.value > budget.amount
-                                        ? Colors.red
-                                        : Colors.green,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 4),
-                            LinearProgressIndicator(
-                              value: (e.value / budget.amount).clamp(0.0, 1.0),
-                              backgroundColor: Colors.grey[200],
-                              color: e.value > budget.amount
-                                  ? Colors.red
-                                  : (e.value > budget.amount * 0.8
-                                        ? Colors.orange
-                                        : Colors.green),
-                              minHeight: 6,
-                              borderRadius: BorderRadius.circular(3),
-                            ),
-                          ],
+                  ),
+                  title: Text(e.key),
+                  trailing: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Text(
+                        '₺${NumberFormat('#,##0', 'tr_TR').format(e.value)}',
+                        style: const TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                      Text(
+                        '${percentage.toStringAsFixed(1)}%',
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey,
                         ),
                       ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -1067,9 +1009,29 @@ class _StatisticsScreenState extends State<StatisticsScreen>
 
   Widget _buildAssetsTab() {
     final assetWallets = widget.wallets
-        .where((w) => w.type != 'credit_card' && w.balance > 0)
+        .where((w) => w.type != 'credit_card')
         .toList();
-    final totalAssets = assetWallets.fold(0.0, (sum, w) => sum + w.balance);
+    
+    // Separate KMH accounts (bank accounts with credit limit)
+    final kmhWallets = assetWallets
+        .where((w) => w.type == 'overdraft' && w.creditLimit > 0)
+        .toList();
+    
+    // Calculate total assets (positive balances only)
+    final totalPositiveAssets = assetWallets
+        .where((w) => w.balance > 0)
+        .fold(0.0, (sum, w) => sum + w.balance);
+    
+    // Calculate KMH debts (negative balances in KMH accounts)
+    final totalKmhDebt = kmhWallets
+        .where((w) => w.balance < 0)
+        .fold(0.0, (sum, w) => sum + w.balance.abs());
+    
+    // Net total (assets - KMH debts)
+    final totalAssets = totalPositiveAssets - totalKmhDebt;
+    
+    // Calculate total for chart (absolute values)
+    final totalForChart = assetWallets.fold(0.0, (sum, w) => sum + w.balance.abs());
 
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
@@ -1081,11 +1043,11 @@ class _StatisticsScreenState extends State<StatisticsScreen>
             color: Theme.of(context).cardColor,
             borderRadius: BorderRadius.circular(12),
           ),
-          child: totalAssets > 0
+          child: totalForChart > 0
               ? PieChart(
                   PieChartData(
                     sections: assetWallets.map((w) {
-                      final percentage = (w.balance / totalAssets) * 100;
+                      final percentage = (w.balance.abs() / totalForChart) * 100;
                       final color = Color(int.parse(w.color));
                       return PieChartSectionData(
                         color: color,
@@ -1107,27 +1069,79 @@ class _StatisticsScreenState extends State<StatisticsScreen>
         _buildCard(
           title: 'Varlık Listesi',
           subtitle:
-              'Toplam: ₺${NumberFormat('#,##0', 'tr_TR').format(totalAssets)}',
+              'Net Toplam: ₺${NumberFormat('#,##0', 'tr_TR').format(totalAssets)}',
           content: Column(
-            children: assetWallets
-                .map(
-                  (w) => ListTile(
-                    leading: CircleAvatar(
-                      backgroundColor: Color(int.parse(w.color)),
-                      child: Icon(
-                        w.type == 'cash' ? Icons.money : Icons.account_balance,
-                        color: Colors.white,
-                        size: 20,
+            children: [
+              // Show positive assets first
+              ...assetWallets
+                  .where((w) => w.balance >= 0)
+                  .map(
+                    (w) => ListTile(
+                      leading: CircleAvatar(
+                        backgroundColor: Color(int.parse(w.color)),
+                        child: Icon(
+                          w.type == 'cash' ? Icons.money : Icons.account_balance,
+                          color: Colors.white,
+                          size: 20,
+                        ),
+                      ),
+                      title: Text(w.name),
+                      subtitle: w.type == 'overdraft' && w.creditLimit > 0
+                          ? Text(
+                              'KMH - Limit: ₺${NumberFormat('#,##0', 'tr_TR').format(w.creditLimit)}',
+                              style: const TextStyle(fontSize: 12, color: Colors.grey),
+                            )
+                          : null,
+                      trailing: Text(
+                        '₺${NumberFormat('#,##0', 'tr_TR').format(w.balance)}',
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: Colors.green,
+                        ),
                       ),
                     ),
-                    title: Text(w.name),
-                    trailing: Text(
-                      '₺${NumberFormat('#,##0', 'tr_TR').format(w.balance)}',
-                      style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+              // Show KMH debts separately
+              if (totalKmhDebt > 0) ...[
+                const Divider(),
+                const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  child: Text(
+                    'KMH Borçları',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: Colors.red,
                     ),
                   ),
-                )
-                .toList(),
+                ),
+                ...kmhWallets
+                    .where((w) => w.balance < 0)
+                    .map(
+                      (w) => ListTile(
+                        leading: CircleAvatar(
+                          backgroundColor: Colors.red,
+                          child: const Icon(
+                            Icons.account_balance,
+                            color: Colors.white,
+                            size: 20,
+                          ),
+                        ),
+                        title: Text(w.name),
+                        subtitle: Text(
+                          'KMH Borcu - Limit: ₺${NumberFormat('#,##0', 'tr_TR').format(w.creditLimit)}',
+                          style: const TextStyle(fontSize: 12, color: Colors.grey),
+                        ),
+                        trailing: Text(
+                          '-₺${NumberFormat('#,##0', 'tr_TR').format(w.balance.abs())}',
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: Colors.red,
+                          ),
+                        ),
+                      ),
+                    ),
+              ],
+            ],
           ),
         ),
       ],
@@ -1149,8 +1163,6 @@ class _StatisticsScreenState extends State<StatisticsScreen>
         const SizedBox(height: 16),
         _buildDebtReceivablePanel(),
         const SizedBox(height: 16),
-        _buildBudgetGoalComparisonCard(),
-        const SizedBox(height: 16),
         _buildPaymentMethodDistributionCard(),
         const SizedBox(height: 16),
         _buildCashFlowTableCard(),
@@ -1166,249 +1178,6 @@ class _StatisticsScreenState extends State<StatisticsScreen>
     );
   }
 
-  Widget _buildBudgetGoalComparisonCard() {
-    // Filter active budgets that are relevant to the current time filter
-    final activeBudgets = widget.budgets
-        .where((budget) => budget.isActive)
-        .toList();
-
-    if (activeBudgets.isEmpty) {
-      return _buildCard(
-        title: 'Bütçe Hedefleri',
-        subtitle: 'Tanımlı bütçe bulunmamaktadır',
-        content: const Padding(
-          padding: EdgeInsets.all(16),
-          child: Text(
-            'Henüz hiç bütçe hedefi eklenmemiş. Bütçe oluşturmak için "Bütçeler" sekmesine gidin.',
-            style: TextStyle(color: Colors.grey),
-            textAlign: TextAlign.center,
-          ),
-        ),
-      );
-    }
-
-    // Calculate spent amounts for each budget category in the filtered period
-    final budgetSpentMap = <String, double>{};
-
-    for (var item in _filteredTransactions) {
-      // Handle both Transaction and CreditCardTransaction objects
-      if (item is Transaction && item.type == 'expense') {
-        budgetSpentMap[item.category] =
-            (budgetSpentMap[item.category] ?? 0) + item.amount;
-      } else if (item is CreditCardTransaction) {
-        // Credit card transactions are always expenses
-        budgetSpentMap[item.category] =
-            (budgetSpentMap[item.category] ?? 0) + item.amount;
-      }
-    }
-
-    // Filter budgets that have transactions in the current period
-    final relevantBudgets = activeBudgets.where((budget) {
-      return budgetSpentMap.containsKey(budget.category) &&
-          budgetSpentMap[budget.category]! > 0;
-    }).toList();
-
-    if (relevantBudgets.isEmpty) {
-      return _buildCard(
-        title: 'Bütçe Hedefleri',
-        subtitle: 'Bu dönemde harcama yapılan bütçe kategorisi bulunmamaktadır',
-        content: const Padding(
-          padding: EdgeInsets.all(16),
-          child: Text(
-            'Bu dönemde bütçelendirilen kategorilerde harcama yapılmamış.',
-            style: TextStyle(color: Colors.grey),
-            textAlign: TextAlign.center,
-          ),
-        ),
-      );
-    }
-
-    return _buildCard(
-      title: 'Bütçe Hedef Karşılaştırması',
-      subtitle: 'Gerçekleşen harcamalar vs. bütçe hedefleri',
-      content: Column(
-        children: [
-          ...relevantBudgets.map((budget) {
-            final spent = budgetSpentMap[budget.category] ?? 0;
-            final percentage = budget.amount > 0
-                ? (spent / budget.amount) * 100
-                : 0;
-            final remaining = budget.amount - spent;
-            final isOverBudget = spent > budget.amount;
-
-            return Padding(
-              padding: const EdgeInsets.symmetric(vertical: 8),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        budget.name,
-                        style: const TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                      Text(
-                        '${percentage.toStringAsFixed(1)}%',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          color: isOverBudget
-                              ? Colors.red
-                              : (percentage > 80
-                                    ? Colors.orange
-                                    : Colors.green),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    '${budget.category} - ₺${NumberFormat('#,##0', 'tr_TR').format(budget.amount)}',
-                    style: const TextStyle(fontSize: 12, color: Colors.grey),
-                  ),
-                  const SizedBox(height: 8),
-                  Stack(
-                    children: [
-                      Container(
-                        height: 8,
-                        decoration: BoxDecoration(
-                          color: Theme.of(context).brightness == Brightness.dark
-                              ? Colors.grey[800]
-                              : Colors.grey[200],
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                      ),
-                      LayoutBuilder(
-                        builder: (context, constraints) {
-                          final width = percentage > 100
-                              ? constraints.maxWidth
-                              : (constraints.maxWidth * percentage / 100);
-                          return Container(
-                            height: 8,
-                            width: width,
-                            decoration: BoxDecoration(
-                              color: isOverBudget
-                                  ? Colors.red
-                                  : (percentage > 80
-                                        ? Colors.orange
-                                        : Colors.green),
-                              borderRadius: BorderRadius.circular(4),
-                            ),
-                          );
-                        },
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        'Harcanan: ₺${NumberFormat('#,##0', 'tr_TR').format(spent)}',
-                        style: const TextStyle(fontSize: 12),
-                      ),
-                      Text(
-                        isOverBudget
-                            ? 'Bütçeyi aşan: ₺${NumberFormat('#,##0', 'tr_TR').format(spent - budget.amount)}'
-                            : 'Kalan: ₺${NumberFormat('#,##0', 'tr_TR').format(remaining)}',
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                          color: isOverBudget ? Colors.red : Colors.green,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            );
-          }),
-          const SizedBox(height: 16),
-          // Summary statistics
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: Colors.blue.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: Colors.blue.withValues(alpha: 0.3)),
-            ),
-            child: Column(
-              children: [
-                const Text(
-                  'Bütçe Özeti',
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    color: Colors.blue,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  children: [
-                    _buildBudgetSummaryItem(
-                      title: 'Toplam Bütçe',
-                      amount: relevantBudgets.fold(
-                        0.0,
-                        (sum, b) => sum + b.amount,
-                      ),
-                      color: Colors.blue,
-                    ),
-                    _buildBudgetSummaryItem(
-                      title: 'Toplam Harcama',
-                      amount: relevantBudgets.fold(
-                        0.0,
-                        (sum, b) => sum + (budgetSpentMap[b.category] ?? 0),
-                      ),
-                      color: Colors.purple,
-                    ),
-                    _buildBudgetSummaryItem(
-                      title: 'Ortalama Kullanım',
-                      amount: relevantBudgets.isNotEmpty
-                          ? relevantBudgets.fold(
-                                  0.0,
-                                  (sum, b) =>
-                                      sum +
-                                      ((budgetSpentMap[b.category] ?? 0) /
-                                          b.amount *
-                                          100),
-                                ) /
-                                relevantBudgets.length
-                          : 0,
-                      color: Colors.orange,
-                      isPercentage: true,
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildBudgetSummaryItem({
-    required String title,
-    required double amount,
-    required Color color,
-    bool isPercentage = false,
-  }) {
-    return Column(
-      children: [
-        Text(title, style: TextStyle(fontSize: 12, color: color)),
-        Text(
-          isPercentage
-              ? '${amount.toStringAsFixed(1)}%'
-              : '₺${NumberFormat('#,##0', 'tr_TR').format(amount)}',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            color: color,
-            fontSize: 14,
-          ),
-        ),
-      ],
-    );
-  }
 
   Widget _buildDebtReceivablePanel() {
     // Calculate total debt from loans
@@ -1422,8 +1191,13 @@ class _StatisticsScreenState extends State<StatisticsScreen>
         .where((w) => w.type == 'credit_card')
         .fold(0.0, (sum, w) => sum + w.balance.abs());
 
+    // Calculate KMH debts (negative balances in bank accounts with credit limit)
+    final kmhDebts = widget.wallets
+        .where((w) => w.type == 'overdraft' && w.creditLimit > 0 && w.balance < 0)
+        .fold(0.0, (sum, w) => sum + w.balance.abs());
+
     // Total debt
-    final totalDebt = totalLoanDebt + creditCardDebts;
+    final totalDebt = totalLoanDebt + creditCardDebts + kmhDebts;
 
     // For receivables, we'll look for "receivable" category transactions
     // or transactions marked in a special way
@@ -1493,6 +1267,13 @@ class _StatisticsScreenState extends State<StatisticsScreen>
                 amount: totalLoanDebt,
                 color: Colors.orange,
                 icon: Icons.account_balance,
+              ),
+            if (kmhDebts > 0)
+              _buildDebtReceivableDetailItem(
+                title: 'KMH Borçları',
+                amount: kmhDebts,
+                color: Colors.deepOrange,
+                icon: Icons.account_balance_wallet,
               ),
             const SizedBox(height: 16),
           ],
@@ -2542,21 +2323,42 @@ class _StatisticsScreenState extends State<StatisticsScreen>
     final assetWallets = widget.wallets
         .where((w) => w.type != 'credit_card')
         .toList();
-    final totalAssets = assetWallets.fold(0.0, (sum, w) => sum + w.balance);
+    
+    // Separate KMH accounts (bank accounts with credit limit)
+    final kmhWallets = assetWallets
+        .where((w) => w.type == 'overdraft' && w.creditLimit > 0)
+        .toList();
+    
+    // Calculate positive assets
+    final positiveAssets = assetWallets
+        .where((w) => w.balance > 0)
+        .fold(0.0, (sum, w) => sum + w.balance);
+    
+    // Calculate KMH debts (negative balances in KMH accounts)
+    final kmhDebts = kmhWallets
+        .where((w) => w.balance < 0)
+        .fold(0.0, (sum, w) => sum + w.balance.abs());
+    
+    // Net total assets
+    final totalAssets = positiveAssets - kmhDebts;
 
-    // Calculate percentages
+    // Calculate percentages for chart
     final cashAssets = assetWallets
-        .where((w) => w.type == 'cash')
+        .where((w) => w.type == 'cash' && w.balance > 0)
         .fold(0.0, (sum, w) => sum + w.balance);
     final bankAssets = assetWallets
-        .where((w) => w.type == 'bank')
+        .where((w) => w.type == 'bank' && w.balance > 0)
         .fold(0.0, (sum, w) => sum + w.balance);
 
-    final cashPercentage = totalAssets > 0
-        ? (cashAssets / totalAssets) * 100
+    final totalForChart = positiveAssets + kmhDebts;
+    final cashPercentage = totalForChart > 0
+        ? (cashAssets / totalForChart) * 100
         : 0.0;
-    final bankPercentage = totalAssets > 0
-        ? (bankAssets / totalAssets) * 100
+    final bankPercentage = totalForChart > 0
+        ? (bankAssets / totalForChart) * 100
+        : 0.0;
+    final debtPercentage = totalForChart > 0
+        ? (kmhDebts / totalForChart) * 100
         : 0.0;
 
     return _buildCard(
@@ -2590,7 +2392,14 @@ class _StatisticsScreenState extends State<StatisticsScreen>
                                 radius: 15,
                                 showTitle: false,
                               ),
-                            if (totalAssets == 0)
+                            if (debtPercentage > 0)
+                              PieChartSectionData(
+                                value: debtPercentage,
+                                color: Colors.red,
+                                radius: 15,
+                                showTitle: false,
+                              ),
+                            if (totalForChart == 0)
                               PieChartSectionData(
                                 value: 100,
                                 color: Colors.grey[200],
@@ -2605,8 +2414,8 @@ class _StatisticsScreenState extends State<StatisticsScreen>
                       Center(
                         child: Text(
                           '₺${NumberFormat.compact().format(totalAssets)}',
-                          style: const TextStyle(
-                            color: Colors.black87,
+                          style: TextStyle(
+                            color: totalAssets >= 0 ? Colors.black87 : Colors.red,
                             fontWeight: FontWeight.bold,
                             fontSize: 14,
                           ),
@@ -2621,14 +2430,15 @@ class _StatisticsScreenState extends State<StatisticsScreen>
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       const Text(
-                        'Toplam finansal varlık',
+                        'Net finansal varlık',
                         style: TextStyle(color: Colors.grey),
                       ),
                       Text(
                         '₺${NumberFormat('#,##0', 'tr_TR').format(totalAssets)}',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 16,
+                          color: totalAssets >= 0 ? Colors.green : Colors.red,
                         ),
                       ),
                     ],
@@ -2647,6 +2457,12 @@ class _StatisticsScreenState extends State<StatisticsScreen>
             '₺${NumberFormat('#,##0', 'tr_TR').format(bankAssets)}',
             '${bankPercentage.toStringAsFixed(1)}%',
           ),
+          if (kmhDebts > 0)
+            _buildAssetRow(
+              'KMH Borçları',
+              '-₺${NumberFormat('#,##0', 'tr_TR').format(kmhDebts)}',
+              '${debtPercentage.toStringAsFixed(1)}%',
+            ),
         ],
       ),
     );
@@ -3455,8 +3271,8 @@ class _StatisticsScreenState extends State<StatisticsScreen>
         }
 
         return _buildCard(
-          title: 'Fatura Takibi',
-          subtitle: 'Ödenen ve bekleyen faturalar',
+          title: 'Kategori Bazlı Fatura Dağılımı',
+          subtitle: 'Faturalarınızın kategori dağılımı',
           content: Column(
             children: [
               // Özet kartları
@@ -3494,134 +3310,119 @@ class _StatisticsScreenState extends State<StatisticsScreen>
                 ),
               ),
 
-              // Kategorilere göre dağılım (Carousel)
+              // Kategorilere göre dağılım (Pie Chart)
               if (paymentsByCategory.isNotEmpty) ...[
                 const Divider(),
-                Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'Kategorilere Göre Dağılım',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 14,
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      SizedBox(
-                        height: 200,
-                        child: PageView.builder(
-                          itemCount: paymentsByCategory.length,
-                          controller: PageController(viewportFraction: 0.85),
-                          itemBuilder: (context, index) {
-                            final entry = paymentsByCategory.entries.elementAt(index);
-                            final percentage = totalAmount > 0
-                                ? (entry.value / totalAmount) * 100
-                                : 0.0;
-                            
-                            return Container(
-                              margin: const EdgeInsets.symmetric(horizontal: 8),
-                              padding: const EdgeInsets.all(20),
-                              decoration: BoxDecoration(
-                                gradient: LinearGradient(
-                                  begin: Alignment.topLeft,
-                                  end: Alignment.bottomRight,
-                                  colors: [
-                                    const Color(0xFF00BFA5),
-                                    const Color(0xFF00BFA5).withValues(alpha: 0.7),
-                                  ],
-                                ),
-                                borderRadius: BorderRadius.circular(16),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: const Color(0xFF00BFA5).withValues(alpha: 0.3),
-                                    blurRadius: 10,
-                                    offset: const Offset(0, 4),
-                                  ),
-                                ],
-                              ),
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  // Kategori ikonu
-                                  Container(
-                                    padding: const EdgeInsets.all(12),
-                                    decoration: BoxDecoration(
-                                      color: Colors.white.withValues(alpha: 0.2),
-                                      shape: BoxShape.circle,
-                                    ),
-                                    child: Icon(
-                                      _getCategoryIcon(entry.key),
-                                      size: 36,
-                                      color: Colors.white,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 12),
-                                  // Kategori adı
-                                  Text(
-                                    entry.key,
-                                    style: const TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.white,
-                                    ),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                  const SizedBox(height: 6),
-                                  // Tutar
-                                  FutureBuilder(
-                                    future: _dataService.getCurrentUser(),
-                                    builder: (context, snapshot) {
-                                      if (!snapshot.hasData) return const SizedBox();
-                                      return Text(
-                                        CurrencyHelper.formatAmount(
-                                          entry.value,
-                                          snapshot.data,
-                                        ),
-                                        style: const TextStyle(
-                                          fontSize: 22,
-                                          fontWeight: FontWeight.bold,
-                                          color: Colors.white,
-                                        ),
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                      );
-                                    },
-                                  ),
-                                  const SizedBox(height: 4),
-                                  // Yüzde
-                                  Text(
-                                    '${percentage.toStringAsFixed(1)}%',
-                                    style: TextStyle(
-                                      fontSize: 14,
-                                      color: Colors.white.withValues(alpha: 0.9),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            );
+                const SizedBox(height: 16),
+                // Pie Chart
+                SizedBox(
+                  height: 250,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: PieChart(
+                      PieChartData(
+                        sectionsSpace: 2,
+                        centerSpaceRadius: 50,
+                        pieTouchData: PieTouchData(
+                          touchCallback: (FlTouchEvent event, pieTouchResponse) {
+                            if (event is FlTapUpEvent && pieTouchResponse != null) {
+                              final sectionIndex = pieTouchResponse.touchedSection?.touchedSectionIndex;
+                              if (sectionIndex != null && sectionIndex < paymentsByCategory.length) {
+                                final category = paymentsByCategory.keys.elementAt(sectionIndex);
+                                _showBillCategoryDetails(category, paymentsByCategory[category]!);
+                              }
+                            }
                           },
                         ),
+                        sections: paymentsByCategory.entries.map((entry) {
+                          final percentage = totalAmount > 0
+                              ? (entry.value / totalAmount) * 100
+                              : 0.0;
+                          final color = Colors.primaries[entry.key.hashCode % Colors.primaries.length];
+                          return PieChartSectionData(
+                            color: color,
+                            value: percentage,
+                            title: '${percentage.toStringAsFixed(0)}%',
+                            radius: 70,
+                            titleStyle: const TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          );
+                        }).toList(),
                       ),
-                      const SizedBox(height: 8),
-                      // Sayfa göstergesi
-                      Center(
-                        child: Text(
-                          'Kaydırarak diğer kategorileri görün',
-                          style: TextStyle(
-                            fontSize: 11,
-                            color: Colors.grey[600],
-                            fontStyle: FontStyle.italic,
-                          ),
-                        ),
-                      ),
-                    ],
+                    ),
                   ),
                 ),
+                const SizedBox(height: 16),
+                // Legend
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Column(
+                    children: paymentsByCategory.entries.map((entry) {
+                      final percentage = totalAmount > 0
+                          ? (entry.value / totalAmount) * 100
+                          : 0.0;
+                      final color = Colors.primaries[entry.key.hashCode % Colors.primaries.length];
+                      return InkWell(
+                        onTap: () => _showBillCategoryDetails(entry.key, entry.value),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 8),
+                          child: Row(
+                            children: [
+                              Container(
+                                width: 16,
+                                height: 16,
+                                decoration: BoxDecoration(
+                                  color: color,
+                                  shape: BoxShape.circle,
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Text(
+                                  entry.key,
+                                  style: const TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ),
+                              FutureBuilder(
+                                future: _dataService.getCurrentUser(),
+                                builder: (context, snapshot) {
+                                  if (!snapshot.hasData) return const SizedBox();
+                                  return Text(
+                                    CurrencyHelper.formatAmountCompact(entry.value, snapshot.data),
+                                    style: const TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  );
+                                },
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                '${percentage.toStringAsFixed(1)}%',
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.grey,
+                                ),
+                              ),
+                              const Icon(
+                                Icons.arrow_forward_ios,
+                                size: 14,
+                                color: Colors.grey,
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                ),
+                const SizedBox(height: 8),
               ],
             ],
           ),
@@ -3782,4 +3583,148 @@ class _StatisticsScreenState extends State<StatisticsScreen>
       };
     }
   }
+
+  void _showBillCategoryDetails(String category, double totalAmount) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Container(
+            constraints: const BoxConstraints(maxHeight: 500),
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.primaries[category.hashCode % Colors.primaries.length]
+                            .withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Icon(
+                        Icons.receipt_long,
+                        color: Colors.primaries[category.hashCode % Colors.primaries.length],
+                        size: 28,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            category,
+                            style: const TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          FutureBuilder(
+                            future: _dataService.getCurrentUser(),
+                            builder: (context, snapshot) {
+                              if (!snapshot.hasData) return const SizedBox();
+                              return Text(
+                                CurrencyHelper.formatAmount(totalAmount, snapshot.data),
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  color: Colors.primaries[category.hashCode % Colors.primaries.length],
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              );
+                            },
+                          ),
+                        ],
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close),
+                      onPressed: () => Navigator.pop(context),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 20),
+                const Divider(),
+                const SizedBox(height: 12),
+                Expanded(
+                  child: SingleChildScrollView(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Bu kategorideki faturalar:',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.grey,
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: Colors.blue.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: Colors.blue.withValues(alpha: 0.3),
+                            ),
+                          ),
+                          child: Row(
+                            children: [
+                              const Icon(
+                                Icons.info_outline,
+                                color: Colors.blue,
+                                size: 20,
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Text(
+                                  'Detaylı fatura listesi için Ayarlar > Faturalarım bölümünü ziyaret edin.',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.blue.shade700,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () => Navigator.pop(context),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF5E5CE6),
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: const Text(
+                      'Tamam',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
 }
+

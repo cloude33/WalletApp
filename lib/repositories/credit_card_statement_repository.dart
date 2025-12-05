@@ -25,24 +25,24 @@ class CreditCardStatementRepository {
     final statements = _box.values
         .where((statement) => statement.cardId == cardId)
         .toList();
-    
+
     // Sort by period end date (newest first)
     statements.sort((a, b) => b.periodEnd.compareTo(a.periodEnd));
-    
+
     return statements;
   }
 
   /// Find current statement for a card (most recent unpaid or pending)
   Future<CreditCardStatement?> findCurrentStatement(String cardId) async {
     final statements = await findByCardId(cardId);
-    
+
     // Find the most recent statement that is not fully paid
     for (var statement in statements) {
       if (!statement.isPaidFully) {
         return statement;
       }
     }
-    
+
     // If all are paid, return the most recent one
     return statements.isNotEmpty ? statements.first : null;
   }
@@ -50,11 +50,11 @@ class CreditCardStatementRepository {
   /// Find previous statement for a card (the one before current)
   Future<CreditCardStatement?> findPreviousStatement(String cardId) async {
     final statements = await findByCardId(cardId);
-    
+
     if (statements.length < 2) {
       return null;
     }
-    
+
     return statements[1]; // Second most recent
   }
 
@@ -62,9 +62,10 @@ class CreditCardStatementRepository {
   Future<List<CreditCardStatement>> findOverdueStatements() async {
     final now = DateTime.now();
     return _box.values
-        .where((statement) =>
-            statement.dueDate.isBefore(now) &&
-            !statement.isPaidFully)
+        .where(
+          (statement) =>
+              statement.dueDate.isBefore(now) && !statement.isPaidFully,
+        )
         .toList();
   }
 
@@ -82,10 +83,14 @@ class CreditCardStatementRepository {
     DateTime end,
   ) async {
     return _box.values
-        .where((statement) =>
-            statement.cardId == cardId &&
-            statement.periodEnd.isAfter(start.subtract(const Duration(seconds: 1))) &&
-            statement.periodEnd.isBefore(end.add(const Duration(days: 1))))
+        .where(
+          (statement) =>
+              statement.cardId == cardId &&
+              statement.periodEnd.isAfter(
+                start.subtract(const Duration(seconds: 1)),
+              ) &&
+              statement.periodEnd.isBefore(end.add(const Duration(days: 1))),
+        )
         .toList();
   }
 
@@ -95,13 +100,15 @@ class CreditCardStatementRepository {
     DateTime periodEnd,
   ) async {
     final statements = _box.values
-        .where((statement) =>
-            statement.cardId == cardId &&
-            statement.periodEnd.year == periodEnd.year &&
-            statement.periodEnd.month == periodEnd.month &&
-            statement.periodEnd.day == periodEnd.day)
+        .where(
+          (statement) =>
+              statement.cardId == cardId &&
+              statement.periodEnd.year == periodEnd.year &&
+              statement.periodEnd.month == periodEnd.month &&
+              statement.periodEnd.day == periodEnd.day,
+        )
         .toList();
-    
+
     return statements.isNotEmpty ? statements.first : null;
   }
 

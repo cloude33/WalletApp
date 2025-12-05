@@ -34,6 +34,18 @@ class CreditCardTransaction extends HiveObject {
   @HiveField(9)
   List<String> images; // Base64 encoded images
 
+  @HiveField(10)
+  int? deferredMonths; // Ertelenmiş taksit için kaç ay sonra başlayacak
+
+  @HiveField(11)
+  DateTime? installmentStartDate; // Taksit başlangıç tarihi
+
+  @HiveField(12)
+  bool isCashAdvance; // Nakit avans mı?
+
+  @HiveField(13)
+  double? pointsEarned; // Bu işlemden kazanılan puan
+
   CreditCardTransaction({
     required this.id,
     required this.cardId,
@@ -45,19 +57,28 @@ class CreditCardTransaction extends HiveObject {
     this.installmentsPaid = 0,
     required this.createdAt,
     List<String>? images,
+    this.deferredMonths,
+    this.installmentStartDate,
+    this.isCashAdvance = false,
+    this.pointsEarned,
   }) : images = images ?? [];
 
   // Computed properties
   double get installmentAmount => amount / installmentCount;
-  
-  double get remainingAmount => 
+
+  double get remainingAmount =>
       installmentAmount * (installmentCount - installmentsPaid);
-  
+
   bool get isCompleted => installmentsPaid >= installmentCount;
-  
+
   int get remainingInstallments => installmentCount - installmentsPaid;
-  
+
   bool get isCashPurchase => installmentCount == 1;
+
+  bool get isDeferred => deferredMonths != null && deferredMonths! > 0;
+
+  DateTime get effectiveStartDate =>
+      installmentStartDate ?? transactionDate;
 
   // Validation
   String? validate() {
@@ -96,6 +117,10 @@ class CreditCardTransaction extends HiveObject {
     int? installmentsPaid,
     DateTime? createdAt,
     List<String>? images,
+    int? deferredMonths,
+    DateTime? installmentStartDate,
+    bool? isCashAdvance,
+    double? pointsEarned,
   }) {
     return CreditCardTransaction(
       id: id ?? this.id,
@@ -108,6 +133,10 @@ class CreditCardTransaction extends HiveObject {
       installmentsPaid: installmentsPaid ?? this.installmentsPaid,
       createdAt: createdAt ?? this.createdAt,
       images: images ?? this.images,
+      deferredMonths: deferredMonths ?? this.deferredMonths,
+      installmentStartDate: installmentStartDate ?? this.installmentStartDate,
+      isCashAdvance: isCashAdvance ?? this.isCashAdvance,
+      pointsEarned: pointsEarned ?? this.pointsEarned,
     );
   }
 

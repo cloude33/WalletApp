@@ -46,7 +46,9 @@ class _UserSelectionScreenState extends State<UserSelectionScreen> {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Kullanıcıyı Sil'),
-        content: Text('${user.name} adlı kullanıcıyı silmek istediğinize emin misiniz?'),
+        content: Text(
+          '${user.name} adlı kullanıcıyı silmek istediğinize emin misiniz?',
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
@@ -64,7 +66,7 @@ class _UserSelectionScreenState extends State<UserSelectionScreen> {
       final users = List<User>.from(_users);
       users.removeWhere((u) => u.id == user.id);
       await _dataService.saveAllUsers(users);
-      
+
       // If the deleted user was the current user, clear current user?
       // For now just reload
       _loadUsers();
@@ -80,9 +82,7 @@ class _UserSelectionScreenState extends State<UserSelectionScreen> {
           children: [
             Container(
               padding: const EdgeInsets.all(20),
-              decoration: const BoxDecoration(
-                color: Color(0xFF00BFA5),
-              ),
+              decoration: const BoxDecoration(color: Color(0xFF00BFA5)),
               child: const Center(
                 child: Text(
                   'Kullanıcı Seçin',
@@ -98,53 +98,61 @@ class _UserSelectionScreenState extends State<UserSelectionScreen> {
               child: _loading
                   ? const Center(child: CircularProgressIndicator())
                   : _users.isEmpty
-                      ? Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              const Icon(Icons.person_off, size: 64, color: Colors.grey),
-                              const SizedBox(height: 16),
-                              const Text(
-                                'Henüz kullanıcı yok',
-                                style: TextStyle(fontSize: 18, color: Colors.grey),
-                              ),
-                              const SizedBox(height: 24),
-                              ElevatedButton(
-                                onPressed: () async {
-                                  final result = await Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) => const AddUserScreen(),
-                                    ),
-                                  );
-                                  if (result == true) {
-                                    _loadUsers();
-                                  }
-                                },
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: const Color(0xFF00BFA5),
-                                ),
-                                child: const Text('Kullanıcı Oluştur', style: TextStyle(color: Colors.white)),
-                              ),
-                            ],
+                  ? Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(
+                            Icons.person_off,
+                            size: 64,
+                            color: Colors.grey,
                           ),
-                        )
-                      : GridView.builder(
-                          padding: const EdgeInsets.all(20),
-                          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                          const SizedBox(height: 16),
+                          const Text(
+                            'Henüz kullanıcı yok',
+                            style: TextStyle(fontSize: 18, color: Colors.grey),
+                          ),
+                          const SizedBox(height: 24),
+                          ElevatedButton(
+                            onPressed: () async {
+                              final result = await Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => const AddUserScreen(),
+                                ),
+                              );
+                              if (result == true) {
+                                _loadUsers();
+                              }
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF00BFA5),
+                            ),
+                            child: const Text(
+                              'Kullanıcı Oluştur',
+                              style: TextStyle(color: Colors.white),
+                            ),
+                          ),
+                        ],
+                      ),
+                    )
+                  : GridView.builder(
+                      padding: const EdgeInsets.all(20),
+                      gridDelegate:
+                          const SliverGridDelegateWithFixedCrossAxisCount(
                             crossAxisCount: 2,
                             crossAxisSpacing: 20,
                             mainAxisSpacing: 20,
                             childAspectRatio: 0.8,
                           ),
-                          itemCount: _users.length + 1,
-                          itemBuilder: (context, index) {
-                            if (index == _users.length) {
-                              return _buildAddUserCard();
-                            }
-                            return _buildUserCard(_users[index]);
-                          },
-                        ),
+                      itemCount: _users.length + 1,
+                      itemBuilder: (context, index) {
+                        if (index == _users.length) {
+                          return _buildAddUserCard();
+                        }
+                        return _buildUserCard(_users[index]);
+                      },
+                    ),
             ),
           ],
         ),
@@ -204,10 +212,7 @@ class _UserSelectionScreenState extends State<UserSelectionScreen> {
               const SizedBox(height: 4),
               Text(
                 user.email!,
-                style: TextStyle(
-                  fontSize: 12,
-                  color: Colors.grey[600],
-                ),
+                style: TextStyle(fontSize: 12, color: Colors.grey[600]),
                 textAlign: TextAlign.center,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
@@ -252,11 +257,7 @@ class _UserSelectionScreenState extends State<UserSelectionScreen> {
                 color: const Color(0xFF00BFA5).withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(
-                Icons.add,
-                size: 40,
-                color: Color(0xFF00BFA5),
-              ),
+              child: const Icon(Icons.add, size: 40, color: Color(0xFF00BFA5)),
             ),
             const SizedBox(height: 16),
             const Text(

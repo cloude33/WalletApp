@@ -63,9 +63,9 @@ class _DebtStatisticsScreenState extends State<DebtStatisticsScreen> {
     } catch (e) {
       setState(() => _isLoading = false);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Hata: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Hata: $e')));
       }
     }
   }
@@ -73,9 +73,7 @@ class _DebtStatisticsScreenState extends State<DebtStatisticsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('İstatistikler'),
-      ),
+      appBar: AppBar(title: const Text('İstatistikler')),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : RefreshIndicator(
@@ -172,10 +170,7 @@ class _DebtStatisticsScreenState extends State<DebtStatisticsScreen> {
             const SizedBox(height: 8),
             Text(
               label,
-              style: TextStyle(
-                fontSize: 12,
-                color: Colors.grey[600],
-              ),
+              style: TextStyle(fontSize: 12, color: Colors.grey[600]),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 4),
@@ -207,10 +202,7 @@ class _DebtStatisticsScreenState extends State<DebtStatisticsScreen> {
           children: [
             const Text(
               'Kategori Dağılımı',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 24),
             SizedBox(
@@ -232,7 +224,10 @@ class _DebtStatisticsScreenState extends State<DebtStatisticsScreen> {
   }
 
   List<PieChartSectionData> _buildPieChartSections() {
-    final total = _categoryBreakdown.values.fold<double>(0, (sum, v) => sum + v);
+    final total = _categoryBreakdown.values.fold<double>(
+      0,
+      (sum, v) => sum + v,
+    );
     final colors = {
       DebtCategory.friend: Colors.blue,
       DebtCategory.family: Colors.green,
@@ -287,10 +282,7 @@ class _DebtStatisticsScreenState extends State<DebtStatisticsScreen> {
               ),
             ),
             const SizedBox(width: 8),
-            Text(
-              labels[entry.key]!,
-              style: const TextStyle(fontSize: 12),
-            ),
+            Text(labels[entry.key]!, style: const TextStyle(fontSize: 12)),
           ],
         );
       }).toList(),
@@ -315,10 +307,7 @@ class _DebtStatisticsScreenState extends State<DebtStatisticsScreen> {
           children: [
             const Text(
               'En Yüksek Tutarlar',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 16),
             ...topDebts.map((debt) => _buildDebtItem(debt)),
@@ -353,16 +342,11 @@ class _DebtStatisticsScreenState extends State<DebtStatisticsScreen> {
               children: [
                 Text(
                   debt.personName,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: const TextStyle(fontWeight: FontWeight.bold),
                 ),
                 Text(
                   debt.categoryText,
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.grey[600],
-                  ),
+                  style: TextStyle(fontSize: 12, color: Colors.grey[600]),
                 ),
               ],
             ),

@@ -31,13 +31,13 @@ class CurrencyHelper {
   static double parse(String value) {
     // Remove currency symbols and spaces
     String cleanValue = value.replaceAll(RegExp(r'[₺$€£\s]'), '');
-    
+
     // Remove thousands separators (dots)
     cleanValue = cleanValue.replaceAll('.', '');
-    
+
     // Replace comma with dot for decimal
     cleanValue = cleanValue.replaceAll(',', '.');
-    
+
     return double.tryParse(cleanValue) ?? 0.0;
   }
 

@@ -17,7 +17,7 @@ class RecurringSchedulerService {
   Future<void> initialize() async {
     // Run initial check
     await runNow();
-    
+
     // Schedule periodic checks while app is running (every hour)
     schedulePeriodicChecks();
   }

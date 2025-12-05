@@ -23,8 +23,12 @@ import 'models/credit_card.dart';
 import 'models/credit_card_transaction.dart';
 import 'models/credit_card_statement.dart';
 import 'models/credit_card_payment.dart';
+import 'models/reward_points.dart';
+import 'models/reward_transaction.dart';
+import 'models/limit_alert.dart';
 import 'services/credit_card_box_service.dart';
 import 'services/bill_migration_service.dart';
+import 'services/credit_card_migration_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -41,6 +45,9 @@ void main() async {
   Hive.registerAdapter(CreditCardTransactionAdapter());
   Hive.registerAdapter(CreditCardStatementAdapter());
   Hive.registerAdapter(CreditCardPaymentAdapter());
+  Hive.registerAdapter(RewardPointsAdapter());
+  Hive.registerAdapter(RewardTransactionAdapter());
+  Hive.registerAdapter(LimitAlertAdapter());
 
   await DataService().init();
 
@@ -88,6 +95,15 @@ void main() async {
     await migrationService.migrateBills();
   } catch (e) {
     debugPrint('Bill migration error: $e');
+  }
+
+  // Migrate credit card data to new enhanced fields
+  try {
+    final creditCardMigrationService = CreditCardMigrationService();
+    final result = await creditCardMigrationService.migrateCreditCards();
+    debugPrint('Credit card migration: ${result.message}');
+  } catch (e) {
+    debugPrint('Credit card migration error: $e');
   }
 
   runApp(const MoneyApp());

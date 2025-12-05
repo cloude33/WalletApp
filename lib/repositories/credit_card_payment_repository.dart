@@ -20,10 +20,10 @@ class CreditCardPaymentRepository {
     final payments = _box.values
         .where((payment) => payment.cardId == cardId)
         .toList();
-    
+
     // Sort by payment date (newest first)
     payments.sort((a, b) => b.paymentDate.compareTo(a.paymentDate));
-    
+
     return payments;
   }
 
@@ -41,10 +41,14 @@ class CreditCardPaymentRepository {
     DateTime end,
   ) async {
     return _box.values
-        .where((payment) =>
-            payment.cardId == cardId &&
-            payment.paymentDate.isAfter(start.subtract(const Duration(seconds: 1))) &&
-            payment.paymentDate.isBefore(end.add(const Duration(days: 1))))
+        .where(
+          (payment) =>
+              payment.cardId == cardId &&
+              payment.paymentDate.isAfter(
+                start.subtract(const Duration(seconds: 1)),
+              ) &&
+              payment.paymentDate.isBefore(end.add(const Duration(days: 1))),
+        )
         .toList();
   }
 
@@ -54,9 +58,11 @@ class CreditCardPaymentRepository {
     String paymentMethod,
   ) async {
     return _box.values
-        .where((payment) =>
-            payment.cardId == cardId &&
-            payment.paymentMethod == paymentMethod)
+        .where(
+          (payment) =>
+              payment.cardId == cardId &&
+              payment.paymentMethod == paymentMethod,
+        )
         .toList();
   }
 

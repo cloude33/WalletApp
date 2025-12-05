@@ -40,7 +40,9 @@ class _NotificationHistoryScreenState extends State<NotificationHistoryScreen> {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Geçmişi Temizle'),
-        content: const Text('Tüm bildirim geçmişini silmek istediğinizden emin misiniz?'),
+        content: const Text(
+          'Tüm bildirim geçmişini silmek istediğinizden emin misiniz?',
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
@@ -59,6 +61,12 @@ class _NotificationHistoryScreenState extends State<NotificationHistoryScreen> {
       await _notificationService.clearAll();
       await _loadNotifications();
     }
+  }
+
+  /// Handle notification tap and navigate to relevant screen
+  /// Requirements: 5.1, 5.2, 5.3, 5.4
+  Future<void> _handleNotificationTap(AppNotification notification) async {
+    // Add notification type handlers here as needed
   }
 
   @override
@@ -83,8 +91,8 @@ class _NotificationHistoryScreenState extends State<NotificationHistoryScreen> {
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : _notifications.isEmpty
-              ? _buildEmptyState()
-              : _buildNotificationList(),
+          ? _buildEmptyState()
+          : _buildNotificationList(),
     );
   }
 
@@ -93,18 +101,11 @@ class _NotificationHistoryScreenState extends State<NotificationHistoryScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            Icons.notifications_none,
-            size: 64,
-            color: Colors.grey[400],
-          ),
+          Icon(Icons.notifications_none, size: 64, color: Colors.grey[400]),
           const SizedBox(height: 16),
           Text(
             'Henüz bildirim yok',
-            style: TextStyle(
-              fontSize: 18,
-              color: Colors.grey[600],
-            ),
+            style: TextStyle(fontSize: 18, color: Colors.grey[600]),
           ),
         ],
       ),
@@ -144,15 +145,14 @@ class _NotificationHistoryScreenState extends State<NotificationHistoryScreen> {
         child: ListTile(
           leading: CircleAvatar(
             backgroundColor: notification.getColor().withValues(alpha: 0.2),
-            child: Icon(
-              notification.getIcon(),
-              color: notification.getColor(),
-            ),
+            child: Icon(notification.getIcon(), color: notification.getColor()),
           ),
           title: Text(
             notification.title,
             style: TextStyle(
-              fontWeight: notification.isRead ? FontWeight.normal : FontWeight.bold,
+              fontWeight: notification.isRead
+                  ? FontWeight.normal
+                  : FontWeight.bold,
             ),
           ),
           subtitle: Column(
@@ -167,10 +167,7 @@ class _NotificationHistoryScreenState extends State<NotificationHistoryScreen> {
               const SizedBox(height: 4),
               Text(
                 dateFormatter.format(notification.createdAt),
-                style: TextStyle(
-                  fontSize: 12,
-                  color: Colors.grey[600],
-                ),
+                style: TextStyle(fontSize: 12, color: Colors.grey[600]),
               ),
             ],
           ),
@@ -188,13 +185,16 @@ class _NotificationHistoryScreenState extends State<NotificationHistoryScreen> {
             if (!notification.isRead) {
               await _notificationService.markAsRead(notification.id);
               setState(() {
-                final index = _notifications.indexWhere((n) => n.id == notification.id);
+                final index = _notifications.indexWhere(
+                  (n) => n.id == notification.id,
+                );
                 if (index != -1) {
                   _notifications[index] = notification.copyWith(isRead: true);
                 }
               });
             }
-            // TODO: Navigate to relevant screen based on notification type
+            // Navigate to relevant screen based on notification type
+            await _handleNotificationTap(notification);
           },
         ),
       ),

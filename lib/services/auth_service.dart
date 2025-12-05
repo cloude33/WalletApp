@@ -81,22 +81,38 @@ class AuthService {
         );
       }
 
+      // Biyometrik ayarının etkin olup olmadığını kontrol et
+      final isEnabled = await isBiometricEnabled();
+      if (!isEnabled) {
+        throw PlatformException(
+          code: 'NotEnabled',
+          message: 'Biyometrik doğrulama etkin değil',
+        );
+      }
+
       final bool didAuthenticate = await _localAuth.authenticate(
         localizedReason: 'Uygulamaya giriş yapmak için kimliğinizi doğrulayın',
         options: const AuthenticationOptions(
           stickyAuth: true,
-          biometricOnly: true,
+          biometricOnly: false, // false olmalı - PIN fallback için
+          useErrorDialogs: true,
+          sensitiveTransaction: false,
         ),
       );
       return didAuthenticate;
-    } on PlatformException catch (_) {
-      // PlatformException'ı yeniden fırlat ki çağıran kod hata kodunu görebilsin
-      rethrow;
+    } on PlatformException catch (e) {
+      // Kullanıcı iptal etti veya başka bir hata oluştu
+      if (e.code == 'NotAvailable' || 
+          e.code == 'NotEnrolled' || 
+          e.code == 'LockedOut' ||
+          e.code == 'PermanentlyLockedOut') {
+        rethrow;
+      }
+      // Diğer hatalar için false döndür
+      return false;
     } catch (e) {
-      throw PlatformException(
-        code: 'Unknown',
-        message: 'Beklenmeyen bir hata oluştu',
-      );
+      // Beklenmeyen hatalar için false döndür
+      return false;
     }
   }
 

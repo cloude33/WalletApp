@@ -36,9 +36,9 @@ class _NotificationSettingsScreenState
     if (_preferences != null) {
       await _prefsService.savePreferences(_preferences!);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Ayarlar kaydedildi')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Ayarlar kaydedildi')));
       }
     }
   }
@@ -46,26 +46,19 @@ class _NotificationSettingsScreenState
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      );
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('Bildirim Ayarları'),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.save),
-            onPressed: _savePreferences,
-          ),
+          IconButton(icon: const Icon(Icons.save), onPressed: _savePreferences),
         ],
       ),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          _buildBudgetAlertsSection(),
-          const SizedBox(height: 24),
           _buildDailySummarySection(),
           const SizedBox(height: 24),
           _buildWeeklySummarySection(),
@@ -73,60 +66,15 @@ class _NotificationSettingsScreenState
           _buildBillRemindersSection(),
           const SizedBox(height: 24),
           _buildInstallmentRemindersSection(),
+          const SizedBox(height: 24),
+          _buildPaymentRemindersSection(),
+          const SizedBox(height: 24),
+          _buildLimitAlertsSection(),
+          const SizedBox(height: 24),
+          _buildStatementCutNotificationsSection(),
+          const SizedBox(height: 24),
+          _buildInstallmentEndingNotificationsSection(),
         ],
-      ),
-    );
-  }
-
-  Widget _buildBudgetAlertsSection() {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Bütçe Uyarıları',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 8),
-            SwitchListTile(
-              title: const Text('Bütçe uyarılarını etkinleştir'),
-              value: _preferences!.budgetAlertsEnabled,
-              onChanged: (value) {
-                setState(() {
-                  _preferences = _preferences!.copyWith(
-                    budgetAlertsEnabled: value,
-                  );
-                });
-              },
-            ),
-            if (_preferences!.budgetAlertsEnabled) ...[
-              const Divider(),
-              ListTile(
-                title: const Text('Uyarı eşiği'),
-                subtitle: Text('%${_preferences!.budgetAlertThreshold}'),
-                trailing: SizedBox(
-                  width: 200,
-                  child: Slider(
-                    value: _preferences!.budgetAlertThreshold.toDouble(),
-                    min: 50,
-                    max: 100,
-                    divisions: 10,
-                    label: '%${_preferences!.budgetAlertThreshold}',
-                    onChanged: (value) {
-                      setState(() {
-                        _preferences = _preferences!.copyWith(
-                          budgetAlertThreshold: value.toInt(),
-                        );
-                      });
-                    },
-                  ),
-                ),
-              ),
-            ],
-          ],
-        ),
       ),
     );
   }
@@ -318,7 +266,9 @@ class _NotificationSettingsScreenState
               const Divider(),
               ListTile(
                 title: const Text('Kaç gün önce hatırlat'),
-                subtitle: Text('${_preferences!.installmentReminderDays} gün önce'),
+                subtitle: Text(
+                  '${_preferences!.installmentReminderDays} gün önce',
+                ),
                 trailing: SizedBox(
                   width: 200,
                   child: Slider(
@@ -338,6 +288,254 @@ class _NotificationSettingsScreenState
                 ),
               ),
             ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPaymentRemindersSection() {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Kredi Kartı Ödeme Hatırlatmaları',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 8),
+            SwitchListTile(
+              title: const Text('Ödeme hatırlatmaları'),
+              subtitle: const Text('Son ödeme tarihinden önce hatırlat'),
+              value: _preferences!.paymentRemindersEnabled,
+              onChanged: (value) {
+                setState(() {
+                  _preferences = _preferences!.copyWith(
+                    paymentRemindersEnabled: value,
+                  );
+                });
+              },
+            ),
+            if (_preferences!.paymentRemindersEnabled) ...[
+              const Divider(),
+              const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                child: Text(
+                  'Hatırlatma günleri (son ödeme tarihinden önce)',
+                  style: TextStyle(fontWeight: FontWeight.w500),
+                ),
+              ),
+              CheckboxListTile(
+                title: const Text('3 gün önce'),
+                value: _preferences!.paymentReminderDays.contains(3),
+                onChanged: (value) {
+                  setState(() {
+                    final days = List<int>.from(_preferences!.paymentReminderDays);
+                    if (value == true) {
+                      if (!days.contains(3)) days.add(3);
+                    } else {
+                      days.remove(3);
+                    }
+                    days.sort();
+                    _preferences = _preferences!.copyWith(
+                      paymentReminderDays: days,
+                    );
+                  });
+                },
+              ),
+              CheckboxListTile(
+                title: const Text('5 gün önce'),
+                value: _preferences!.paymentReminderDays.contains(5),
+                onChanged: (value) {
+                  setState(() {
+                    final days = List<int>.from(_preferences!.paymentReminderDays);
+                    if (value == true) {
+                      if (!days.contains(5)) days.add(5);
+                    } else {
+                      days.remove(5);
+                    }
+                    days.sort();
+                    _preferences = _preferences!.copyWith(
+                      paymentReminderDays: days,
+                    );
+                  });
+                },
+              ),
+              CheckboxListTile(
+                title: const Text('7 gün önce'),
+                value: _preferences!.paymentReminderDays.contains(7),
+                onChanged: (value) {
+                  setState(() {
+                    final days = List<int>.from(_preferences!.paymentReminderDays);
+                    if (value == true) {
+                      if (!days.contains(7)) days.add(7);
+                    } else {
+                      days.remove(7);
+                    }
+                    days.sort();
+                    _preferences = _preferences!.copyWith(
+                      paymentReminderDays: days,
+                    );
+                  });
+                },
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLimitAlertsSection() {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Limit Uyarıları',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 8),
+            SwitchListTile(
+              title: const Text('Limit uyarıları'),
+              subtitle: const Text('Kart limitine yaklaşıldığında uyar'),
+              value: _preferences!.limitAlertsEnabled,
+              onChanged: (value) {
+                setState(() {
+                  _preferences = _preferences!.copyWith(
+                    limitAlertsEnabled: value,
+                  );
+                });
+              },
+            ),
+            if (_preferences!.limitAlertsEnabled) ...[
+              const Divider(),
+              const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                child: Text(
+                  'Uyarı eşikleri (limit kullanım oranı)',
+                  style: TextStyle(fontWeight: FontWeight.w500),
+                ),
+              ),
+              CheckboxListTile(
+                title: const Text('%80 limite ulaşıldığında'),
+                value: _preferences!.limitAlertThresholds.contains(80.0),
+                onChanged: (value) {
+                  setState(() {
+                    final thresholds = List<double>.from(_preferences!.limitAlertThresholds);
+                    if (value == true) {
+                      if (!thresholds.contains(80.0)) thresholds.add(80.0);
+                    } else {
+                      thresholds.remove(80.0);
+                    }
+                    thresholds.sort();
+                    _preferences = _preferences!.copyWith(
+                      limitAlertThresholds: thresholds,
+                    );
+                  });
+                },
+              ),
+              CheckboxListTile(
+                title: const Text('%90 limite ulaşıldığında'),
+                value: _preferences!.limitAlertThresholds.contains(90.0),
+                onChanged: (value) {
+                  setState(() {
+                    final thresholds = List<double>.from(_preferences!.limitAlertThresholds);
+                    if (value == true) {
+                      if (!thresholds.contains(90.0)) thresholds.add(90.0);
+                    } else {
+                      thresholds.remove(90.0);
+                    }
+                    thresholds.sort();
+                    _preferences = _preferences!.copyWith(
+                      limitAlertThresholds: thresholds,
+                    );
+                  });
+                },
+              ),
+              CheckboxListTile(
+                title: const Text('%100 limite ulaşıldığında'),
+                value: _preferences!.limitAlertThresholds.contains(100.0),
+                onChanged: (value) {
+                  setState(() {
+                    final thresholds = List<double>.from(_preferences!.limitAlertThresholds);
+                    if (value == true) {
+                      if (!thresholds.contains(100.0)) thresholds.add(100.0);
+                    } else {
+                      thresholds.remove(100.0);
+                    }
+                    thresholds.sort();
+                    _preferences = _preferences!.copyWith(
+                      limitAlertThresholds: thresholds,
+                    );
+                  });
+                },
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStatementCutNotificationsSection() {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Ekstre Kesim Bildirimleri',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 8),
+            SwitchListTile(
+              title: const Text('Ekstre kesim bildirimleri'),
+              subtitle: const Text('Ekstre kesildiğinde bildirim al'),
+              value: _preferences!.statementCutNotificationsEnabled,
+              onChanged: (value) {
+                setState(() {
+                  _preferences = _preferences!.copyWith(
+                    statementCutNotificationsEnabled: value,
+                  );
+                });
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildInstallmentEndingNotificationsSection() {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Taksit Bitişi Bildirimleri',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 8),
+            SwitchListTile(
+              title: const Text('Taksit bitişi bildirimleri'),
+              subtitle: const Text('Taksit son ödemeye ulaştığında bildirim al'),
+              value: _preferences!.installmentEndingNotificationsEnabled,
+              onChanged: (value) {
+                setState(() {
+                  _preferences = _preferences!.copyWith(
+                    installmentEndingNotificationsEnabled: value,
+                  );
+                });
+              },
+            ),
           ],
         ),
       ),

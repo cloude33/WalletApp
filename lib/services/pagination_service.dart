@@ -9,10 +9,7 @@ class PaginationService<T> {
   bool isLoading = false;
   String? error;
 
-  PaginationService({
-    required this.pageSize,
-    required this.fetchPage,
-  });
+  PaginationService({required this.pageSize, required this.fetchPage});
 
   /// Load the next page of data
   Future<void> loadNextPage() async {
@@ -29,7 +26,7 @@ class PaginationService<T> {
       } else {
         items.addAll(newItems);
         currentPage++;
-        
+
         // If we got fewer items than page size, we've reached the end
         if (newItems.length < pageSize) {
           hasMore = false;

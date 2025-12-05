@@ -11,7 +11,8 @@ class BillTemplateDetailScreen extends StatefulWidget {
   const BillTemplateDetailScreen({super.key, required this.template});
 
   @override
-  State<BillTemplateDetailScreen> createState() => _BillTemplateDetailScreenState();
+  State<BillTemplateDetailScreen> createState() =>
+      _BillTemplateDetailScreenState();
 }
 
 class _BillTemplateDetailScreenState extends State<BillTemplateDetailScreen> {
@@ -27,7 +28,9 @@ class _BillTemplateDetailScreenState extends State<BillTemplateDetailScreen> {
 
   Future<void> _loadPayments() async {
     setState(() => _loading = true);
-    final payments = await _paymentService.getPaymentsByTemplate(widget.template.id);
+    final payments = await _paymentService.getPaymentsByTemplate(
+      widget.template.id,
+    );
     // En yeni ödemeler önce
     payments.sort((a, b) => b.dueDate.compareTo(a.dueDate));
     setState(() {
@@ -94,7 +97,8 @@ class _BillTemplateDetailScreenState extends State<BillTemplateDetailScreen> {
               final navigator = Navigator.of(context);
               final result = await navigator.push(
                 MaterialPageRoute(
-                  builder: (context) => AddBillTemplateScreen(template: widget.template),
+                  builder: (context) =>
+                      AddBillTemplateScreen(template: widget.template),
                 ),
               );
               if (result == true) {
@@ -112,8 +116,8 @@ class _BillTemplateDetailScreenState extends State<BillTemplateDetailScreen> {
             child: _loading
                 ? const Center(child: CircularProgressIndicator())
                 : _payments.isEmpty
-                    ? _buildEmptyPayments()
-                    : _buildPaymentsList(),
+                ? _buildEmptyPayments()
+                : _buildPaymentsList(),
           ),
         ],
       ),
@@ -156,17 +160,17 @@ class _BillTemplateDetailScreenState extends State<BillTemplateDetailScreen> {
                     const SizedBox(height: 4),
                     Text(
                       widget.template.categoryDisplayName,
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Colors.grey[600],
-                      ),
+                      style: TextStyle(fontSize: 14, color: Colors.grey[600]),
                     ),
                   ],
                 ),
               ),
               if (!widget.template.isActive)
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 6,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.grey[300],
                     borderRadius: BorderRadius.circular(16),
@@ -180,11 +184,19 @@ class _BillTemplateDetailScreenState extends State<BillTemplateDetailScreen> {
           ),
           if (widget.template.provider != null) ...[
             const SizedBox(height: 16),
-            _buildInfoRow(Icons.business, 'Sağlayıcı', widget.template.provider!),
+            _buildInfoRow(
+              Icons.business,
+              'Sağlayıcı',
+              widget.template.provider!,
+            ),
           ],
           if (widget.template.accountNumber != null) ...[
             const SizedBox(height: 8),
-            _buildInfoRow(Icons.numbers, 'Abone No', widget.template.accountNumber!),
+            _buildInfoRow(
+              Icons.numbers,
+              'Abone No',
+              widget.template.accountNumber!,
+            ),
           ],
           if (widget.template.phoneNumber != null) ...[
             const SizedBox(height: 8),
@@ -212,12 +224,7 @@ class _BillTemplateDetailScreenState extends State<BillTemplateDetailScreen> {
             fontWeight: FontWeight.w500,
           ),
         ),
-        Expanded(
-          child: Text(
-            value,
-            style: const TextStyle(fontSize: 14),
-          ),
-        ),
+        Expanded(child: Text(value, style: const TextStyle(fontSize: 14))),
       ],
     );
   }
@@ -227,27 +234,17 @@ class _BillTemplateDetailScreenState extends State<BillTemplateDetailScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            Icons.receipt_long_outlined,
-            size: 64,
-            color: Colors.grey[400],
-          ),
+          Icon(Icons.receipt_long_outlined, size: 64, color: Colors.grey[400]),
           const SizedBox(height: 16),
           Text(
             'Henüz ödeme kaydı yok',
-            style: TextStyle(
-              fontSize: 16,
-              color: Colors.grey[600],
-            ),
+            style: TextStyle(fontSize: 16, color: Colors.grey[600]),
           ),
           const SizedBox(height: 8),
           Text(
             'Bu fatura için ödeme yaptığınızda\nburada görünecektir',
             textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 14,
-              color: Colors.grey[500],
-            ),
+            style: TextStyle(fontSize: 14, color: Colors.grey[500]),
           ),
         ],
       ),
@@ -287,9 +284,14 @@ class _BillTemplateDetailScreenState extends State<BillTemplateDetailScreen> {
                   ),
                 ),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 6,
+                  ),
                   decoration: BoxDecoration(
-                    color: _getStatusColor(payment.status).withValues(alpha: 0.1),
+                    color: _getStatusColor(
+                      payment.status,
+                    ).withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(16),
                   ),
                   child: Text(
@@ -325,11 +327,7 @@ class _BillTemplateDetailScreenState extends State<BillTemplateDetailScreen> {
             ),
             if (payment.notes != null) ...[
               const SizedBox(height: 8),
-              _buildPaymentInfoRow(
-                Icons.note,
-                'Not',
-                payment.notes!,
-              ),
+              _buildPaymentInfoRow(Icons.note, 'Not', payment.notes!),
             ],
           ],
         ),
@@ -344,17 +342,9 @@ class _BillTemplateDetailScreenState extends State<BillTemplateDetailScreen> {
         const SizedBox(width: 8),
         Text(
           '$label: ',
-          style: TextStyle(
-            fontSize: 13,
-            color: Colors.grey[600],
-          ),
+          style: TextStyle(fontSize: 13, color: Colors.grey[600]),
         ),
-        Expanded(
-          child: Text(
-            value,
-            style: const TextStyle(fontSize: 13),
-          ),
-        ),
+        Expanded(child: Text(value, style: const TextStyle(fontSize: 13))),
       ],
     );
   }

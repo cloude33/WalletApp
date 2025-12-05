@@ -81,11 +81,7 @@ class _CurrencySettingsScreenState extends State<CurrencySettingsScreen> {
       decoration: BoxDecoration(
         color: Theme.of(context).appBarTheme.backgroundColor,
         boxShadow: const [
-          BoxShadow(
-            color: Colors.black12,
-            blurRadius: 4,
-            offset: Offset(0, 2),
-          ),
+          BoxShadow(color: Colors.black12, blurRadius: 4, offset: Offset(0, 2)),
         ],
       ),
       child: Row(
@@ -140,7 +136,10 @@ class _CurrencySettingsScreenState extends State<CurrencySettingsScreen> {
             ],
           ),
           child: ListTile(
-            contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 20,
+              vertical: 12,
+            ),
             leading: Container(
               width: 50,
               height: 50,
@@ -156,7 +155,9 @@ class _CurrencySettingsScreenState extends State<CurrencySettingsScreen> {
                   style: TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
-                    color: isSelected ? const Color(0xFF5E5CE6) : const Color(0xFF8E8E93),
+                    color: isSelected
+                        ? const Color(0xFF5E5CE6)
+                        : const Color(0xFF8E8E93),
                   ),
                 ),
               ),
@@ -173,7 +174,9 @@ class _CurrencySettingsScreenState extends State<CurrencySettingsScreen> {
               currency.code,
               style: TextStyle(
                 fontSize: 13,
-                color: Theme.of(context).textTheme.bodyMedium?.color?.withValues(alpha: 0.6),
+                color: Theme.of(
+                  context,
+                ).textTheme.bodyMedium?.color?.withValues(alpha: 0.6),
               ),
             ),
             trailing: isSelected

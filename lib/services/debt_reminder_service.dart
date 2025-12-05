@@ -114,11 +114,12 @@ class DebtReminderService {
   Future<void> _sendOverdueNotification(Debt debt) async {
     final isLent = debt.type == DebtType.lent;
     final action = isLent ? 'alacağınızın' : 'borcunuzun';
-    
+
     final daysOverdue = DateTime.now().difference(debt.dueDate!).inDays;
 
     final title = 'Vadesi Geçmiş ${isLent ? 'Alacak' : 'Borç'}!';
-    final message = '${debt.personName} ile $action vadesi $daysOverdue gün önce doldu. '
+    final message =
+        '${debt.personName} ile $action vadesi $daysOverdue gün önce doldu. '
         'Tutar: ₺${debt.remainingAmount.toStringAsFixed(2)}';
 
     // Bildirim gönder (mevcut notification service kullanarak)
@@ -166,7 +167,9 @@ class DebtReminderService {
 
   /// Hatırlatma bildirimi gönder
   Future<void> _sendReminderNotification(
-      Debt debt, DebtReminder reminder) async {
+    Debt debt,
+    DebtReminder reminder,
+  ) async {
     final isLent = debt.type == DebtType.lent;
     final title = isLent ? 'Alacak Hatırlatması' : 'Borç Hatırlatması';
 
@@ -245,10 +248,7 @@ class DebtReminderService {
         if (reminder.status == ReminderStatus.pending &&
             reminder.reminderDate.isAfter(now) &&
             reminder.reminderDate.isBefore(weekLater)) {
-          upcomingReminders.add({
-            'debt': debt,
-            'reminder': reminder,
-          });
+          upcomingReminders.add({'debt': debt, 'reminder': reminder});
         }
       }
     }

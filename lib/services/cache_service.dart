@@ -59,7 +59,9 @@ class CacheService {
   /// Invalidate entries matching pattern
   void invalidatePattern(String pattern) {
     final regex = RegExp(pattern);
-    final keysToRemove = _cache.keys.where((key) => regex.hasMatch(key)).toList();
+    final keysToRemove = _cache.keys
+        .where((key) => regex.hasMatch(key))
+        .toList();
 
     for (final key in keysToRemove) {
       _cache.remove(key);

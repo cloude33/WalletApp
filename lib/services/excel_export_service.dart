@@ -74,11 +74,11 @@ class ExcelExportService {
     ];
 
     for (var i = 0; i < headers.length; i++) {
-      final cell = sheet.cell(CellIndex.indexByColumnRow(columnIndex: i, rowIndex: 0));
-      cell.value = TextCellValue(headers[i]);
-      cell.cellStyle = CellStyle(
-        bold: true,
+      final cell = sheet.cell(
+        CellIndex.indexByColumnRow(columnIndex: i, rowIndex: 0),
       );
+      cell.value = TextCellValue(headers[i]);
+      cell.cellStyle = CellStyle(bold: true);
     }
 
     // Add data rows
@@ -89,37 +89,51 @@ class ExcelExportService {
       // Date
       sheet
           .cell(CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: rowIndex))
-          .value = TextCellValue(DateFormat('yyyy-MM-dd').format(transaction.date));
+          .value = TextCellValue(
+        DateFormat('yyyy-MM-dd').format(transaction.date),
+      );
 
       // Type
       sheet
           .cell(CellIndex.indexByColumnRow(columnIndex: 1, rowIndex: rowIndex))
-          .value = TextCellValue(transaction.type);
+          .value = TextCellValue(
+        transaction.type,
+      );
 
       // Amount with currency
       sheet
           .cell(CellIndex.indexByColumnRow(columnIndex: 2, rowIndex: rowIndex))
-          .value = TextCellValue('$currency${transaction.amount.toStringAsFixed(2)}');
+          .value = TextCellValue(
+        '$currency${transaction.amount.toStringAsFixed(2)}',
+      );
 
       // Category
       sheet
           .cell(CellIndex.indexByColumnRow(columnIndex: 3, rowIndex: rowIndex))
-          .value = TextCellValue(transaction.category);
+          .value = TextCellValue(
+        transaction.category,
+      );
 
       // Description
       sheet
           .cell(CellIndex.indexByColumnRow(columnIndex: 4, rowIndex: rowIndex))
-          .value = TextCellValue(transaction.description);
+          .value = TextCellValue(
+        transaction.description,
+      );
 
       // Wallet
       sheet
           .cell(CellIndex.indexByColumnRow(columnIndex: 5, rowIndex: rowIndex))
-          .value = TextCellValue(transaction.walletId);
+          .value = TextCellValue(
+        transaction.walletId,
+      );
 
       // Memo
       sheet
           .cell(CellIndex.indexByColumnRow(columnIndex: 6, rowIndex: rowIndex))
-          .value = TextCellValue(transaction.memo ?? '');
+          .value = TextCellValue(
+        transaction.memo ?? '',
+      );
     }
 
     // Auto-fit columns
@@ -163,47 +177,83 @@ class ExcelExportService {
 
     // Add category summary
     var rowIndex = 0;
-    sheet.cell(CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: rowIndex)).value =
-        TextCellValue('Category Summary');
     sheet
         .cell(CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: rowIndex))
-        .cellStyle = CellStyle(bold: true, fontSize: 14);
+        .value = TextCellValue(
+      'Category Summary',
+    );
+    sheet
+        .cell(CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: rowIndex))
+        .cellStyle = CellStyle(
+      bold: true,
+      fontSize: 14,
+    );
 
     rowIndex += 2;
-    sheet.cell(CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: rowIndex)).value =
-        TextCellValue('Category');
-    sheet.cell(CellIndex.indexByColumnRow(columnIndex: 1, rowIndex: rowIndex)).value =
-        TextCellValue('Total');
+    sheet
+        .cell(CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: rowIndex))
+        .value = TextCellValue(
+      'Category',
+    );
+    sheet
+        .cell(CellIndex.indexByColumnRow(columnIndex: 1, rowIndex: rowIndex))
+        .value = TextCellValue(
+      'Total',
+    );
 
     rowIndex++;
     final sortedCategories = categoryTotals.entries.toList()
       ..sort((a, b) => b.value.compareTo(a.value));
 
     for (final entry in sortedCategories) {
-      sheet.cell(CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: rowIndex)).value =
-          TextCellValue(entry.key);
-      sheet.cell(CellIndex.indexByColumnRow(columnIndex: 1, rowIndex: rowIndex)).value =
-          TextCellValue('$currency${entry.value.toStringAsFixed(2)}');
+      sheet
+          .cell(CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: rowIndex))
+          .value = TextCellValue(
+        entry.key,
+      );
+      sheet
+          .cell(CellIndex.indexByColumnRow(columnIndex: 1, rowIndex: rowIndex))
+          .value = TextCellValue(
+        '$currency${entry.value.toStringAsFixed(2)}',
+      );
       rowIndex++;
     }
 
     // Add monthly summary
     rowIndex += 2;
-    sheet.cell(CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: rowIndex)).value =
-        TextCellValue('Monthly Summary');
     sheet
         .cell(CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: rowIndex))
-        .cellStyle = CellStyle(bold: true, fontSize: 14);
+        .value = TextCellValue(
+      'Monthly Summary',
+    );
+    sheet
+        .cell(CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: rowIndex))
+        .cellStyle = CellStyle(
+      bold: true,
+      fontSize: 14,
+    );
 
     rowIndex += 2;
-    sheet.cell(CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: rowIndex)).value =
-        TextCellValue('Month');
-    sheet.cell(CellIndex.indexByColumnRow(columnIndex: 1, rowIndex: rowIndex)).value =
-        TextCellValue('Income');
-    sheet.cell(CellIndex.indexByColumnRow(columnIndex: 2, rowIndex: rowIndex)).value =
-        TextCellValue('Expense');
-    sheet.cell(CellIndex.indexByColumnRow(columnIndex: 3, rowIndex: rowIndex)).value =
-        TextCellValue('Net');
+    sheet
+        .cell(CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: rowIndex))
+        .value = TextCellValue(
+      'Month',
+    );
+    sheet
+        .cell(CellIndex.indexByColumnRow(columnIndex: 1, rowIndex: rowIndex))
+        .value = TextCellValue(
+      'Income',
+    );
+    sheet
+        .cell(CellIndex.indexByColumnRow(columnIndex: 2, rowIndex: rowIndex))
+        .value = TextCellValue(
+      'Expense',
+    );
+    sheet
+        .cell(CellIndex.indexByColumnRow(columnIndex: 3, rowIndex: rowIndex))
+        .value = TextCellValue(
+      'Net',
+    );
 
     rowIndex++;
     final sortedMonths = monthTotals.entries.toList()
@@ -214,14 +264,26 @@ class ExcelExportService {
       final expense = entry.value['expense']!;
       final net = income - expense;
 
-      sheet.cell(CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: rowIndex)).value =
-          TextCellValue(entry.key);
-      sheet.cell(CellIndex.indexByColumnRow(columnIndex: 1, rowIndex: rowIndex)).value =
-          TextCellValue('$currency${income.toStringAsFixed(2)}');
-      sheet.cell(CellIndex.indexByColumnRow(columnIndex: 2, rowIndex: rowIndex)).value =
-          TextCellValue('$currency${expense.toStringAsFixed(2)}');
-      sheet.cell(CellIndex.indexByColumnRow(columnIndex: 3, rowIndex: rowIndex)).value =
-          TextCellValue('$currency${net.toStringAsFixed(2)}');
+      sheet
+          .cell(CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: rowIndex))
+          .value = TextCellValue(
+        entry.key,
+      );
+      sheet
+          .cell(CellIndex.indexByColumnRow(columnIndex: 1, rowIndex: rowIndex))
+          .value = TextCellValue(
+        '$currency${income.toStringAsFixed(2)}',
+      );
+      sheet
+          .cell(CellIndex.indexByColumnRow(columnIndex: 2, rowIndex: rowIndex))
+          .value = TextCellValue(
+        '$currency${expense.toStringAsFixed(2)}',
+      );
+      sheet
+          .cell(CellIndex.indexByColumnRow(columnIndex: 3, rowIndex: rowIndex))
+          .value = TextCellValue(
+        '$currency${net.toStringAsFixed(2)}',
+      );
       rowIndex++;
     }
 

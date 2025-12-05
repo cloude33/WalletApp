@@ -27,28 +27,39 @@ class _CalendarScreenState extends State<CalendarScreen> {
   List<Category> _categories = [];
   List<CreditCardTransaction> _creditCardTransactions = [];
   Map<String, CreditCard> _creditCards = {};
+  late PageController _pageController;
+  final int _initialPage = 1200; // Başlangıç sayfası (100 yıl geriye gidebilir)
 
   @override
   void initState() {
     super.initState();
+    _pageController = PageController(initialPage: _initialPage);
     _loadData();
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
   }
 
   Future<void> _loadData() async {
     final user = await _dataService.getCurrentUser();
     final categories = (await _dataService.getCategories()).cast<Category>();
-    
+
     // Load credit card transactions
     final cards = await _creditCardService.getAllCards();
     final Map<String, CreditCard> cardMap = {};
     final List<CreditCardTransaction> allCCTransactions = [];
-    
+
     for (var card in cards) {
       cardMap[card.id] = card;
-      final transactions = await _creditCardService.getCardTransactions(card.id);
+      final transactions = await _creditCardService.getCardTransactions(
+        card.id,
+      );
       allCCTransactions.addAll(transactions);
     }
-    
+
     setState(() {
       _currentUser = user;
       _categories = categories;
@@ -72,14 +83,14 @@ class _CalendarScreenState extends State<CalendarScreen> {
           t.date.month == date.month &&
           t.date.day == date.day;
     }).toList();
-    
+
     // Credit card transactions
     final ccTransactions = _creditCardTransactions.where((t) {
       return t.transactionDate.year == date.year &&
           t.transactionDate.month == date.month &&
           t.transactionDate.day == date.day;
     }).toList();
-    
+
     // Combine all lists
     return [...normalTransactions, ...ccTransactions];
   }
@@ -112,17 +123,18 @@ class _CalendarScreenState extends State<CalendarScreen> {
   double _getDayExpense(DateTime date) {
     final dayTransactions = _getTransactionsForDay(date);
     double expense = 0;
-    
+
     // Normal expenses
     expense += dayTransactions
         .where((t) => t is Transaction && t.type == 'expense')
         .fold(0.0, (sum, t) => sum + (t as Transaction).amount);
-    
+
     // Credit card expenses
-    expense += dayTransactions
-        .whereType<CreditCardTransaction>()
-        .fold(0.0, (sum, t) => sum + (t).amount);
-    
+    expense += dayTransactions.whereType<CreditCardTransaction>().fold(
+      0.0,
+      (sum, t) => sum + (t).amount,
+    );
+
     return expense;
   }
 
@@ -147,7 +159,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
               t.date.year == _selectedMonth.year,
         )
         .fold(0.0, (sum, t) => sum + t.amount);
-    
+
     // Credit card expenses
     double ccExpense = _creditCardTransactions
         .where(
@@ -156,7 +168,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
               t.transactionDate.year == _selectedMonth.year,
         )
         .fold(0.0, (sum, t) => sum + t.amount);
-    
+
     return normalExpense + ccExpense;
   }
 
@@ -164,35 +176,61 @@ class _CalendarScreenState extends State<CalendarScreen> {
     return _monthIncome - _monthExpense;
   }
 
+  DateTime _getMonthForPage(int page) {
+    final monthsFromNow = page - _initialPage;
+    final now = DateTime.now();
+    return DateTime(now.year, now.month + monthsFromNow);
+  }
+
   @override
   Widget build(BuildContext context) {
     final screenHeight = MediaQuery.of(context).size.height;
-    
+
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SafeArea(
         child: Column(
-        children: [
-          _buildHeader(), // Sabit header
-          _buildSummary(), // Sabit özet
-          Expanded(
-            child: SingleChildScrollView(
-              child: Column(
-                children: [
-                  _buildCalendarHeader(),
-                  _buildCalendarGrid(),
-                  Container(height: 1, color: const Color(0xFFE5E5EA)),
-                  SizedBox(
-                    height: screenHeight * 0.4, // Ekran yüksekliğinin %40'ı
-                    child: _buildDayTransactions(),
-                  ),
-                ],
+          children: [
+            _buildHeader(), // Sabit header
+            _buildSummary(), // Sabit özet
+            Expanded(
+              child: PageView.builder(
+                controller: _pageController,
+                onPageChanged: (page) {
+                  setState(() {
+                    _selectedMonth = _getMonthForPage(page);
+                    // Seçili tarihi yeni aya taşı
+                    _selectedDate = DateTime(
+                      _selectedMonth.year,
+                      _selectedMonth.month,
+                      _selectedDate.day.clamp(
+                        1,
+                        DateTime(_selectedMonth.year, _selectedMonth.month + 1, 0).day,
+                      ),
+                    );
+                  });
+                },
+                itemBuilder: (context, page) {
+                  return SingleChildScrollView(
+                    child: Column(
+                      children: [
+                        _buildCalendarHeader(),
+                        _buildCalendarGrid(),
+                        Container(height: 1, color: const Color(0xFFE5E5EA)),
+                        SizedBox(
+                          height: screenHeight * 0.4,
+                          child: _buildDayTransactions(),
+                        ),
+                      ],
+                    ),
+                  );
+                },
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
-    ));
+    );
   }
 
   Widget _buildDayTransactions() {
@@ -313,14 +351,17 @@ class _CalendarScreenState extends State<CalendarScreen> {
                         Icon(
                           Icons.receipt_long_outlined,
                           size: 48,
-                          color: Theme.of(context).textTheme.bodyMedium?.color?.withValues(alpha: 0.3),
+                          color: Theme.of(
+                            context,
+                          ).textTheme.bodyMedium?.color?.withValues(alpha: 0.3),
                         ),
                         const SizedBox(height: 12),
                         Text(
                           'İşlem yok',
                           style: TextStyle(
                             fontSize: 14,
-                            color: Theme.of(context).textTheme.bodyMedium?.color?.withValues(alpha: 0.6),
+                            color: Theme.of(context).textTheme.bodyMedium?.color
+                                ?.withValues(alpha: 0.6),
                           ),
                         ),
                       ],
@@ -348,7 +389,8 @@ class _CalendarScreenState extends State<CalendarScreen> {
   Widget _buildTransactionItem(Transaction transaction) {
     final category = _categories.firstWhere(
       (c) => c.name == transaction.category,
-      orElse: () => _categories.isNotEmpty ? _categories.first : defaultCategories.first,
+      orElse: () =>
+          _categories.isNotEmpty ? _categories.first : defaultCategories.first,
     );
 
     final isIncome = transaction.type == 'income';
@@ -427,10 +469,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
             ? const Color(0xFF2C2C2E)
             : const Color(0xFFF2F2F7),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: card?.color ?? Colors.blue,
-          width: 1.5,
-        ),
+        border: Border.all(color: card?.color ?? Colors.blue, width: 1.5),
       ),
       child: Row(
         children: [
@@ -522,11 +561,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
       decoration: BoxDecoration(
         color: Theme.of(context).appBarTheme.backgroundColor,
         boxShadow: const [
-          BoxShadow(
-            color: Colors.black12,
-            blurRadius: 4,
-            offset: Offset(0, 2),
-          ),
+          BoxShadow(color: Colors.black12, blurRadius: 4, offset: Offset(0, 2)),
         ],
       ),
       child: Row(
@@ -541,12 +576,10 @@ class _CalendarScreenState extends State<CalendarScreen> {
               size: 20,
             ),
             onPressed: () {
-              setState(() {
-                _selectedMonth = DateTime(
-                  _selectedMonth.year,
-                  _selectedMonth.month - 1,
-                );
-              });
+              _pageController.previousPage(
+                duration: const Duration(milliseconds: 300),
+                curve: Curves.easeInOut,
+              );
             },
           ),
           Text(
@@ -568,12 +601,10 @@ class _CalendarScreenState extends State<CalendarScreen> {
               size: 20,
             ),
             onPressed: () {
-              setState(() {
-                _selectedMonth = DateTime(
-                  _selectedMonth.year,
-                  _selectedMonth.month + 1,
-                );
-              });
+              _pageController.nextPage(
+                duration: const Duration(milliseconds: 300),
+                curve: Curves.easeInOut,
+              );
             },
           ),
         ],
@@ -591,13 +622,25 @@ class _CalendarScreenState extends State<CalendarScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
               Flexible(
-                child: _buildSummaryItem('Gelir', _monthIncome, const Color(0xFF34C759)),
+                child: _buildSummaryItem(
+                  'Gelir',
+                  _monthIncome,
+                  const Color(0xFF34C759),
+                ),
               ),
               Flexible(
-                child: _buildSummaryItem('Gider', _monthExpense, const Color(0xFFFF3B30)),
+                child: _buildSummaryItem(
+                  'Gider',
+                  _monthExpense,
+                  const Color(0xFFFF3B30),
+                ),
               ),
               Flexible(
-                child: _buildSummaryItem('Toplam', _monthTotal, const Color(0xFF1C1C1E)),
+                child: _buildSummaryItem(
+                  'Toplam',
+                  _monthTotal,
+                  const Color(0xFF1C1C1E),
+                ),
               ),
             ],
           );
@@ -650,8 +693,8 @@ class _CalendarScreenState extends State<CalendarScreen> {
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.bold,
-                  color: isWeekend 
-                      ? Colors.red 
+                  color: isWeekend
+                      ? Colors.red
                       : (isDark ? Colors.grey[300] : const Color(0xFF1C1C1E)),
                 ),
               ),
@@ -670,7 +713,11 @@ class _CalendarScreenState extends State<CalendarScreen> {
     ).day;
     // Adjust for Monday start (weekday: 1=Mon, 7=Sun)
     // We want: Mon=0, Tue=1, ..., Sun=6
-    final firstDayWeekday = DateTime(_selectedMonth.year, _selectedMonth.month, 1).weekday;
+    final firstDayWeekday = DateTime(
+      _selectedMonth.year,
+      _selectedMonth.month,
+      1,
+    ).weekday;
     final firstDayOfWeek = firstDayWeekday == 7 ? 6 : firstDayWeekday - 1;
 
     return Padding(
@@ -698,19 +745,19 @@ class _CalendarScreenState extends State<CalendarScreen> {
 
   Widget _buildDayCell(int day, int dayOfWeek) {
     final date = DateTime(_selectedMonth.year, _selectedMonth.month, day);
-    final isSelected = date.year == _selectedDate.year &&
+    final isSelected =
+        date.year == _selectedDate.year &&
         date.month == _selectedDate.month &&
         date.day == _selectedDate.day;
     final now = DateTime.now();
-    final isToday = date.year == now.year &&
-        date.month == now.month &&
-        date.day == now.day;
+    final isToday =
+        date.year == now.year && date.month == now.month && date.day == now.day;
     final income = _getDayIncome(date);
     final expense = _getDayExpense(date);
     final total = _getDayTotal(date);
     final hasTransactions = income > 0 || expense > 0;
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    
+
     // dayOfWeek: 0=Mon, 1=Tue, ..., 5=Sat, 6=Sun
     final isWeekend = dayOfWeek == 5 || dayOfWeek == 6;
 
@@ -795,5 +842,4 @@ class _CalendarScreenState extends State<CalendarScreen> {
       ),
     );
   }
-
 }

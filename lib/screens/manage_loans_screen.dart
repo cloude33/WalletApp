@@ -113,7 +113,10 @@ class _ManageLoansScreenState extends State<ManageLoansScreen> {
               child: Row(
                 children: [
                   IconButton(
-                    icon: const Icon(Icons.arrow_back, color: Color(0xFF1C1C1E)),
+                    icon: const Icon(
+                      Icons.arrow_back,
+                      color: Color(0xFF1C1C1E),
+                    ),
                     onPressed: () => Navigator.pop(context),
                   ),
                   const Expanded(

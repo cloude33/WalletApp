@@ -67,7 +67,6 @@ class _LoginScreenState extends State<LoginScreen>
     try {
       final users = await _dataService.getAllUsers();
       if (users.isNotEmpty) {
-        // Eğer hatırlanan email varsa, o kullanıcıyı bul
         final rememberedEmail = _emailController.text.trim();
         final user = rememberedEmail.isNotEmpty
             ? users.firstWhere(
@@ -83,7 +82,7 @@ class _LoginScreenState extends State<LoginScreen>
         }
       }
     } catch (e) {
-      // Hata durumunda sessizce devam et
+      // Kullanıcı bilgisi yüklenemedi, varsayılan değer kullanılacak
     }
   }
 
@@ -112,10 +111,24 @@ class _LoginScreenState extends State<LoginScreen>
       final authenticated = await _authService.authenticateWithBiometric();
       if (authenticated && mounted) {
         _navigateToApp();
+      } else if (!authenticated && mounted) {
+        // Kullanıcı iptal etti veya doğrulama başarısız - sessizce devam et
       }
     } on PlatformException catch (e) {
       if (mounted) {
-        _showError(e.message ?? 'Biyometrik doğrulama başarısız');
+        // Sadece kritik hatalarda mesaj göster
+        if (e.code == 'LockedOut') {
+          _showError('Çok fazla başarısız deneme. Lütfen daha sonra tekrar deneyin.');
+        } else if (e.code == 'PermanentlyLockedOut') {
+          _showError('Biyometrik doğrulama kalıcı olarak kilitlendi. Lütfen şifre kullanın.');
+        } else if (e.code == 'NotEnrolled') {
+          _showError('Cihazınızda biyometrik doğrulama ayarlanmamış.');
+        }
+        // Diğer hatalar için sessiz kal (kullanıcı iptal etti vs.)
+      }
+    } catch (e) {
+      if (mounted) {
+        _showError('Biyometrik doğrulama sırasında bir hata oluştu');
       }
     }
   }
@@ -249,7 +262,6 @@ class _LoginScreenState extends State<LoginScreen>
             ),
             keyboardType: TextInputType.emailAddress,
             onChanged: (value) async {
-              // Email değiştiğinde kullanıcı adını güncelle
               if (value.contains('@')) {
                 try {
                   final users = await _dataService.getAllUsers();
@@ -264,7 +276,6 @@ class _LoginScreenState extends State<LoginScreen>
                     });
                   }
                 } catch (e) {
-                  // Kullanıcı bulunamazsa ismi temizle
                   if (mounted) {
                     setState(() {
                       _userName = null;

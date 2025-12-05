@@ -2,7 +2,9 @@ import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
 import '../models/bill_payment.dart';
+import '../models/transaction.dart';
 import 'bill_template_service.dart';
+import 'data_service.dart';
 
 /// Fatura ödemelerini yöneten servis
 class BillPaymentService {
@@ -15,9 +17,9 @@ class BillPaymentService {
     try {
       final prefs = await SharedPreferences.getInstance();
       final jsonString = prefs.getString(_storageKey);
-      
+
       if (jsonString == null) return [];
-      
+
       final List<dynamic> jsonList = json.decode(jsonString);
       return jsonList.map((json) => BillPayment.fromJson(json)).toList();
     } catch (e) {
@@ -77,6 +79,12 @@ class BillPaymentService {
     }
 
     final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final dueDateOnly = DateTime(dueDate.year, dueDate.month, dueDate.day);
+    
+    // Eğer son ödeme tarihi bugün veya geçmişse, otomatik olarak ödendi kabul et
+    final isOverdue = dueDateOnly.isBefore(today) || dueDateOnly.isAtSameMomentAs(today);
+    
     final payment = BillPayment(
       id: _uuid.v4(),
       templateId: templateId,
@@ -84,7 +92,9 @@ class BillPaymentService {
       dueDate: dueDate,
       periodStart: periodStart,
       periodEnd: periodEnd,
-      status: BillPaymentStatus.pending,
+      status: isOverdue ? BillPaymentStatus.paid : BillPaymentStatus.pending,
+      paidDate: isOverdue ? now : null,
+      paidWithWalletId: isOverdue ? template.walletId : null,
       notes: notes?.trim(),
       createdDate: now,
       updatedDate: now,
@@ -94,6 +104,30 @@ class BillPaymentService {
     payments.add(payment);
     await _savePayments(payments);
 
+    // Eğer otomatik ödendi olarak işaretlendiyse, Transaction oluştur
+    if (isOverdue && template.walletId != null) {
+      final dataService = DataService();
+      final transaction = Transaction(
+        id: _uuid.v4(),
+        description: '${template.name} Fatura Ödemesi',
+        amount: amount,
+        type: 'expense',
+        category: template.categoryDisplayName,
+        date: dueDate, // Son ödeme tarihini kullan
+        walletId: template.walletId!,
+      );
+      
+      await dataService.addTransaction(transaction);
+      
+      // Transaction ID'yi kaydet
+      final updatedPayment = payment.copyWith(transactionId: transaction.id);
+      final index = payments.indexWhere((p) => p.id == payment.id);
+      if (index != -1) {
+        payments[index] = updatedPayment;
+        await _savePayments(payments);
+      }
+    }
+
     return payment;
   }
 
@@ -101,7 +135,7 @@ class BillPaymentService {
   Future<void> updatePayment(BillPayment payment) async {
     final payments = await getPayments();
     final index = payments.indexWhere((p) => p.id == payment.id);
-    
+
     if (index == -1) {
       throw Exception('Ödeme bulunamadı');
     }
@@ -125,16 +159,42 @@ class BillPaymentService {
   }) async {
     final payments = await getPayments();
     final index = payments.indexWhere((p) => p.id == paymentId);
-    
+
     if (index == -1) {
       throw Exception('Ödeme bulunamadı');
     }
 
-    payments[index] = payments[index].copyWith(
+    final payment = payments[index];
+    
+    // Eğer transactionId verilmemişse, yeni bir transaction oluştur
+    String? newTransactionId = transactionId;
+    if (newTransactionId == null) {
+      // Template bilgisini al
+      final template = await _templateService.getTemplate(payment.templateId);
+      
+      if (template != null) {
+        // Transaction oluştur
+        final dataService = DataService();
+        final transaction = Transaction(
+          id: _uuid.v4(),
+          description: '${template.name} Fatura Ödemesi',
+          amount: payment.amount,
+          type: 'expense',
+          category: template.categoryDisplayName,
+          date: DateTime.now(),
+          walletId: walletId,
+        );
+        
+        await dataService.addTransaction(transaction);
+        newTransactionId = transaction.id;
+      }
+    }
+
+    payments[index] = payment.copyWith(
       status: BillPaymentStatus.paid,
       paidDate: DateTime.now(),
       paidWithWalletId: walletId,
-      transactionId: transactionId,
+      transactionId: newTransactionId,
       updatedDate: DateTime.now(),
     );
     await _savePayments(payments);
@@ -151,8 +211,9 @@ class BillPaymentService {
   Future<bool> hasPaymentForCurrentMonth(String templateId) async {
     final now = DateTime.now();
     final payments = await getPaymentsByTemplate(templateId);
-    return payments.any((p) =>
-        p.periodStart.year == now.year && p.periodStart.month == now.month);
+    return payments.any(
+      (p) => p.periodStart.year == now.year && p.periodStart.month == now.month,
+    );
   }
 
   /// Toplam ödenen tutar (belirli bir dönem için)

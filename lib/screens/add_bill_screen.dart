@@ -48,11 +48,11 @@ class _AddBillScreenState extends State<AddBillScreen> {
     // Örnek: Vade 15 Aralık ise, dönem 1 Kasım - 30 Kasım
     final dueMonth = _dueDate.month;
     final dueYear = _dueDate.year;
-    
+
     // Bir önceki ayın ilk günü
     final previousMonth = dueMonth == 1 ? 12 : dueMonth - 1;
     final previousYear = dueMonth == 1 ? dueYear - 1 : dueYear;
-    
+
     _periodStart = DateTime(previousYear, previousMonth, 1);
     _periodEnd = DateTime(dueYear, dueMonth, 0); // Son gün
   }
@@ -92,9 +92,7 @@ class _AddBillScreenState extends State<AddBillScreen> {
       builder: (context, child) {
         return Theme(
           data: Theme.of(context).copyWith(
-            colorScheme: const ColorScheme.light(
-              primary: Color(0xFF00BFA5),
-            ),
+            colorScheme: const ColorScheme.light(primary: Color(0xFF00BFA5)),
           ),
           child: child!,
         );
@@ -158,10 +156,7 @@ class _AddBillScreenState extends State<AddBillScreen> {
       setState(() => _isSaving = false);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Hata: $e'),
-            backgroundColor: Colors.red,
-          ),
+          SnackBar(content: Text('Hata: $e'), backgroundColor: Colors.red),
         );
       }
     }
@@ -178,191 +173,207 @@ class _AddBillScreenState extends State<AddBillScreen> {
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : _templates.isEmpty
-              ? _buildEmptyState()
-              : Form(
-                  key: _formKey,
-                  child: ListView(
-                    padding: const EdgeInsets.all(16),
-                    children: [
-                      // Bilgilendirme kartı
-                      Card(
-                        color: Colors.blue.withValues(alpha: 0.1),
-                        child: Padding(
-                          padding: const EdgeInsets.all(16),
-                          child: Row(
-                            children: [
-                              const Icon(Icons.info_outline, color: Colors.blue),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Text(
-                                  'Ayarlarda tanımladığınız faturalar için bu ayın tutarını ve son ödeme tarihini girin.',
-                                  style: const TextStyle(
-                                    fontSize: 13,
-                                    color: Color(0xFF0D47A1),
-                                  ),
-                                ),
+          ? _buildEmptyState()
+          : Form(
+              key: _formKey,
+              child: ListView(
+                padding: const EdgeInsets.all(16),
+                children: [
+                  // Bilgilendirme kartı
+                  Card(
+                    color: Colors.blue.withValues(alpha: 0.1),
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.info_outline, color: Colors.blue),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              'Ayarlarda tanımladığınız faturalar için bu ayın tutarını ve son ödeme tarihini girin.',
+                              style: const TextStyle(
+                                fontSize: 13,
+                                color: Color(0xFF0D47A1),
                               ),
-                            ],
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 24),
-
-                      // Fatura şablonu seçimi
-                      DropdownButtonFormField<BillTemplate>(
-                        value: _selectedTemplate,
-                        isExpanded: true,
-                        decoration: const InputDecoration(
-                          labelText: 'Fatura *',
-                          border: OutlineInputBorder(),
-                          prefixIcon: Icon(Icons.receipt_long),
-                        ),
-                        items: _templates.map((template) {
-                          return DropdownMenuItem<BillTemplate>(
-                            value: template,
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Text(
-                                  template.provider ?? template.name,
-                                  overflow: TextOverflow.ellipsis,
-                                  maxLines: 1,
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                                if (template.category == BillTemplateCategory.phone && 
-                                    template.phoneNumber != null)
-                                  Text(
-                                    template.phoneNumber!.startsWith('0')
-                                        ? template.phoneNumber!
-                                        : '0${template.phoneNumber!}',
-                                    style: const TextStyle(
-                                      fontSize: 13,
-                                      color: Color(0xFF757575),
-                                    ),
-                                  ),
-                              ],
                             ),
-                          );
-                        }).toList(),
-                        onChanged: (value) {
-                          setState(() => _selectedTemplate = value);
-                        },
-                        validator: (value) {
-                          if (value == null) return 'Fatura seçimi gerekli';
-                          return null;
-                        },
-                      ),
-                      const SizedBox(height: 16),
-
-                      // Tutar girişi
-                      TextFormField(
-                        controller: _amountController,
-                        decoration: const InputDecoration(
-                          labelText: 'Fatura Tutarı *',
-                          hintText: '0.00',
-                          border: OutlineInputBorder(),
-                          prefixText: '₺ ',
-                          prefixIcon: Icon(Icons.payments),
-                        ),
-                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                        inputFormatters: [
-                          FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}')),
+                          ),
                         ],
-                        validator: (value) {
-                          if (value == null || value.trim().isEmpty) {
-                            return 'Tutar gerekli';
-                          }
-                          final amount = double.tryParse(value);
-                          if (amount == null || amount <= 0) {
-                            return 'Geçerli bir tutar girin';
-                          }
-                          return null;
-                        },
                       ),
-                      const SizedBox(height: 16),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
 
-                      // Son ödeme tarihi
-                      InkWell(
-                        onTap: _selectDueDate,
-                        child: InputDecorator(
-                          decoration: const InputDecoration(
-                            labelText: 'Son Ödeme Tarihi *',
-                            border: OutlineInputBorder(),
-                            prefixIcon: Icon(Icons.calendar_today),
-                          ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                DateFormat('dd MMMM yyyy', 'tr_TR').format(_dueDate),
-                                style: const TextStyle(fontSize: 16),
-                              ),
-                              const Icon(Icons.arrow_drop_down),
-                            ],
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-
-                      // Fatura dönemi bilgisi
-                      Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: Colors.grey.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: Colors.grey.withValues(alpha: 0.3)),
-                        ),
-                        child: Row(
+                  // Fatura şablonu seçimi
+                  DropdownButtonFormField<BillTemplate>(
+                    initialValue: _selectedTemplate,
+                    isExpanded: true,
+                    decoration: const InputDecoration(
+                      labelText: 'Fatura *',
+                      border: OutlineInputBorder(),
+                      prefixIcon: Icon(Icons.receipt_long),
+                    ),
+                    items: _templates.map((template) {
+                      return DropdownMenuItem<BillTemplate>(
+                        value: template,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
                           children: [
-                            const Icon(Icons.date_range, size: 20, color: Colors.grey),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: Text(
-                                _periodStart != null && _periodEnd != null
-                                    ? 'Fatura Dönemi: ${DateFormat('dd MMM', 'tr_TR').format(_periodStart!)} - ${DateFormat('dd MMM yyyy', 'tr_TR').format(_periodEnd!)}'
-                                    : 'Fatura Dönemi: -',
-                                style: const TextStyle(fontSize: 13),
+                            Text(
+                              template.provider ?? template.name,
+                              overflow: TextOverflow.ellipsis,
+                              maxLines: 1,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w600,
                               ),
                             ),
+                            if (template.category ==
+                                    BillTemplateCategory.phone &&
+                                template.phoneNumber != null)
+                              Text(
+                                template.phoneNumber!.startsWith('0')
+                                    ? template.phoneNumber!
+                                    : '0${template.phoneNumber!}',
+                                style: const TextStyle(
+                                  fontSize: 13,
+                                  color: Color(0xFF757575),
+                                ),
+                              ),
                           ],
                         ),
-                      ),
-                      const SizedBox(height: 32),
+                      );
+                    }).toList(),
+                    onChanged: (value) {
+                      setState(() => _selectedTemplate = value);
+                    },
+                    validator: (value) {
+                      if (value == null) return 'Fatura seçimi gerekli';
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 16),
 
-                      // Kaydet butonu
-                      SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton(
-                          onPressed: _isSaving ? null : _savePayment,
-                          style: ElevatedButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(vertical: 16),
-                            backgroundColor: const Color(0xFF00BFA5),
-                            foregroundColor: Colors.white,
-                          ),
-                          child: _isSaving
-                              ? const SizedBox(
-                                  height: 20,
-                                  width: 20,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                                  ),
-                                )
-                              : const Text(
-                                  'Fatura Ekle',
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                        ),
+                  // Tutar girişi
+                  TextFormField(
+                    controller: _amountController,
+                    decoration: const InputDecoration(
+                      labelText: 'Fatura Tutarı *',
+                      hintText: '0.00',
+                      border: OutlineInputBorder(),
+                      prefixText: '₺ ',
+                      prefixIcon: Icon(Icons.payments),
+                    ),
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
+                    ),
+                    inputFormatters: [
+                      FilteringTextInputFormatter.allow(
+                        RegExp(r'^\d+\.?\d{0,2}'),
                       ),
                     ],
+                    validator: (value) {
+                      if (value == null || value.trim().isEmpty) {
+                        return 'Tutar gerekli';
+                      }
+                      final amount = double.tryParse(value);
+                      if (amount == null || amount <= 0) {
+                        return 'Geçerli bir tutar girin';
+                      }
+                      return null;
+                    },
                   ),
-                ),
+                  const SizedBox(height: 16),
+
+                  // Son ödeme tarihi
+                  InkWell(
+                    onTap: _selectDueDate,
+                    child: InputDecorator(
+                      decoration: const InputDecoration(
+                        labelText: 'Son Ödeme Tarihi *',
+                        border: OutlineInputBorder(),
+                        prefixIcon: Icon(Icons.calendar_today),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            DateFormat(
+                              'dd MMMM yyyy',
+                              'tr_TR',
+                            ).format(_dueDate),
+                            style: const TextStyle(fontSize: 16),
+                          ),
+                          const Icon(Icons.arrow_drop_down),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Fatura dönemi bilgisi
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.grey.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: Colors.grey.withValues(alpha: 0.3),
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(
+                          Icons.date_range,
+                          size: 20,
+                          color: Colors.grey,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            _periodStart != null && _periodEnd != null
+                                ? 'Fatura Dönemi: ${DateFormat('dd MMM', 'tr_TR').format(_periodStart!)} - ${DateFormat('dd MMM yyyy', 'tr_TR').format(_periodEnd!)}'
+                                : 'Fatura Dönemi: -',
+                            style: const TextStyle(fontSize: 13),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 32),
+
+                  // Kaydet butonu
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: _isSaving ? null : _savePayment,
+                      style: ElevatedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        backgroundColor: const Color(0xFF00BFA5),
+                        foregroundColor: Colors.white,
+                      ),
+                      child: _isSaving
+                          ? const SizedBox(
+                              height: 20,
+                              width: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                  Colors.white,
+                                ),
+                              ),
+                            )
+                          : const Text(
+                              'Fatura Ekle',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
     );
   }
 
@@ -389,10 +400,7 @@ class _AddBillScreenState extends State<AddBillScreen> {
           Text(
             'Önce Ayarlar > Faturalarım bölümünden\nfatura tanımlamanız gerekiyor',
             textAlign: TextAlign.center,
-            style: const TextStyle(
-              fontSize: 14,
-              color: Color(0xFF9E9E9E),
-            ),
+            style: const TextStyle(fontSize: 14, color: Color(0xFF9E9E9E)),
           ),
           const SizedBox(height: 24),
           ElevatedButton.icon(
@@ -400,7 +408,9 @@ class _AddBillScreenState extends State<AddBillScreen> {
               // Navigate to bill templates screen
               final result = await Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => const BillTemplatesScreen()),
+                MaterialPageRoute(
+                  builder: (context) => const BillTemplatesScreen(),
+                ),
               );
               if (result == true && mounted) {
                 // Reload templates if a new one was added
@@ -426,28 +436,5 @@ class _AddBillScreenState extends State<AddBillScreen> {
         ],
       ),
     );
-  }
-
-  IconData _getCategoryIcon(BillTemplateCategory category) {
-    switch (category) {
-      case BillTemplateCategory.electricity:
-        return Icons.bolt;
-      case BillTemplateCategory.water:
-        return Icons.water_drop;
-      case BillTemplateCategory.gas:
-        return Icons.local_fire_department;
-      case BillTemplateCategory.internet:
-        return Icons.wifi;
-      case BillTemplateCategory.phone:
-        return Icons.phone;
-      case BillTemplateCategory.rent:
-        return Icons.home;
-      case BillTemplateCategory.insurance:
-        return Icons.shield;
-      case BillTemplateCategory.subscription:
-        return Icons.subscriptions;
-      case BillTemplateCategory.other:
-        return Icons.receipt;
-    }
   }
 }

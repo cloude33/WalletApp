@@ -42,7 +42,15 @@ const List<ElectricityCompany> electricityCompanies = [
     name: "Başkent Elektrik Dağıtım A.Ş.",
     shortName: "BAŞKENT EDAŞ",
     regionNo: 9,
-    cities: ["Ankara", "Zonguldak", "Kastamonu", "Kırıkkale", "Karabük", "Çankırı", "Bartın"],
+    cities: [
+      "Ankara",
+      "Zonguldak",
+      "Kastamonu",
+      "Kırıkkale",
+      "Karabük",
+      "Çankırı",
+      "Bartın",
+    ],
     population: 6899700,
     operator: "Enerjisa",
   ),
@@ -141,7 +149,15 @@ const List<ElectricityCompany> electricityCompanies = [
     name: "Aras Elektrik Dağıtım A.Ş.",
     shortName: "ARAS EDAŞ",
     regionNo: 3,
-    cities: ["Erzurum", "Ağrı", "Kars", "Erzincan", "Iğdır", "Ardahan", "Bayburt"],
+    cities: [
+      "Erzurum",
+      "Ağrı",
+      "Kars",
+      "Erzincan",
+      "Iğdır",
+      "Ardahan",
+      "Bayburt",
+    ],
     population: 2207602,
     operator: "Çalık + Kiler",
   ),
@@ -228,8 +244,6 @@ ElectricityCompany? getCompanyByCode(String code) {
 ElectricityCompany? getCompanyByCity(String city) {
   return cityToCompany[city.toLowerCase()];
 }
-
-
 
 // ==================== SU VE KANALİZASYON İDARELERİ ====================
 
@@ -427,7 +441,7 @@ const List<WaterUtility> waterUtilities = [
     cities: ["Ordu"],
     website: "https://www.oski.gov.tr",
   ),
-  
+
   // Diğer 56 İl için Belediye Su ve Kanalizasyon Müdürlükleri
   WaterUtility(
     code: "AGRI_SU",
@@ -844,7 +858,6 @@ WaterUtility? getWaterUtilityByCode(String code) {
 WaterUtility? getWaterUtilityByCity(String city) {
   return cityToWaterUtility[city.toLowerCase()];
 }
-
 
 // ==================== DOĞALGAZ ŞİRKETLERİ ====================
 

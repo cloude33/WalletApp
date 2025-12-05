@@ -25,6 +25,7 @@ class BillTemplate {
   final String? accountNumber; // Abone numarası
   final String? phoneNumber; // GSM numarası (telefon faturaları için)
   final String? description;
+  final String? walletId; // Ödeme yapılacak cüzdan
   final bool isActive; // Aktif mi?
   final DateTime createdDate;
   final DateTime updatedDate;
@@ -37,6 +38,7 @@ class BillTemplate {
     this.accountNumber,
     this.phoneNumber,
     this.description,
+    this.walletId,
     this.isActive = true,
     required this.createdDate,
     required this.updatedDate,
@@ -54,6 +56,7 @@ class BillTemplate {
     String? accountNumber,
     String? phoneNumber,
     String? description,
+    String? walletId,
     bool? isActive,
     DateTime? createdDate,
     DateTime? updatedDate,
@@ -66,6 +69,7 @@ class BillTemplate {
       accountNumber: accountNumber ?? this.accountNumber,
       phoneNumber: phoneNumber ?? this.phoneNumber,
       description: description ?? this.description,
+      walletId: walletId ?? this.walletId,
       isActive: isActive ?? this.isActive,
       createdDate: createdDate ?? this.createdDate,
       updatedDate: updatedDate ?? this.updatedDate,

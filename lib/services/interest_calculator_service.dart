@@ -2,9 +2,11 @@ import '../repositories/credit_card_statement_repository.dart';
 import '../repositories/credit_card_payment_repository.dart';
 
 class InterestCalculatorService {
-  final CreditCardStatementRepository _statementRepo = CreditCardStatementRepository();
+  final CreditCardStatementRepository _statementRepo =
+      CreditCardStatementRepository();
   // ignore: unused_field
-  final CreditCardPaymentRepository _paymentRepo = CreditCardPaymentRepository();
+  final CreditCardPaymentRepository _paymentRepo =
+      CreditCardPaymentRepository();
 
   // ==================== INTEREST CALCULATIONS ====================
 
@@ -20,22 +22,30 @@ class InterestCalculatorService {
   /// Calculate daily interest
   /// Formula: principal * (monthlyRate / 100) / 30 * days
   /// Turkish banks typically use 30-day months for interest calculation
-  double calculateDailyInterest(double principal, double monthlyRate, int days) {
+  double calculateDailyInterest(
+    double principal,
+    double monthlyRate,
+    int days,
+  ) {
     if (principal <= 0 || monthlyRate < 0 || days <= 0) {
       return 0;
     }
-    
+
     final dailyRate = monthlyRate / 30;
     return principal * (dailyRate / 100) * days;
   }
 
   /// Calculate late interest (gecikme faizi)
   /// Applied when payment is overdue
-  double calculateLateInterest(double principal, double lateRate, int daysLate) {
+  double calculateLateInterest(
+    double principal,
+    double lateRate,
+    int daysLate,
+  ) {
     if (principal <= 0 || lateRate < 0 || daysLate <= 0) {
       return 0;
     }
-    
+
     return calculateDailyInterest(principal, lateRate, daysLate);
   }
 
@@ -84,7 +94,7 @@ class InterestCalculatorService {
     if (monthlyRate < 0) {
       return 0;
     }
-    
+
     // APR = (1 + monthly rate)^12 - 1
     final rate = monthlyRate / 100;
     return (pow(1 + rate, 12) - 1) * 100;
@@ -112,7 +122,7 @@ class InterestCalculatorService {
   ) async {
     final now = DateTime.now();
     final startDate = DateTime(now.year, now.month - months, 1);
-    
+
     final statements = await _statementRepo.findByDateRange(
       cardId,
       startDate,
@@ -120,9 +130,10 @@ class InterestCalculatorService {
     );
 
     final breakdown = <String, double>{};
-    
+
     for (var statement in statements) {
-      final monthKey = '${statement.periodEnd.year}-${statement.periodEnd.month.toString().padLeft(2, '0')}';
+      final monthKey =
+          '${statement.periodEnd.year}-${statement.periodEnd.month.toString().padLeft(2, '0')}';
       breakdown[monthKey] = statement.interestCharged;
     }
 
@@ -149,7 +160,10 @@ class InterestCalculatorService {
       if (remainingDebt <= 0) break;
 
       // Calculate interest for this month
-      final monthlyInterest = calculateMonthlyInterest(remainingDebt, monthlyRate);
+      final monthlyInterest = calculateMonthlyInterest(
+        remainingDebt,
+        monthlyRate,
+      );
       totalInterest += monthlyInterest;
 
       // Add interest to debt
@@ -309,7 +323,7 @@ class InterestCalculatorService {
 double pow(double base, int exponent) {
   if (exponent == 0) return 1;
   if (exponent == 1) return base;
-  
+
   double result = 1;
   for (int i = 0; i < exponent; i++) {
     result *= base;

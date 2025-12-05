@@ -17,6 +17,11 @@ subprojects {
 }
 subprojects {
     project.evaluationDependsOn(":app")
+    
+    // Suppress obsolete Java version warnings
+    tasks.withType<JavaCompile>().configureEach {
+        options.compilerArgs.addAll(listOf("-Xlint:-options"))
+    }
 }
 
 tasks.register<Delete>("clean") {

@@ -37,8 +37,6 @@ class NotificationPreferencesService {
 
   /// Update specific preference
   Future<void> updatePreference({
-    bool? budgetAlertsEnabled,
-    int? budgetAlertThreshold,
     bool? dailySummaryEnabled,
     bool? weeklySummaryEnabled,
     bool? billRemindersEnabled,
@@ -48,8 +46,6 @@ class NotificationPreferencesService {
   }) async {
     final current = await getPreferences();
     final updated = current.copyWith(
-      budgetAlertsEnabled: budgetAlertsEnabled,
-      budgetAlertThreshold: budgetAlertThreshold,
       dailySummaryEnabled: dailySummaryEnabled,
       weeklySummaryEnabled: weeklySummaryEnabled,
       billRemindersEnabled: billRemindersEnabled,

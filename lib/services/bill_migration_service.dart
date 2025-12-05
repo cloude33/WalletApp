@@ -9,7 +9,8 @@ import 'bill_payment_service.dart';
 
 /// Eski Bill modelinden yeni BillTemplate + BillPayment yapısına geçiş servisi
 class BillMigrationService {
-  static final BillMigrationService _instance = BillMigrationService._internal();
+  static final BillMigrationService _instance =
+      BillMigrationService._internal();
   factory BillMigrationService() => _instance;
   BillMigrationService._internal();
 
@@ -45,7 +46,7 @@ class BillMigrationService {
       // Eski bill verilerini oku
       final prefs = await SharedPreferences.getInstance();
       final jsonString = prefs.getString('bills');
-      
+
       if (jsonString == null || jsonString.isEmpty) {
         debugPrint('Migrate edilecek bill verisi bulunamadı');
         await markMigrationCompleted();
@@ -53,13 +54,14 @@ class BillMigrationService {
       }
 
       // Eski bill verilerini parse et (dynamic olarak)
-      final List<dynamic> oldBillsJson = jsonDecode(jsonString) as List<dynamic>;
+      final List<dynamic> oldBillsJson =
+          jsonDecode(jsonString) as List<dynamic>;
 
       debugPrint('${oldBillsJson.length} adet bill bulundu');
 
       // Benzersiz fatura tanımlarını grupla (aynı name + provider)
       final Map<String, List<Map<String, dynamic>>> groupedBills = {};
-      
+
       for (var billJson in oldBillsJson) {
         final bill = billJson as Map<String, dynamic>;
         final name = bill['name'] as String? ?? 'Bilinmeyen';
@@ -86,7 +88,9 @@ class BillMigrationService {
           id: _uuid.v4(),
           name: firstBill['name'] as String? ?? 'Bilinmeyen',
           provider: firstBill['provider'] as String?,
-          category: _mapBillCategoryToTemplateCategory(firstBill['category'] as String?),
+          category: _mapBillCategoryToTemplateCategory(
+            firstBill['category'] as String?,
+          ),
           accountNumber: firstBill['accountNumber'] as String?,
           phoneNumber: firstBill['phoneNumber'] as String?,
           description: firstBill['description'] as String?,
@@ -103,13 +107,13 @@ class BillMigrationService {
           final currentMonthAmount = billJson['currentMonthAmount'] as double?;
           final fixedAmount = billJson['fixedAmount'] as double?;
           final amount = currentMonthAmount ?? fixedAmount;
-          
+
           if (amount != null && amount > 0) {
             // Ödeme durumunu belirle
             BillPaymentStatus status;
             final statusStr = billJson['status'] as String?;
             final isPaid = billJson['isPaid'] as bool? ?? false;
-            
+
             if (statusStr == 'paid' || isPaid) {
               status = BillPaymentStatus.paid;
             } else if (statusStr == 'overdue') {
@@ -128,7 +132,11 @@ class BillMigrationService {
               dueDate = _parseDateTime(dueDateStr);
               // Vade tarihinden dönemi tahmin et
               periodEnd = DateTime(dueDate.year, dueDate.month, dueDate.day);
-              periodStart = DateTime(periodEnd.year, periodEnd.month - 1, periodEnd.day);
+              periodStart = DateTime(
+                periodEnd.year,
+                periodEnd.month - 1,
+                periodEnd.day,
+              );
             } else {
               // Vade tarihi yoksa, oluşturulma tarihini kullan
               final created = _parseDateTime(billJson['createdDate']);
@@ -147,8 +155,9 @@ class BillMigrationService {
               status: status,
               paidDate: _parseDateTime(billJson['paidDate']),
               paidWithWalletId: billJson['autoPaymentWalletId'] as String?,
-              transactionId: (billJson['paymentIds'] as List?)?.isNotEmpty == true 
-                  ? (billJson['paymentIds'] as List).first as String 
+              transactionId:
+                  (billJson['paymentIds'] as List?)?.isNotEmpty == true
+                  ? (billJson['paymentIds'] as List).first as String
                   : null,
               notes: billJson['description'] as String?,
               createdDate: _parseDateTime(billJson['createdDate']),
@@ -161,11 +170,13 @@ class BillMigrationService {
         }
       }
 
-      debugPrint('Migration tamamlandı: $templateCount template, $paymentCount payment oluşturuldu');
+      debugPrint(
+        'Migration tamamlandı: $templateCount template, $paymentCount payment oluşturuldu',
+      );
 
       // Eski bill verilerini yedekle
       await prefs.setString('bills_backup', jsonString);
-      
+
       // Eski bill verilerini temizle
       await prefs.remove('bills');
 
@@ -191,7 +202,7 @@ class BillMigrationService {
   /// Eski BillCategory string'ini yeni BillTemplateCategory'ye map et
   BillTemplateCategory _mapBillCategoryToTemplateCategory(String? oldCategory) {
     if (oldCategory == null) return BillTemplateCategory.other;
-    
+
     switch (oldCategory) {
       case 'electricity':
         return BillTemplateCategory.electricity;
@@ -217,7 +228,7 @@ class BillMigrationService {
   /// Migration'ı geri al (sadece test için)
   Future<void> rollbackMigration() async {
     final prefs = await SharedPreferences.getInstance();
-    
+
     // Yedekten geri yükle
     final backup = prefs.getString('bills_backup');
     if (backup != null) {

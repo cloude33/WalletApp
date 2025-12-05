@@ -1,7 +1,6 @@
 /// Manages notification IDs to ensure uniqueness and avoid conflicts
 class NotificationIdManager {
   // Base IDs for different notification types
-  static const int budgetAlertBase = 1000;
   static const int dailySummaryId = 2000;
   static const int weeklySummaryId = 2001;
   static const int billReminderBase = 3000;
@@ -10,12 +9,6 @@ class NotificationIdManager {
   static const int goalAchievedBase = 6000;
   static const int debtReminderBase = 7000;
   static const int debtOverdueBase = 8000;
-
-  /// Get notification ID for budget alert
-  /// Uses budget ID hash to ensure uniqueness
-  static int getBudgetAlertId(String budgetId) {
-    return budgetAlertBase + (budgetId.hashCode % 1000).abs();
-  }
 
   /// Get notification ID for bill reminder
   /// Uses transaction ID hash to ensure uniqueness
@@ -63,11 +56,6 @@ class NotificationIdManager {
     return weeklySummaryId;
   }
 
-  /// Check if an ID is a budget alert
-  static bool isBudgetAlert(int id) {
-    return id >= budgetAlertBase && id < dailySummaryId;
-  }
-
   /// Check if an ID is a summary notification
   static bool isSummary(int id) {
     return id == dailySummaryId || id == weeklySummaryId;
@@ -105,7 +93,6 @@ class NotificationIdManager {
 
   /// Get notification type from ID
   static String getNotificationType(int id) {
-    if (isBudgetAlert(id)) return 'budget_alert';
     if (isSummary(id)) return 'summary';
     if (isBillReminder(id)) return 'bill_reminder';
     if (isInstallmentReminder(id)) return 'installment_reminder';

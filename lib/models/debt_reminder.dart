@@ -6,16 +6,16 @@ part 'debt_reminder.g.dart';
 enum ReminderType {
   @JsonValue('due_date_before')
   dueDateBefore, // Vade tarihinden önce
-  
+
   @JsonValue('due_date')
   dueDate, // Vade tarihinde
-  
+
   @JsonValue('overdue')
   overdue, // Vadesi geçmiş
-  
+
   @JsonValue('custom')
   custom, // Özel hatırlatma
-  
+
   @JsonValue('recurring')
   recurring, // Tekrarlayan hatırlatma
 }
@@ -24,13 +24,13 @@ enum ReminderType {
 enum ReminderStatus {
   @JsonValue('pending')
   pending, // Bekliyor
-  
+
   @JsonValue('sent')
   sent, // Gönderildi
-  
+
   @JsonValue('failed')
   failed, // Başarısız
-  
+
   @JsonValue('cancelled')
   cancelled, // İptal edildi
 }
@@ -39,13 +39,13 @@ enum ReminderStatus {
 enum RecurrenceFrequency {
   @JsonValue('daily')
   daily, // Günlük
-  
+
   @JsonValue('weekly')
   weekly, // Haftalık
-  
+
   @JsonValue('monthly')
   monthly, // Aylık
-  
+
   @JsonValue('custom_days')
   customDays, // Özel gün sayısı
 }
@@ -89,7 +89,8 @@ class DebtReminder {
     this.metadata,
   });
 
-  factory DebtReminder.fromJson(Map<String, dynamic> json) => _$DebtReminderFromJson(json);
+  factory DebtReminder.fromJson(Map<String, dynamic> json) =>
+      _$DebtReminderFromJson(json);
   Map<String, dynamic> toJson() => _$DebtReminderToJson(this);
 
   DebtReminder copyWith({
@@ -123,7 +124,8 @@ class DebtReminder {
       recurrenceFrequency: recurrenceFrequency ?? this.recurrenceFrequency,
       recurrenceInterval: recurrenceInterval ?? this.recurrenceInterval,
       maxRecurrences: maxRecurrences ?? this.maxRecurrences,
-      currentRecurrenceCount: currentRecurrenceCount ?? this.currentRecurrenceCount,
+      currentRecurrenceCount:
+          currentRecurrenceCount ?? this.currentRecurrenceCount,
       isActive: isActive ?? this.isActive,
       failureReason: failureReason ?? this.failureReason,
       metadata: metadata ?? this.metadata,
@@ -159,7 +161,8 @@ class DebtReminder {
   }
 
   bool get isPastDue {
-    return DateTime.now().isAfter(reminderDate) && status == ReminderStatus.pending;
+    return DateTime.now().isAfter(reminderDate) &&
+        status == ReminderStatus.pending;
   }
 
   bool get isRecurring {
@@ -170,7 +173,9 @@ class DebtReminder {
     if (message.trim().isEmpty) {
       return 'Hatırlatma mesajı boş olamaz';
     }
-    if (reminderDate.isBefore(DateTime.now().subtract(const Duration(days: 1)))) {
+    if (reminderDate.isBefore(
+      DateTime.now().subtract(const Duration(days: 1)),
+    )) {
       return 'Hatırlatma tarihi çok geçmişte olamaz';
     }
     return null;

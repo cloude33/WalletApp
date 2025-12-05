@@ -93,7 +93,9 @@ class _EditCategoryScreenState extends State<EditCategoryScreen> {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Kategoriyi Sil'),
-        content: const Text('Bu kategoriyi silmek istediğinizden emin misiniz?'),
+        content: const Text(
+          'Bu kategoriyi silmek istediğinizden emin misiniz?',
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
@@ -126,10 +128,7 @@ class _EditCategoryScreenState extends State<EditCategoryScreen> {
             icon: const Icon(Icons.delete),
             onPressed: _deleteCategory,
           ),
-          IconButton(
-            icon: const Icon(Icons.save),
-            onPressed: _saveCategory,
-          ),
+          IconButton(icon: const Icon(Icons.save), onPressed: _saveCategory),
         ],
       ),
       body: Form(
@@ -140,13 +139,18 @@ class _EditCategoryScreenState extends State<EditCategoryScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Name field
-              const Text('Kategori Adı', style: TextStyle(fontWeight: FontWeight.bold)),
+              const Text(
+                'Kategori Adı',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
               const SizedBox(height: 8),
               TextFormField(
                 controller: _nameController,
                 decoration: InputDecoration(
                   hintText: 'Kategori adı girin',
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
                 ),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
@@ -166,7 +170,9 @@ class _EditCategoryScreenState extends State<EditCategoryScreen> {
                     label: const Text('Gelir'),
                     selected: _selectedType == 'income',
                     onSelected: (selected) {
-                      setState(() => _selectedType = selected ? 'income' : 'expense');
+                      setState(
+                        () => _selectedType = selected ? 'income' : 'expense',
+                      );
                     },
                   ),
                   const SizedBox(width: 10),
@@ -174,7 +180,9 @@ class _EditCategoryScreenState extends State<EditCategoryScreen> {
                     label: const Text('Gider'),
                     selected: _selectedType == 'expense',
                     onSelected: (selected) {
-                      setState(() => _selectedType = selected ? 'expense' : 'income');
+                      setState(
+                        () => _selectedType = selected ? 'expense' : 'income',
+                      );
                     },
                   ),
                 ],
@@ -227,7 +235,11 @@ class _EditCategoryScreenState extends State<EditCategoryScreen> {
                           color: _selectedColor,
                           borderRadius: BorderRadius.circular(10),
                         ),
-                        child: Icon(_selectedIcon, color: Colors.white, size: 32),
+                        child: Icon(
+                          _selectedIcon,
+                          color: Colors.white,
+                          size: 32,
+                        ),
                       ),
                       const SizedBox(width: 16),
                       const Expanded(
@@ -236,7 +248,11 @@ class _EditCategoryScreenState extends State<EditCategoryScreen> {
                           style: TextStyle(fontSize: 16),
                         ),
                       ),
-                      Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey.shade600),
+                      Icon(
+                        Icons.arrow_forward_ios,
+                        size: 16,
+                        color: Colors.grey.shade600,
+                      ),
                     ],
                   ),
                 ),
@@ -274,7 +290,10 @@ class _EditCategoryScreenState extends State<EditCategoryScreen> {
               const SizedBox(height: 40),
 
               // Preview
-              const Text('Önizleme', style: TextStyle(fontWeight: FontWeight.bold)),
+              const Text(
+                'Önizleme',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
               const SizedBox(height: 8),
               Container(
                 padding: const EdgeInsets.all(15),
@@ -302,8 +321,13 @@ class _EditCategoryScreenState extends State<EditCategoryScreen> {
                     const SizedBox(width: 15),
                     Expanded(
                       child: Text(
-                        _nameController.text.isEmpty ? 'Kategori Adı' : _nameController.text,
-                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+                        _nameController.text.isEmpty
+                            ? 'Kategori Adı'
+                            : _nameController.text,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w500,
+                        ),
                       ),
                     ),
                   ],

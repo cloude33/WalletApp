@@ -68,10 +68,7 @@ class DateRange {
   final DateTime start;
   final DateTime end;
 
-  const DateRange({
-    required this.start,
-    required this.end,
-  });
+  const DateRange({required this.start, required this.end});
 
   bool isValid() => start.isBefore(end) || start.isAtSameMomentAs(end);
 }

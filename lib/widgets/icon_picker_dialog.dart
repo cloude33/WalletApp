@@ -15,7 +15,8 @@ class IconPickerDialog extends StatefulWidget {
   State<IconPickerDialog> createState() => _IconPickerDialogState();
 }
 
-class _IconPickerDialogState extends State<IconPickerDialog> with SingleTickerProviderStateMixin {
+class _IconPickerDialogState extends State<IconPickerDialog>
+    with SingleTickerProviderStateMixin {
   late TabController _tabController;
   IconData? _selectedIcon;
   final TextEditingController _searchController = TextEditingController();
@@ -59,10 +60,7 @@ class _IconPickerDialogState extends State<IconPickerDialog> with SingleTickerPr
               children: [
                 const Text(
                   'İkon Seç',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                 ),
                 IconButton(
                   icon: const Icon(Icons.close),
@@ -71,7 +69,7 @@ class _IconPickerDialogState extends State<IconPickerDialog> with SingleTickerPr
               ],
             ),
             const SizedBox(height: 16),
-            
+
             // Search bar
             TextField(
               controller: _searchController,
@@ -91,10 +89,11 @@ class _IconPickerDialogState extends State<IconPickerDialog> with SingleTickerPr
                   borderRadius: BorderRadius.circular(12),
                 ),
               ),
-              onChanged: (value) => setState(() => _searchQuery = value.toLowerCase()),
+              onChanged: (value) =>
+                  setState(() => _searchQuery = value.toLowerCase()),
             ),
             const SizedBox(height: 16),
-            
+
             // Tabs
             TabBar(
               controller: _tabController,
@@ -104,23 +103,27 @@ class _IconPickerDialogState extends State<IconPickerDialog> with SingleTickerPr
               indicatorColor: widget.selectedColor,
               tabs: [
                 const Tab(text: 'Tümü'),
-                ...CategoryIcons.categorizedIcons.keys.map((category) => Tab(text: category)),
+                ...CategoryIcons.categorizedIcons.keys.map(
+                  (category) => Tab(text: category),
+                ),
               ],
             ),
             const SizedBox(height: 16),
-            
+
             // Icon grid
             Expanded(
               child: TabBarView(
                 controller: _tabController,
                 children: [
                   _buildIconGrid(CategoryIcons.allIcons),
-                  ...CategoryIcons.categorizedIcons.values.map((icons) => _buildIconGrid(icons)),
+                  ...CategoryIcons.categorizedIcons.values.map(
+                    (icons) => _buildIconGrid(icons),
+                  ),
                 ],
               ),
             ),
             const SizedBox(height: 16),
-            
+
             // Action buttons
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
@@ -150,7 +153,7 @@ class _IconPickerDialogState extends State<IconPickerDialog> with SingleTickerPr
 
   Widget _buildIconGrid(List<IconData> icons) {
     final filteredIcons = _getFilteredIcons(icons);
-    
+
     return GridView.builder(
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 5,
@@ -161,7 +164,7 @@ class _IconPickerDialogState extends State<IconPickerDialog> with SingleTickerPr
       itemBuilder: (context, index) {
         final icon = filteredIcons[index];
         final isSelected = _selectedIcon == icon;
-        
+
         return GestureDetector(
           onTap: () => setState(() => _selectedIcon = icon),
           child: Container(

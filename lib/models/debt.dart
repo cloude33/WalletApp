@@ -5,7 +5,7 @@ part 'debt.g.dart';
 enum DebtType {
   @JsonValue('lent')
   lent, // Borç verdim (alacak)
-  
+
   @JsonValue('borrowed')
   borrowed, // Borç aldım
 }
@@ -13,10 +13,10 @@ enum DebtType {
 enum DebtStatus {
   @JsonValue('active')
   active,
-  
+
   @JsonValue('paid')
   paid,
-  
+
   @JsonValue('overdue')
   overdue,
 }
@@ -24,13 +24,13 @@ enum DebtStatus {
 enum DebtCategory {
   @JsonValue('friend')
   friend,
-  
+
   @JsonValue('family')
   family,
-  
+
   @JsonValue('business')
   business,
-  
+
   @JsonValue('other')
   other,
 }
@@ -140,10 +140,10 @@ class Debt {
   String get dueDateStatus {
     if (dueDate == null) return 'Vade yok';
     if (isPaid) return 'Ödendi';
-    
+
     final now = DateTime.now();
     final difference = dueDate!.difference(now).inDays;
-    
+
     if (difference < 0) {
       return '${difference.abs()} gün gecikmiş';
     } else if (difference == 0) {

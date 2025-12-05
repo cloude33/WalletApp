@@ -55,9 +55,9 @@ class _ManageGoalsScreenState extends State<ManageGoalsScreen> {
       await _dataService.deleteGoal(id);
       _loadGoals();
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Hedef silindi')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Hedef silindi')));
       }
     }
   }
@@ -99,7 +99,9 @@ class _ManageGoalsScreenState extends State<ManageGoalsScreen> {
                     onPressed: () async {
                       final result = await Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (context) => const AddGoalScreen()),
+                        MaterialPageRoute(
+                          builder: (context) => const AddGoalScreen(),
+                        ),
                       );
                       if (result == true) {
                         _loadGoals();
@@ -113,132 +115,145 @@ class _ManageGoalsScreenState extends State<ManageGoalsScreen> {
               child: _loading
                   ? const Center(child: CircularProgressIndicator())
                   : _goals.isEmpty
-                      ? Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(Icons.flag, size: 80, color: Colors.grey.shade300),
-                              const SizedBox(height: 20),
-                              Text(
-                                'Henüz hedef yok',
-                                style: TextStyle(fontSize: 18, color: Colors.grey.shade600),
-                              ),
-                            ],
+                  ? Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.flag,
+                            size: 80,
+                            color: Colors.grey.shade300,
                           ),
-                        )
-                      : ListView.builder(
-                          padding: const EdgeInsets.all(20),
-                          itemCount: _goals.length,
-                          itemBuilder: (context, index) {
-                            final goal = _goals[index];
-                            return Card(
-                              margin: const EdgeInsets.only(bottom: 15),
-                              elevation: 2,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(15),
-                              ),
-                              child: Padding(
-                                padding: const EdgeInsets.all(15),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
+                          const SizedBox(height: 20),
+                          Text(
+                            'Henüz hedef yok',
+                            style: TextStyle(
+                              fontSize: 18,
+                              color: Colors.grey.shade600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    )
+                  : ListView.builder(
+                      padding: const EdgeInsets.all(20),
+                      itemCount: _goals.length,
+                      itemBuilder: (context, index) {
+                        final goal = _goals[index];
+                        return Card(
+                          margin: const EdgeInsets.only(bottom: 15),
+                          elevation: 2,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(15),
+                          ),
+                          child: Padding(
+                            padding: const EdgeInsets.all(15),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
                                   children: [
-                                    Row(
-                                      children: [
-                                        Expanded(
-                                          child: Column(
-                                            crossAxisAlignment: CrossAxisAlignment.start,
-                                            children: [
-                                              Text(
-                                                goal.name,
-                                                style: const TextStyle(
-                                                  fontSize: 18,
-                                                  fontWeight: FontWeight.bold,
-                                                ),
-                                              ),
-                                              const SizedBox(height: 5),
-                                              Text(
-                                                '₺ ${NumberFormat('#,##0', 'tr_TR').format(goal.currentAmount)} / ₺ ${NumberFormat('#,##0', 'tr_TR').format(goal.targetAmount)}',
-                                                style: const TextStyle(
-                                                  fontSize: 14,
-                                                  color: Colors.grey,
-                                                ),
-                                              ),
-                                              if (goal.deadline != null) ...[
-                                                const SizedBox(height: 5),
-                                                Text(
-                                                  'Son Tarih: ${DateFormat('dd/MM/yyyy').format(goal.deadline!)}',
-                                                  style: const TextStyle(
-                                                    fontSize: 12,
-                                                    color: Colors.orange,
-                                                  ),
-                                                ),
-                                              ],
-                                            ],
-                                          ),
-                                        ),
-                                        Stack(
-                                          alignment: Alignment.center,
-                                          children: [
-                                            SizedBox(
-                                              width: 60,
-                                              height: 60,
-                                              child: CircularProgressIndicator(
-                                                value: goal.progress,
-                                                strokeWidth: 5,
-                                                backgroundColor: Colors.grey.shade200,
-                                                valueColor: AlwaysStoppedAnimation<Color>(
-                                                  goal.progress >= 1.0
-                                                      ? Colors.green
-                                                      : goal.progress >= 0.5
-                                                          ? Colors.orange
-                                                          : Colors.red,
-                                                ),
-                                              ),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            goal.name,
+                                            style: const TextStyle(
+                                              fontSize: 18,
+                                              fontWeight: FontWeight.bold,
                                             ),
+                                          ),
+                                          const SizedBox(height: 5),
+                                          Text(
+                                            '₺ ${NumberFormat('#,##0', 'tr_TR').format(goal.currentAmount)} / ₺ ${NumberFormat('#,##0', 'tr_TR').format(goal.targetAmount)}',
+                                            style: const TextStyle(
+                                              fontSize: 14,
+                                              color: Colors.grey,
+                                            ),
+                                          ),
+                                          if (goal.deadline != null) ...[
+                                            const SizedBox(height: 5),
                                             Text(
-                                              '${(goal.progress * 100).toInt()}%',
+                                              'Son Tarih: ${DateFormat('dd/MM/yyyy').format(goal.deadline!)}',
                                               style: const TextStyle(
-                                                fontSize: 14,
-                                                fontWeight: FontWeight.bold,
+                                                fontSize: 12,
+                                                color: Colors.orange,
                                               ),
                                             ),
                                           ],
-                                        ),
-                                      ],
+                                        ],
+                                      ),
                                     ),
-                                    const SizedBox(height: 10),
-                                    Row(
-                                      mainAxisAlignment: MainAxisAlignment.end,
+                                    Stack(
+                                      alignment: Alignment.center,
                                       children: [
-                                        TextButton.icon(
-                                          onPressed: () async {
-                                            final result = await Navigator.push(
-                                              context,
-                                              MaterialPageRoute(
-                                                builder: (context) => EditGoalScreen(goal: goal),
-                                              ),
-                                            );
-                                            if (result == true) {
-                                              _loadGoals();
-                                            }
-                                          },
-                                          icon: const Icon(Icons.edit, size: 18),
-                                          label: const Text('Düzenle'),
+                                        SizedBox(
+                                          width: 60,
+                                          height: 60,
+                                          child: CircularProgressIndicator(
+                                            value: goal.progress,
+                                            strokeWidth: 5,
+                                            backgroundColor:
+                                                Colors.grey.shade200,
+                                            valueColor:
+                                                AlwaysStoppedAnimation<Color>(
+                                                  goal.progress >= 1.0
+                                                      ? Colors.green
+                                                      : goal.progress >= 0.5
+                                                      ? Colors.orange
+                                                      : Colors.red,
+                                                ),
+                                          ),
                                         ),
-                                        TextButton.icon(
-                                          onPressed: () => _deleteGoal(goal.id),
-                                          icon: const Icon(Icons.delete, size: 18),
-                                          label: const Text('Sil'),
-                                          style: TextButton.styleFrom(foregroundColor: Colors.red),
+                                        Text(
+                                          '${(goal.progress * 100).toInt()}%',
+                                          style: const TextStyle(
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.bold,
+                                          ),
                                         ),
                                       ],
                                     ),
                                   ],
                                 ),
-                              ),
-                            );
-                          },
-                        ),
+                                const SizedBox(height: 10),
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.end,
+                                  children: [
+                                    TextButton.icon(
+                                      onPressed: () async {
+                                        final result = await Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) =>
+                                                EditGoalScreen(goal: goal),
+                                          ),
+                                        );
+                                        if (result == true) {
+                                          _loadGoals();
+                                        }
+                                      },
+                                      icon: const Icon(Icons.edit, size: 18),
+                                      label: const Text('Düzenle'),
+                                    ),
+                                    TextButton.icon(
+                                      onPressed: () => _deleteGoal(goal.id),
+                                      icon: const Icon(Icons.delete, size: 18),
+                                      label: const Text('Sil'),
+                                      style: TextButton.styleFrom(
+                                        foregroundColor: Colors.red,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                    ),
             ),
           ],
         ),

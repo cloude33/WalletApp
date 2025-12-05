@@ -49,10 +49,12 @@ class _LockScreenState extends State<LockScreen> {
       setState(() => _isBiometricAvailable = available && enabled);
     }
 
-    // Auto-trigger biometric if available
-    if (available && enabled) {
-      Future.delayed(const Duration(milliseconds: 500), () {
-        _handleBiometricAuth();
+    // Auto-trigger biometric if available and enabled
+    if (available && enabled && mounted) {
+      Future.delayed(const Duration(milliseconds: 800), () {
+        if (mounted) {
+          _handleBiometricAuth();
+        }
       });
     }
   }
@@ -62,12 +64,46 @@ class _LockScreenState extends State<LockScreen> {
       final authenticated = await _authService.authenticateWithBiometric();
       if (authenticated && mounted) {
         _unlock();
+      } else if (!authenticated && mounted) {
+        // Kullanıcı iptal etti veya doğrulama başarısız
+        // Sessizce devam et, hata mesajı gösterme
       }
     } on PlatformException catch (e) {
-      if (mounted && e.code != 'NotAvailable' && e.code != 'NoPin') {
+      // Sadece kritik hatalarda mesaj göster
+      if (mounted) {
+        if (e.code == 'LockedOut') {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Çok fazla başarısız deneme. Lütfen daha sonra tekrar deneyin.'),
+              backgroundColor: Colors.orange,
+              duration: Duration(seconds: 4),
+            ),
+          );
+        } else if (e.code == 'PermanentlyLockedOut') {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Biyometrik doğrulama kalıcı olarak kilitlendi. Lütfen PIN kullanın.'),
+              backgroundColor: Colors.red,
+              duration: Duration(seconds: 5),
+            ),
+          );
+        } else if (e.code == 'NotEnrolled') {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Cihazınızda biyometrik doğrulama ayarlanmamış.'),
+              backgroundColor: Colors.orange,
+              duration: Duration(seconds: 4),
+            ),
+          );
+        }
+        // NotAvailable, NotEnabled, veya kullanıcı iptal etti - sessiz kal
+      }
+    } catch (e) {
+      // Beklenmeyen hatalar için genel mesaj
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(e.message ?? 'Biyometrik doğrulama başarısız'),
+          const SnackBar(
+            content: Text('Biyometrik doğrulama sırasında bir hata oluştu'),
             backgroundColor: Colors.red,
           ),
         );
@@ -109,8 +145,9 @@ class _LockScreenState extends State<LockScreen> {
         }
       } else {
         // For social logins, verify PIN code
-        final isValid =
-            await _authService.verifyPinCode(_passwordController.text);
+        final isValid = await _authService.verifyPinCode(
+          _passwordController.text,
+        );
 
         if (isValid) {
           _unlock();
@@ -128,10 +165,7 @@ class _LockScreenState extends State<LockScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Hata: $e'),
-            backgroundColor: Colors.red,
-          ),
+          SnackBar(content: Text('Hata: $e'), backgroundColor: Colors.red),
         );
       }
     } finally {
@@ -159,10 +193,7 @@ class _LockScreenState extends State<LockScreen> {
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             colors: isDark
-                ? [
-                    const Color(0xFF1A1A1A),
-                    const Color(0xFF2D2D2D),
-                  ]
+                ? [const Color(0xFF1A1A1A), const Color(0xFF2D2D2D)]
                 : [
                     const Color(0xFFFDB32A).withValues(alpha: 0.1),
                     Colors.white,
@@ -191,19 +222,13 @@ class _LockScreenState extends State<LockScreen> {
                   const SizedBox(height: 32),
                   const Text(
                     'Uygulama Kilitli',
-                    style: TextStyle(
-                      fontSize: 28,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 8),
                   if (_userProfile != null)
                     Text(
                       'Hoş geldiniz, ${_userProfile!.name}',
-                      style: TextStyle(
-                        fontSize: 16,
-                        color: Colors.grey[600],
-                      ),
+                      style: TextStyle(fontSize: 16, color: Colors.grey[600]),
                     ),
                   const SizedBox(height: 32),
                   if (_isBiometricAvailable) ...[
@@ -279,8 +304,9 @@ class _LockScreenState extends State<LockScreen> {
                               width: 20,
                               child: CircularProgressIndicator(
                                 strokeWidth: 2,
-                                valueColor:
-                                    AlwaysStoppedAnimation<Color>(Colors.white),
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                  Colors.white,
+                                ),
                               ),
                             )
                           : const Text(

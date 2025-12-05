@@ -8,10 +8,7 @@ import 'recurring_statistics_screen.dart';
 class RecurringTransactionListScreen extends StatefulWidget {
   final RecurringTransactionService service;
 
-  const RecurringTransactionListScreen({
-    super.key,
-    required this.service,
-  });
+  const RecurringTransactionListScreen({super.key, required this.service});
 
   @override
   State<RecurringTransactionListScreen> createState() =>
@@ -54,9 +51,8 @@ class _RecurringTransactionListScreenState
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => RecurringStatisticsScreen(
-                    service: widget.service,
-                  ),
+                  builder: (context) =>
+                      RecurringStatisticsScreen(service: widget.service),
                 ),
               );
             },
@@ -65,19 +61,15 @@ class _RecurringTransactionListScreenState
       ),
       body: TabBarView(
         controller: _tabController,
-        children: [
-          _buildActiveList(),
-          _buildInactiveList(),
-        ],
+        children: [_buildActiveList(), _buildInactiveList()],
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () async {
           final result = await Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) => AddRecurringTransactionScreen(
-                service: widget.service,
-              ),
+              builder: (context) =>
+                  AddRecurringTransactionScreen(service: widget.service),
             ),
           );
           if (result == true) {

@@ -53,7 +53,10 @@ class RecurringTransactionService {
     await _repository.update(transaction);
   }
 
-  Future<void> delete(String id, {bool deleteCreatedTransactions = false}) async {
+  Future<void> delete(
+    String id, {
+    bool deleteCreatedTransactions = false,
+  }) async {
     if (deleteCreatedTransactions) {
       // Transaction'ları silmek için data service kullanılabilir
       // Şimdilik sadece recurring transaction'ı siliyoruz
@@ -86,10 +89,12 @@ class RecurringTransactionService {
     }
   }
 
-  Future<void> _createTransactionFromRecurring(RecurringTransaction recurring) async {
+  Future<void> _createTransactionFromRecurring(
+    RecurringTransaction recurring,
+  ) async {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
-    
+
     // Bugün zaten bir işlem oluşturulmuş mu kontrol et
     if (recurring.lastCreatedDate != null) {
       final lastCreated = DateTime(
@@ -102,7 +107,7 @@ class RecurringTransactionService {
         return;
       }
     }
-    
+
     final transaction = Transaction(
       id: const Uuid().v4(),
       type: recurring.isIncome ? 'income' : 'expense',
@@ -134,10 +139,10 @@ class RecurringTransactionService {
 
   Map<String, double> getStatistics() {
     final active = getActive();
-    
+
     double totalIncome = 0;
     double totalExpense = 0;
-    
+
     for (final recurring in active) {
       if (recurring.isIncome) {
         totalIncome += recurring.amount;
@@ -158,7 +163,7 @@ class RecurringTransactionService {
     final Map<String, double> breakdown = {};
 
     for (final recurring in active) {
-      breakdown[recurring.category] = 
+      breakdown[recurring.category] =
           (breakdown[recurring.category] ?? 0) + recurring.amount;
     }
 

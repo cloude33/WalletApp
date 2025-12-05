@@ -46,6 +46,14 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
     _amountController = TextEditingController();
     _descriptionController = TextEditingController();
     _selectedDate = DateTime.now();
+    
+    // Set transaction type based on defaultType parameter
+    if (widget.defaultType == 'income') {
+      _isIncome = true;
+    } else if (widget.defaultType == 'expense') {
+      _isIncome = false;
+    }
+    
     // Initialize with a default category based on transaction type
     if (widget.categories != null && widget.categories!.isNotEmpty) {
       final incomeCategories = widget.categories!
@@ -260,7 +268,9 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                         Container(
                           padding: const EdgeInsets.all(24),
                           decoration: BoxDecoration(
-                            color: const Color(0xFF5E5CE6).withValues(alpha: 0.1),
+                            color: const Color(
+                              0xFF5E5CE6,
+                            ).withValues(alpha: 0.1),
                             shape: BoxShape.circle,
                           ),
                           child: const Icon(

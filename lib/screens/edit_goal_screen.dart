@@ -24,8 +24,12 @@ class _EditGoalScreenState extends State<EditGoalScreen> {
   void initState() {
     super.initState();
     _nameController = TextEditingController(text: widget.goal.name);
-    _targetController = TextEditingController(text: widget.goal.targetAmount.toString());
-    _currentController = TextEditingController(text: widget.goal.currentAmount.toString());
+    _targetController = TextEditingController(
+      text: widget.goal.targetAmount.toString(),
+    );
+    _currentController = TextEditingController(
+      text: widget.goal.currentAmount.toString(),
+    );
     _selectedDate = widget.goal.deadline;
   }
 
@@ -103,12 +107,17 @@ class _EditGoalScreenState extends State<EditGoalScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text('Hedef Adı', style: TextStyle(fontWeight: FontWeight.bold)),
+                      const Text(
+                        'Hedef Adı',
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
                       const SizedBox(height: 8),
                       TextFormField(
                         controller: _nameController,
                         decoration: InputDecoration(
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
                         ),
                         validator: (value) {
                           if (value == null || value.isEmpty) {
@@ -118,14 +127,19 @@ class _EditGoalScreenState extends State<EditGoalScreen> {
                         },
                       ),
                       const SizedBox(height: 20),
-                      const Text('Hedef Tutar', style: TextStyle(fontWeight: FontWeight.bold)),
+                      const Text(
+                        'Hedef Tutar',
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
                       const SizedBox(height: 8),
                       TextFormField(
                         controller: _targetController,
                         keyboardType: TextInputType.number,
                         decoration: InputDecoration(
                           prefixText: '₺ ',
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
                         ),
                         validator: (value) {
                           if (value == null || value.isEmpty) {
@@ -138,14 +152,19 @@ class _EditGoalScreenState extends State<EditGoalScreen> {
                         },
                       ),
                       const SizedBox(height: 20),
-                      const Text('Mevcut Tutar', style: TextStyle(fontWeight: FontWeight.bold)),
+                      const Text(
+                        'Mevcut Tutar',
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
                       const SizedBox(height: 8),
                       TextFormField(
                         controller: _currentController,
                         keyboardType: TextInputType.number,
                         decoration: InputDecoration(
                           prefixText: '₺ ',
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
                         ),
                         validator: (value) {
                           if (value == null || value.isEmpty) {
@@ -158,7 +177,10 @@ class _EditGoalScreenState extends State<EditGoalScreen> {
                         },
                       ),
                       const SizedBox(height: 20),
-                      const Text('Son Tarih (Opsiyonel)', style: TextStyle(fontWeight: FontWeight.bold)),
+                      const Text(
+                        'Son Tarih (Opsiyonel)',
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
                       const SizedBox(height: 8),
                       InkWell(
                         onTap: _selectDate,
@@ -174,9 +196,13 @@ class _EditGoalScreenState extends State<EditGoalScreen> {
                               Text(
                                 _selectedDate == null
                                     ? 'Tarih seçin'
-                                    : DateFormat('dd/MM/yyyy').format(_selectedDate!),
+                                    : DateFormat(
+                                        'dd/MM/yyyy',
+                                      ).format(_selectedDate!),
                                 style: TextStyle(
-                                  color: _selectedDate == null ? Colors.grey : Colors.black,
+                                  color: _selectedDate == null
+                                      ? Colors.grey
+                                      : Colors.black,
                                 ),
                               ),
                               Row(
@@ -184,7 +210,8 @@ class _EditGoalScreenState extends State<EditGoalScreen> {
                                   if (_selectedDate != null)
                                     IconButton(
                                       icon: const Icon(Icons.clear, size: 20),
-                                      onPressed: () => setState(() => _selectedDate = null),
+                                      onPressed: () =>
+                                          setState(() => _selectedDate = null),
                                     ),
                                   const Icon(Icons.calendar_today),
                                 ],

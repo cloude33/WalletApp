@@ -71,17 +71,17 @@ class _AddDebtScreenState extends State<AddDebtScreen> {
       );
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Borç/alacak kaydedildi')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Borç/alacak kaydedildi')));
         Navigator.pop(context, true);
       }
     } catch (e) {
       setState(() => _isLoading = false);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Hata: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Hata: $e')));
       }
     }
   }
@@ -89,9 +89,7 @@ class _AddDebtScreenState extends State<AddDebtScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Yeni Borç/Alacak'),
-      ),
+      appBar: AppBar(title: const Text('Yeni Borç/Alacak')),
       body: Form(
         key: _formKey,
         child: ListView(
@@ -127,10 +125,7 @@ class _AddDebtScreenState extends State<AddDebtScreen> {
           children: [
             const Text(
               'Borç Tipi',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-              ),
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 12),
             Row(
@@ -180,8 +175,8 @@ class _AddDebtScreenState extends State<AddDebtScreen> {
           color: isSelected
               ? color.withValues(alpha: 0.1)
               : (Theme.of(context).brightness == Brightness.dark
-                  ? Colors.grey[800]
-                  : Colors.grey[100]),
+                    ? Colors.grey[800]
+                    : Colors.grey[100]),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: isSelected ? color : Colors.grey[300]!,
@@ -190,11 +185,7 @@ class _AddDebtScreenState extends State<AddDebtScreen> {
         ),
         child: Column(
           children: [
-            Icon(
-              icon,
-              color: isSelected ? color : Colors.grey[600],
-              size: 32,
-            ),
+            Icon(icon, color: isSelected ? color : Colors.grey[600], size: 32),
             const SizedBox(height: 8),
             Text(
               title,
@@ -224,9 +215,7 @@ class _AddDebtScreenState extends State<AddDebtScreen> {
         labelText: 'Kişi Adı *',
         hintText: 'Örn: Ahmet Yılmaz',
         prefixIcon: const Icon(Icons.person),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
       ),
       textCapitalization: TextCapitalization.words,
       validator: (value) {
@@ -245,9 +234,7 @@ class _AddDebtScreenState extends State<AddDebtScreen> {
         labelText: 'Telefon',
         hintText: '0555 123 45 67',
         prefixIcon: const Icon(Icons.phone),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
       ),
       keyboardType: TextInputType.phone,
       inputFormatters: [
@@ -264,14 +251,10 @@ class _AddDebtScreenState extends State<AddDebtScreen> {
         hintText: '0.00',
         prefixIcon: const Icon(Icons.attach_money),
         suffixText: '₺',
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
       ),
       keyboardType: const TextInputType.numberWithOptions(decimal: true),
-      inputFormatters: [
-        FilteringTextInputFormatter.allow(RegExp(r'[0-9.,]')),
-      ],
+      inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[0-9.,]'))],
       validator: (value) {
         if (value == null || value.trim().isEmpty) {
           return 'Tutar gerekli';
@@ -291,9 +274,7 @@ class _AddDebtScreenState extends State<AddDebtScreen> {
       decoration: InputDecoration(
         labelText: 'Kategori',
         prefixIcon: const Icon(Icons.category),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
       ),
       items: DebtCategory.values.map((category) {
         String label;
@@ -350,9 +331,7 @@ class _AddDebtScreenState extends State<AddDebtScreen> {
                   onPressed: () => setState(() => _selectedDueDate = null),
                 )
               : null,
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
         ),
         child: Text(
           _selectedDueDate != null
@@ -373,9 +352,7 @@ class _AddDebtScreenState extends State<AddDebtScreen> {
         labelText: 'Açıklama',
         hintText: 'Ek bilgiler...',
         prefixIcon: const Icon(Icons.notes),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
       ),
       maxLines: 3,
       textCapitalization: TextCapitalization.sentences,
@@ -387,9 +364,7 @@ class _AddDebtScreenState extends State<AddDebtScreen> {
       onPressed: _isLoading ? null : _saveDebt,
       style: ElevatedButton.styleFrom(
         padding: const EdgeInsets.symmetric(vertical: 16),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
       child: _isLoading
           ? const SizedBox(
@@ -397,10 +372,7 @@ class _AddDebtScreenState extends State<AddDebtScreen> {
               width: 20,
               child: CircularProgressIndicator(strokeWidth: 2),
             )
-          : const Text(
-              'Kaydet',
-              style: TextStyle(fontSize: 16),
-            ),
+          : const Text('Kaydet', style: TextStyle(fontSize: 16)),
     );
   }
 }

@@ -1,9 +1,13 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:uuid/uuid.dart';
 import '../models/credit_card.dart';
 import '../services/credit_card_service.dart';
+import '../utils/image_helper.dart';
+import '../widgets/icon_picker_dialog.dart';
+import '../utils/category_icons.dart';
 
 class AddCreditCardScreen extends StatefulWidget {
   final CreditCard? card; // null for add, non-null for edit
@@ -28,8 +32,14 @@ class _AddCreditCardScreenState extends State<AddCreditCardScreen> {
   late TextEditingController _monthlyInterestRateController;
   late TextEditingController _lateInterestRateController;
   late TextEditingController _initialDebtController;
+  late TextEditingController _pointsConversionRateController;
+  late TextEditingController _cashAdvanceRateController;
+  late TextEditingController _cashAdvanceLimitController;
 
   Color _selectedColor = Colors.blue;
+  IconData? _selectedIcon;
+  String? _cardImageBase64;
+  String? _selectedRewardType;
   bool _isLoading = false;
 
   // Turkish bank suggestions
@@ -63,6 +73,15 @@ class _AddCreditCardScreenState extends State<AddCreditCardScreen> {
     'Advantage',
   ];
 
+  // Reward types
+  final List<Map<String, String>> _rewardTypes = [
+    {'value': 'bonus', 'label': 'Bonus Puan'},
+    {'value': 'worldpuan', 'label': 'WorldPuan'},
+    {'value': 'miles', 'label': 'Mil'},
+    {'value': 'cashback', 'label': 'Cashback'},
+    {'value': 'none', 'label': 'Puan Yok'},
+  ];
+
   // Predefined colors
   final List<Color> _cardColors = [
     Colors.blue,
@@ -80,12 +99,14 @@ class _AddCreditCardScreenState extends State<AddCreditCardScreen> {
   @override
   void initState() {
     super.initState();
-    
+
     // Initialize controllers with existing card data or empty
     final card = widget.card;
     _bankNameController = TextEditingController(text: card?.bankName ?? '');
     _cardNameController = TextEditingController(text: card?.cardName ?? '');
-    _last4DigitsController = TextEditingController(text: card?.last4Digits ?? '');
+    _last4DigitsController = TextEditingController(
+      text: card?.last4Digits ?? '',
+    );
     _creditLimitController = TextEditingController(
       text: card != null ? _formatNumber(card.creditLimit) : '',
     );
@@ -102,12 +123,43 @@ class _AddCreditCardScreenState extends State<AddCreditCardScreen> {
       text: card?.lateInterestRate.toString() ?? '4.5',
     );
     _initialDebtController = TextEditingController(
-      text: card != null && card.initialDebt > 0 ? _formatNumber(card.initialDebt) : '',
+      text: card != null && card.initialDebt > 0
+          ? _formatNumber(card.initialDebt)
+          : '',
+    );
+    _pointsConversionRateController = TextEditingController(
+      text: card?.pointsConversionRate?.toString() ?? '',
+    );
+    _cashAdvanceRateController = TextEditingController(
+      text: card?.cashAdvanceRate?.toString() ?? '',
+    );
+    _cashAdvanceLimitController = TextEditingController(
+      text: card != null && card.cashAdvanceLimit != null
+          ? _formatNumber(card.cashAdvanceLimit!)
+          : '',
     );
 
     if (card != null) {
       _selectedColor = card.color;
+      _cardImageBase64 = card.cardImagePath;
+      _selectedRewardType = card.rewardType;
+      
+      // Load icon if iconName is stored
+      if (card.iconName != null) {
+        _selectedIcon = _getIconFromName(card.iconName!);
+      }
     }
+  }
+
+  // Helper to get IconData from icon name
+  IconData? _getIconFromName(String iconName) {
+    // Try to find the icon in CategoryIcons
+    for (var icon in CategoryIcons.allIcons) {
+      if (icon.codePoint.toString() == iconName) {
+        return icon;
+      }
+    }
+    return null;
   }
 
   // Binlik ayırıcı ile sayı formatlama
@@ -131,6 +183,9 @@ class _AddCreditCardScreenState extends State<AddCreditCardScreen> {
     _monthlyInterestRateController.dispose();
     _lateInterestRateController.dispose();
     _initialDebtController.dispose();
+    _pointsConversionRateController.dispose();
+    _cashAdvanceRateController.dispose();
+    _cashAdvanceLimitController.dispose();
     super.dispose();
   }
 
@@ -149,6 +204,8 @@ class _AddCreditCardScreenState extends State<AddCreditCardScreen> {
               child: ListView(
                 padding: const EdgeInsets.all(16),
                 children: [
+                  _buildCardImageSection(),
+                  const SizedBox(height: 24),
                   _buildBankNameField(),
                   const SizedBox(height: 16),
                   _buildCardNameField(),
@@ -161,10 +218,7 @@ class _AddCreditCardScreenState extends State<AddCreditCardScreen> {
                   const SizedBox(height: 24),
                   const Text(
                     'Ekstre ve Ödeme Bilgileri',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 16),
                   _buildStatementDayField(),
@@ -173,10 +227,7 @@ class _AddCreditCardScreenState extends State<AddCreditCardScreen> {
                   const SizedBox(height: 24),
                   const Text(
                     'Faiz Oranları',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 16),
                   _buildMonthlyInterestRateField(),
@@ -184,14 +235,33 @@ class _AddCreditCardScreenState extends State<AddCreditCardScreen> {
                   _buildLateInterestRateField(),
                   const SizedBox(height: 24),
                   const Text(
-                    'Kart Rengi',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    'Nakit Avans Bilgileri (Opsiyonel)',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 16),
+                  _buildCashAdvanceRateField(),
+                  const SizedBox(height: 16),
+                  _buildCashAdvanceLimitField(),
+                  const SizedBox(height: 24),
+                  const Text(
+                    'Puan/Ödül Sistemi (Opsiyonel)',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 16),
+                  _buildRewardTypeField(),
+                  if (_selectedRewardType != null && _selectedRewardType != 'none') ...[
+                    const SizedBox(height: 16),
+                    _buildPointsConversionRateField(),
+                  ],
+                  const SizedBox(height: 24),
+                  const Text(
+                    'Görünüm',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 16),
                   _buildColorPicker(),
+                  const SizedBox(height: 16),
+                  _buildIconPicker(),
                   const SizedBox(height: 32),
                   _buildSaveButton(isEdit),
                   const SizedBox(height: 16),
@@ -199,6 +269,305 @@ class _AddCreditCardScreenState extends State<AddCreditCardScreen> {
               ),
             ),
     );
+  }
+
+  Widget _buildCardImageSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Kart Görseli (Opsiyonel)',
+          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 16),
+        Center(
+          child: GestureDetector(
+            onTap: _pickCardImage,
+            child: Container(
+              width: double.infinity,
+              height: 200,
+              decoration: BoxDecoration(
+                color: _selectedColor.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: _selectedColor, width: 2),
+              ),
+              child: _cardImageBase64 != null
+                  ? ClipRRect(
+                      borderRadius: BorderRadius.circular(14),
+                      child: Image.memory(
+                        base64Decode(_cardImageBase64!),
+                        fit: BoxFit.cover,
+                      ),
+                    )
+                  : Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.add_photo_alternate,
+                          size: 48,
+                          color: _selectedColor,
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Kart Fotoğrafı Ekle',
+                          style: TextStyle(
+                            color: _selectedColor,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'Kameranızdan veya galerinizden seçin',
+                          style: TextStyle(
+                            color: Colors.grey[600],
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
+                    ),
+            ),
+          ),
+        ),
+        if (_cardImageBase64 != null) ...[
+          const SizedBox(height: 8),
+          Center(
+            child: TextButton.icon(
+              onPressed: () {
+                setState(() {
+                  _cardImageBase64 = null;
+                });
+              },
+              icon: const Icon(Icons.delete, color: Colors.red),
+              label: const Text(
+                'Fotoğrafı Kaldır',
+                style: TextStyle(color: Colors.red),
+              ),
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+
+  Future<void> _pickCardImage() async {
+    try {
+      final imagePath = await ImageHelper.showImageSourceDialog(context);
+      if (imagePath != null && mounted) {
+        setState(() {
+          _cardImageBase64 = imagePath;
+        });
+      }
+    } catch (e) {
+      debugPrint('Resim seçme hatası: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Resim seçilirken bir hata oluştu: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  Widget _buildRewardTypeField() {
+    return DropdownButtonFormField<String>(
+      initialValue: _selectedRewardType,
+      decoration: const InputDecoration(
+        labelText: 'Puan Türü',
+        hintText: 'Puan türü seçin',
+        prefixIcon: Icon(Icons.card_giftcard),
+        border: OutlineInputBorder(),
+      ),
+      items: _rewardTypes.map((type) {
+        return DropdownMenuItem<String>(
+          value: type['value'],
+          child: Text(type['label']!),
+        );
+      }).toList(),
+      onChanged: (value) {
+        setState(() {
+          _selectedRewardType = value;
+        });
+      },
+    );
+  }
+
+  Widget _buildPointsConversionRateField() {
+    return TextFormField(
+      controller: _pointsConversionRateController,
+      decoration: const InputDecoration(
+        labelText: 'Puan Dönüşüm Oranı',
+        hintText: '0.01',
+        helperText: '1 puan = X TL (örn: 0.01 = 100 puan = 1 TL)',
+        prefixIcon: Icon(Icons.currency_exchange),
+        suffixText: '₺',
+        border: OutlineInputBorder(),
+      ),
+      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+      inputFormatters: [
+        FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,4}')),
+      ],
+      validator: (value) {
+        if (_selectedRewardType != null && _selectedRewardType != 'none') {
+          if (value == null || value.isEmpty) {
+            return 'Puan dönüşüm oranı gerekli';
+          }
+          final rate = double.tryParse(value);
+          if (rate == null || rate <= 0) {
+            return 'Geçerli bir oran giriniz';
+          }
+        }
+        return null;
+      },
+    );
+  }
+
+  Widget _buildCashAdvanceRateField() {
+    return TextFormField(
+      controller: _cashAdvanceRateController,
+      decoration: const InputDecoration(
+        labelText: 'Nakit Avans Faiz Oranı',
+        hintText: '4.5',
+        helperText: 'Nakit avans için uygulanan aylık faiz oranı',
+        prefixIcon: Icon(Icons.money_off),
+        suffixText: '%',
+        border: OutlineInputBorder(),
+      ),
+      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+      inputFormatters: [
+        FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}')),
+      ],
+      validator: (value) {
+        if (value != null && value.isNotEmpty) {
+          final rate = double.tryParse(value);
+          if (rate == null || rate < 0) {
+            return 'Geçerli bir oran giriniz';
+          }
+        }
+        return null;
+      },
+    );
+  }
+
+  Widget _buildCashAdvanceLimitField() {
+    return TextFormField(
+      controller: _cashAdvanceLimitController,
+      decoration: const InputDecoration(
+        labelText: 'Nakit Avans Limiti',
+        hintText: '10.000,00',
+        helperText: 'Maksimum nakit avans çekme limiti',
+        prefixIcon: Icon(Icons.atm),
+        suffixText: '₺',
+        border: OutlineInputBorder(),
+      ),
+      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+      inputFormatters: [
+        FilteringTextInputFormatter.allow(RegExp(r'[0-9,.]')),
+        _DecimalThousandsSeparatorInputFormatter(),
+      ],
+      onChanged: (value) {
+        final cursorPos = _cashAdvanceLimitController.selection.base.offset;
+        final formatted = _formatNumberInput(value);
+        if (formatted != value) {
+          _cashAdvanceLimitController.value = TextEditingValue(
+            text: formatted,
+            selection: TextSelection.collapsed(
+              offset: cursorPos + (formatted.length - value.length),
+            ),
+          );
+        }
+      },
+      validator: (value) {
+        if (value != null && value.isNotEmpty) {
+          final limit = _parseNumber(value);
+          if (limit < 0) {
+            return 'Geçerli bir limit giriniz';
+          }
+        }
+        return null;
+      },
+    );
+  }
+
+  Widget _buildIconPicker() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Kart İkonu (Opsiyonel)',
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+        ),
+        const SizedBox(height: 8),
+        InkWell(
+          onTap: _pickIcon,
+          borderRadius: BorderRadius.circular(12),
+          child: Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              border: Border.all(color: Colors.grey[300]!),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  width: 48,
+                  height: 48,
+                  decoration: BoxDecoration(
+                    color: _selectedColor.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Icon(
+                    _selectedIcon ?? Icons.credit_card,
+                    color: _selectedColor,
+                    size: 28,
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Text(
+                    _selectedIcon != null ? 'İkon seçildi' : 'İkon seç',
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: _selectedIcon != null ? Colors.black : Colors.grey[600],
+                    ),
+                  ),
+                ),
+                Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey[400]),
+              ],
+            ),
+          ),
+        ),
+        if (_selectedIcon != null) ...[
+          const SizedBox(height: 8),
+          TextButton.icon(
+            onPressed: () {
+              setState(() {
+                _selectedIcon = null;
+              });
+            },
+            icon: const Icon(Icons.clear, size: 16),
+            label: const Text('İkonu Kaldır'),
+          ),
+        ],
+      ],
+    );
+  }
+
+  Future<void> _pickIcon() async {
+    final icon = await showDialog<IconData>(
+      context: context,
+      builder: (context) => IconPickerDialog(
+        initialIcon: _selectedIcon,
+        selectedColor: _selectedColor,
+      ),
+    );
+    if (icon != null) {
+      setState(() {
+        _selectedIcon = icon;
+      });
+    }
   }
 
   Widget _buildBankNameField() {
@@ -209,7 +578,9 @@ class _AddCreditCardScreenState extends State<AddCreditCardScreen> {
           return _turkishBanks;
         }
         return _turkishBanks.where((String bank) {
-          return bank.toLowerCase().contains(textEditingValue.text.toLowerCase());
+          return bank.toLowerCase().contains(
+            textEditingValue.text.toLowerCase(),
+          );
         });
       },
       onSelected: (String selection) {
@@ -245,7 +616,9 @@ class _AddCreditCardScreenState extends State<AddCreditCardScreen> {
           return _cardTypes;
         }
         return _cardTypes.where((String type) {
-          return type.toLowerCase().contains(textEditingValue.text.toLowerCase());
+          return type.toLowerCase().contains(
+            textEditingValue.text.toLowerCase(),
+          );
         });
       },
       onSelected: (String selection) {
@@ -353,15 +726,16 @@ class _AddCreditCardScreenState extends State<AddCreditCardScreen> {
       controller: _initialDebtController,
       decoration: const InputDecoration(
         labelText: 'Mevcut Borç (Opsiyonel)',
-        hintText: 'Boş bırakabilirsiniz',
-        helperText: 'Önceki dönemden kalan borç varsa giriniz. Binlik ayırıcı otomatik eklenir.',
+        hintText: 'Örn: 102.250,38',
+        helperText:
+            'Önceki dönemden kalan borç varsa giriniz. Binlik ayırıcı otomatik eklenir.',
         prefixIcon: Icon(Icons.credit_card_outlined),
         suffixText: '₺',
         border: OutlineInputBorder(),
       ),
-      keyboardType: TextInputType.number,
+      keyboardType: const TextInputType.numberWithOptions(decimal: true),
       inputFormatters: [
-        FilteringTextInputFormatter.digitsOnly,
+        FilteringTextInputFormatter.allow(RegExp(r'[0-9.,]')),
         _ThousandsSeparatorInputFormatter(),
       ],
       onChanged: (value) {
@@ -388,7 +762,6 @@ class _AddCreditCardScreenState extends State<AddCreditCardScreen> {
       },
     );
   }
-
 
   Widget _buildStatementDayField() {
     return TextFormField(
@@ -540,9 +913,7 @@ class _AddCreditCardScreenState extends State<AddCreditCardScreen> {
       onPressed: _saveCard,
       style: ElevatedButton.styleFrom(
         padding: const EdgeInsets.symmetric(vertical: 16),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
       ),
       child: Text(
         isEdit ? 'Güncelle' : 'Kaydet',
@@ -559,10 +930,22 @@ class _AddCreditCardScreenState extends State<AddCreditCardScreen> {
     setState(() => _isLoading = true);
 
     try {
-      final initialDebt = _initialDebtController.text.isEmpty 
-          ? 0.0 
+      final initialDebt = _initialDebtController.text.isEmpty
+          ? 0.0
           : _parseNumber(_initialDebtController.text);
-      
+
+      final pointsConversionRate = _pointsConversionRateController.text.isEmpty
+          ? null
+          : double.tryParse(_pointsConversionRateController.text);
+
+      final cashAdvanceRate = _cashAdvanceRateController.text.isEmpty
+          ? null
+          : double.tryParse(_cashAdvanceRateController.text);
+
+      final cashAdvanceLimit = _cashAdvanceLimitController.text.isEmpty
+          ? null
+          : _parseNumber(_cashAdvanceLimitController.text);
+
       final card = CreditCard(
         id: widget.card?.id ?? const Uuid().v4(),
         bankName: _bankNameController.text.trim(),
@@ -577,6 +960,12 @@ class _AddCreditCardScreenState extends State<AddCreditCardScreen> {
         createdAt: widget.card?.createdAt ?? DateTime.now(),
         isActive: widget.card?.isActive ?? true,
         initialDebt: initialDebt,
+        cardImagePath: _cardImageBase64,
+        iconName: _selectedIcon?.codePoint.toString(),
+        rewardType: _selectedRewardType != 'none' ? _selectedRewardType : null,
+        pointsConversionRate: pointsConversionRate,
+        cashAdvanceRate: cashAdvanceRate,
+        cashAdvanceLimit: cashAdvanceLimit,
       );
 
       if (widget.card == null) {
@@ -603,10 +992,7 @@ class _AddCreditCardScreenState extends State<AddCreditCardScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Hata: $e'),
-            backgroundColor: Colors.red,
-          ),
+          SnackBar(content: Text('Hata: $e'), backgroundColor: Colors.red),
         );
       }
     } finally {
@@ -617,7 +1003,7 @@ class _AddCreditCardScreenState extends State<AddCreditCardScreen> {
   }
 }
 
-// Binlik ayırıcı input formatter
+// Binlik ayırıcı ve ondalık sayı destekli input formatter
 class _ThousandsSeparatorInputFormatter extends TextInputFormatter {
   @override
   TextEditingValue formatEditUpdate(
@@ -628,16 +1014,47 @@ class _ThousandsSeparatorInputFormatter extends TextInputFormatter {
       return newValue;
     }
 
-    // Sadece rakamları al
-    final number = int.tryParse(newValue.text.replaceAll('.', ''));
+    String text = newValue.text;
+    
+    // Virgül ve noktayı ayır (virgül ondalık, nokta binlik ayırıcı)
+    final hasComma = text.contains(',');
+    String integerPart;
+    String decimalPart = '';
+    
+    if (hasComma) {
+      final parts = text.split(',');
+      integerPart = parts[0].replaceAll('.', ''); // Binlik ayırıcıları kaldır
+      if (parts.length > 1) {
+        decimalPart = parts[1].replaceAll('.', ''); // Ondalık kısımdan noktaları kaldır
+        // Ondalık kısmı maksimum 2 basamak
+        if (decimalPart.length > 2) {
+          decimalPart = decimalPart.substring(0, 2);
+        }
+      }
+    } else {
+      integerPart = text.replaceAll('.', ''); // Tüm noktaları kaldır
+    }
+    
+    // Sadece rakam kontrolü
+    if (!RegExp(r'^\d+$').hasMatch(integerPart) || 
+        (decimalPart.isNotEmpty && !RegExp(r'^\d+$').hasMatch(decimalPart))) {
+      return oldValue;
+    }
+    
+    // Tam kısmı formatla
+    final number = int.tryParse(integerPart);
     if (number == null) {
       return oldValue;
     }
-
-    // Binlik ayırıcı ile formatla
-    final formatted = NumberFormat('#,##0', 'tr_TR')
+    
+    String formatted = NumberFormat('#,##0', 'tr_TR')
         .format(number)
         .replaceAll(',', '.');
+    
+    // Ondalık kısmı ekle
+    if (hasComma) {
+      formatted += ',$decimalPart';
+    }
 
     return TextEditingValue(
       text: formatted,
@@ -658,19 +1075,19 @@ class _DecimalThousandsSeparatorInputFormatter extends TextInputFormatter {
     }
 
     String text = newValue.text;
-    
+
     // Tüm noktaları kaldır (binlik ayırıcı)
     text = text.replaceAll('.', '');
-    
+
     // Virgülü noktaya çevir (ondalık ayırıcı)
     text = text.replaceAll(',', '.');
-    
+
     // Sadece bir ondalık nokta olsun
     final parts = text.split('.');
     if (parts.length > 2) {
       text = '${parts[0]}.${parts.sublist(1).join('')}';
     }
-    
+
     // Ondalık kısmı maksimum 2 basamak
     if (parts.length == 2 && parts[1].length > 2) {
       text = '${parts[0]}.${parts[1].substring(0, 2)}';
@@ -682,4 +1099,3 @@ class _DecimalThousandsSeparatorInputFormatter extends TextInputFormatter {
     );
   }
 }
-

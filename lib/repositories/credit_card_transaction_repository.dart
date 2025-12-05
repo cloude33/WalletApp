@@ -29,29 +29,40 @@ class CreditCardTransactionRepository {
     DateTime end,
   ) async {
     return _box.values
-        .where((transaction) =>
-            transaction.cardId == cardId &&
-            transaction.transactionDate.isAfter(start.subtract(const Duration(seconds: 1))) &&
-            transaction.transactionDate.isBefore(end.add(const Duration(days: 1))))
+        .where(
+          (transaction) =>
+              transaction.cardId == cardId &&
+              transaction.transactionDate.isAfter(
+                start.subtract(const Duration(seconds: 1)),
+              ) &&
+              transaction.transactionDate.isBefore(
+                end.add(const Duration(days: 1)),
+              ),
+        )
         .toList();
   }
 
   /// Find active installments for a specific card
-  Future<List<CreditCardTransaction>> findActiveInstallments(String cardId) async {
+  Future<List<CreditCardTransaction>> findActiveInstallments(
+    String cardId,
+  ) async {
     return _box.values
-        .where((transaction) =>
-            transaction.cardId == cardId &&
-            !transaction.isCompleted &&
-            transaction.installmentCount > 1)
+        .where(
+          (transaction) =>
+              transaction.cardId == cardId &&
+              !transaction.isCompleted &&
+              transaction.installmentCount > 1,
+        )
         .toList();
   }
 
   /// Find all active installments across all cards
   Future<List<CreditCardTransaction>> findAllActiveInstallments() async {
     return _box.values
-        .where((transaction) =>
-            !transaction.isCompleted &&
-            transaction.installmentCount > 1)
+        .where(
+          (transaction) =>
+              !transaction.isCompleted && transaction.installmentCount > 1,
+        )
         .toList();
   }
 
@@ -61,9 +72,10 @@ class CreditCardTransactionRepository {
     String category,
   ) async {
     return _box.values
-        .where((transaction) =>
-            transaction.cardId == cardId &&
-            transaction.category == category)
+        .where(
+          (transaction) =>
+              transaction.cardId == cardId && transaction.category == category,
+        )
         .toList();
   }
 

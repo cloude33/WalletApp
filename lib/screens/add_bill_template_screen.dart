@@ -1,28 +1,97 @@
+// ignore_for_file: deprecated_member_use
+
 import 'package:flutter/material.dart';
-import 'package:uuid/uuid.dart';
 import '../models/bill_template.dart';
 import '../services/bill_template_service.dart';
+import '../services/data_service.dart';
 import '../constants/electricity_companies.dart';
 
 /// Telefon operatörleri
-const List<String> phoneOperators = [
-  'Turkcell',
-  'Vodafone',
-  'Türk Telekom',
-];
+const List<String> phoneOperators = ['Turkcell', 'Vodafone', 'Türk Telekom'];
 
 /// Türkiye illeri
 const List<String> turkishCities = [
-  'Adana', 'Adıyaman', 'Afyonkarahisar', 'Ağrı', 'Aksaray', 'Amasya', 'Ankara', 'Antalya',
-  'Ardahan', 'Artvin', 'Aydın', 'Balıkesir', 'Bartın', 'Batman', 'Bayburt', 'Bilecik',
-  'Bingöl', 'Bitlis', 'Bolu', 'Burdur', 'Bursa', 'Çanakkale', 'Çankırı', 'Çorum',
-  'Denizli', 'Diyarbakır', 'Düzce', 'Edirne', 'Elazığ', 'Erzincan', 'Erzurum', 'Eskişehir',
-  'Gaziantep', 'Giresun', 'Gümüşhane', 'Hakkari', 'Hatay', 'Iğdır', 'Isparta', 'İstanbul',
-  'İzmir', 'Kahramanmaraş', 'Karabük', 'Karaman', 'Kars', 'Kastamonu', 'Kayseri', 'Kilis',
-  'Kırıkkale', 'Kırklareli', 'Kırşehir', 'Kocaeli', 'Konya', 'Kütahya', 'Malatya', 'Manisa',
-  'Mardin', 'Mersin', 'Muğla', 'Muş', 'Nevşehir', 'Niğde', 'Ordu', 'Osmaniye', 'Rize',
-  'Sakarya', 'Samsun', 'Şanlıurfa', 'Siirt', 'Sinop', 'Şırnak', 'Sivas', 'Tekirdağ',
-  'Tokat', 'Trabzon', 'Tunceli', 'Uşak', 'Van', 'Yalova', 'Yozgat', 'Zonguldak',
+  'Adana',
+  'Adıyaman',
+  'Afyonkarahisar',
+  'Ağrı',
+  'Aksaray',
+  'Amasya',
+  'Ankara',
+  'Antalya',
+  'Ardahan',
+  'Artvin',
+  'Aydın',
+  'Balıkesir',
+  'Bartın',
+  'Batman',
+  'Bayburt',
+  'Bilecik',
+  'Bingöl',
+  'Bitlis',
+  'Bolu',
+  'Burdur',
+  'Bursa',
+  'Çanakkale',
+  'Çankırı',
+  'Çorum',
+  'Denizli',
+  'Diyarbakır',
+  'Düzce',
+  'Edirne',
+  'Elazığ',
+  'Erzincan',
+  'Erzurum',
+  'Eskişehir',
+  'Gaziantep',
+  'Giresun',
+  'Gümüşhane',
+  'Hakkari',
+  'Hatay',
+  'Iğdır',
+  'Isparta',
+  'İstanbul',
+  'İzmir',
+  'Kahramanmaraş',
+  'Karabük',
+  'Karaman',
+  'Kars',
+  'Kastamonu',
+  'Kayseri',
+  'Kilis',
+  'Kırıkkale',
+  'Kırklareli',
+  'Kırşehir',
+  'Kocaeli',
+  'Konya',
+  'Kütahya',
+  'Malatya',
+  'Manisa',
+  'Mardin',
+  'Mersin',
+  'Muğla',
+  'Muş',
+  'Nevşehir',
+  'Niğde',
+  'Ordu',
+  'Osmaniye',
+  'Rize',
+  'Sakarya',
+  'Samsun',
+  'Şanlıurfa',
+  'Siirt',
+  'Sinop',
+  'Şırnak',
+  'Sivas',
+  'Tekirdağ',
+  'Tokat',
+  'Trabzon',
+  'Tunceli',
+  'Uşak',
+  'Van',
+  'Yalova',
+  'Yozgat',
+  'Zonguldak',
 ];
 
 class AddBillTemplateScreen extends StatefulWidget {
@@ -45,27 +114,49 @@ class _AddBillTemplateScreenState extends State<AddBillTemplateScreen> {
   BillTemplateCategory _selectedCategory = BillTemplateCategory.electricity;
   String? _selectedCity;
   String? _selectedProvider;
+  String? _selectedWalletId;
   bool _isActive = true;
   bool _loading = false;
 
   List<String> _availableProviders = [];
+  List<dynamic> _wallets = [];
 
   @override
   void initState() {
     super.initState();
     final template = widget.template;
-    
-    _accountNumberController = TextEditingController(text: template?.accountNumber ?? '');
-    _phoneNumberController = TextEditingController(text: template?.phoneNumber ?? '');
-    _descriptionController = TextEditingController(text: template?.description ?? '');
-    
+
+    _accountNumberController = TextEditingController(
+      text: template?.accountNumber ?? '',
+    );
+    _phoneNumberController = TextEditingController(
+      text: template?.phoneNumber ?? '',
+    );
+    _descriptionController = TextEditingController(
+      text: template?.description ?? '',
+    );
+
     if (template != null) {
       _selectedCategory = template.category;
       _selectedProvider = template.provider;
+      _selectedWalletId = template.walletId;
       _isActive = template.isActive;
     }
 
     _updateProviderList();
+    _loadWallets();
+  }
+
+  Future<void> _loadWallets() async {
+    final dataService = DataService();
+    final wallets = await dataService.getWallets();
+    setState(() {
+      _wallets = wallets;
+      // Eğer cüzdan seçilmemişse ve cüzdanlar varsa, ilkini seç
+      if (_selectedWalletId == null && _wallets.isNotEmpty) {
+        _selectedWalletId = _wallets.first.id;
+      }
+    });
   }
 
   @override
@@ -86,7 +177,9 @@ class _AddBillTemplateScreenState extends State<AddBillTemplateScreen> {
           _availableProviders = phoneOperators;
           break;
         case BillTemplateCategory.internet:
-          _availableProviders = internetProviders.map((p) => p.shortName).toList();
+          _availableProviders = internetProviders
+              .map((p) => p.shortName)
+              .toList();
           break;
         case BillTemplateCategory.electricity:
           if (_selectedCity != null) {
@@ -123,20 +216,20 @@ class _AddBillTemplateScreenState extends State<AddBillTemplateScreen> {
 
   String _getGeneratedName() {
     // Telefon kategorisi için numara varsa ekle
-    if (_selectedCategory == BillTemplateCategory.phone && 
+    if (_selectedCategory == BillTemplateCategory.phone &&
         _phoneNumberController.text.trim().isNotEmpty) {
       String phoneNumber = _phoneNumberController.text.trim();
-      
+
       // Eğer numara 0 ile başlamıyorsa, başına 0 ekle
       if (!phoneNumber.startsWith('0')) {
         phoneNumber = '0$phoneNumber';
       }
-      
-      return _selectedProvider != null 
+
+      return _selectedProvider != null
           ? '$_selectedProvider - $phoneNumber'
           : 'Telefon - $phoneNumber';
     }
-    
+
     if (_selectedProvider != null) {
       return _selectedProvider!;
     }
@@ -171,21 +264,22 @@ class _AddBillTemplateScreenState extends State<AddBillTemplateScreen> {
 
     try {
       final generatedName = _getGeneratedName();
-      
+
       if (widget.template == null) {
         // Yeni şablon
         await _service.addTemplate(
           name: generatedName,
           provider: _selectedProvider,
           category: _selectedCategory,
-          accountNumber: _accountNumberController.text.trim().isEmpty 
-              ? null 
+          walletId: _selectedWalletId,
+          accountNumber: _accountNumberController.text.trim().isEmpty
+              ? null
               : _accountNumberController.text.trim(),
-          phoneNumber: _phoneNumberController.text.trim().isEmpty 
-              ? null 
+          phoneNumber: _phoneNumberController.text.trim().isEmpty
+              ? null
               : _phoneNumberController.text.trim(),
-          description: _descriptionController.text.trim().isEmpty 
-              ? null 
+          description: _descriptionController.text.trim().isEmpty
+              ? null
               : _descriptionController.text.trim(),
         );
       } else {
@@ -194,14 +288,15 @@ class _AddBillTemplateScreenState extends State<AddBillTemplateScreen> {
           name: generatedName,
           provider: _selectedProvider,
           category: _selectedCategory,
-          accountNumber: _accountNumberController.text.trim().isEmpty 
-              ? null 
+          walletId: _selectedWalletId,
+          accountNumber: _accountNumberController.text.trim().isEmpty
+              ? null
               : _accountNumberController.text.trim(),
-          phoneNumber: _phoneNumberController.text.trim().isEmpty 
-              ? null 
+          phoneNumber: _phoneNumberController.text.trim().isEmpty
+              ? null
               : _phoneNumberController.text.trim(),
-          description: _descriptionController.text.trim().isEmpty 
-              ? null 
+          description: _descriptionController.text.trim().isEmpty
+              ? null
               : _descriptionController.text.trim(),
           isActive: _isActive,
         );
@@ -212,9 +307,11 @@ class _AddBillTemplateScreenState extends State<AddBillTemplateScreen> {
         Navigator.pop(context, true);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(widget.template == null 
-                ? 'Fatura şablonu eklendi' 
-                : 'Fatura şablonu güncellendi'),
+            content: Text(
+              widget.template == null
+                  ? 'Fatura şablonu eklendi'
+                  : 'Fatura şablonu güncellendi',
+            ),
             backgroundColor: Colors.green,
           ),
         );
@@ -223,10 +320,7 @@ class _AddBillTemplateScreenState extends State<AddBillTemplateScreen> {
       setState(() => _loading = false);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Hata: $e'),
-            backgroundColor: Colors.red,
-          ),
+          SnackBar(content: Text('Hata: $e'), backgroundColor: Colors.red),
         );
       }
     }
@@ -237,7 +331,9 @@ class _AddBillTemplateScreenState extends State<AddBillTemplateScreen> {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Fatura Şablonunu Sil'),
-        content: const Text('Bu fatura şablonunu silmek istediğinizden emin misiniz?'),
+        content: const Text(
+          'Bu fatura şablonunu silmek istediğinizden emin misiniz?',
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
@@ -271,10 +367,7 @@ class _AddBillTemplateScreenState extends State<AddBillTemplateScreen> {
       setState(() => _loading = false);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Hata: $e'),
-            backgroundColor: Colors.red,
-          ),
+          SnackBar(content: Text('Hata: $e'), backgroundColor: Colors.red),
         );
       }
     }
@@ -282,13 +375,13 @@ class _AddBillTemplateScreenState extends State<AddBillTemplateScreen> {
 
   bool _requiresCitySelection() {
     return _selectedCategory == BillTemplateCategory.electricity ||
-           _selectedCategory == BillTemplateCategory.water ||
-           _selectedCategory == BillTemplateCategory.gas;
+        _selectedCategory == BillTemplateCategory.water ||
+        _selectedCategory == BillTemplateCategory.gas;
   }
 
   bool _requiresProviderSelection() {
     return _selectedCategory == BillTemplateCategory.phone ||
-           _selectedCategory == BillTemplateCategory.internet;
+        _selectedCategory == BillTemplateCategory.internet;
   }
 
   @override
@@ -352,10 +445,7 @@ class _AddBillTemplateScreenState extends State<AddBillTemplateScreen> {
                         border: OutlineInputBorder(),
                       ),
                       items: turkishCities.map((city) {
-                        return DropdownMenuItem(
-                          value: city,
-                          child: Text(city),
-                        );
+                        return DropdownMenuItem(value: city, child: Text(city));
                       }).toList(),
                       onChanged: (value) {
                         setState(() {
@@ -373,7 +463,9 @@ class _AddBillTemplateScreenState extends State<AddBillTemplateScreen> {
                       value: _selectedProvider,
                       isExpanded: true,
                       decoration: InputDecoration(
-                        labelText: _requiresProviderSelection() ? 'Sağlayıcı *' : 'Sağlayıcı',
+                        labelText: _requiresProviderSelection()
+                            ? 'Sağlayıcı *'
+                            : 'Sağlayıcı',
                         prefixIcon: const Icon(Icons.business),
                         border: const OutlineInputBorder(),
                       ),
@@ -383,11 +475,54 @@ class _AddBillTemplateScreenState extends State<AddBillTemplateScreen> {
                           child: Text(provider),
                         );
                       }).toList(),
-                      onChanged: _requiresCitySelection() 
-                          ? null  // Disabled for city-based categories
+                      onChanged: _requiresCitySelection()
+                          ? null // Disabled for city-based categories
                           : (value) {
                               setState(() => _selectedProvider = value);
                             },
+                    ),
+                    const SizedBox(height: 16),
+                  ],
+
+                  // Ödeme Aracı (Cüzdan) seçimi
+                  if (_wallets.isNotEmpty) ...[
+                    DropdownButtonFormField<String>(
+                      value: _selectedWalletId,
+                      isExpanded: true,
+                      decoration: const InputDecoration(
+                        labelText: 'Ödeme Aracı',
+                        prefixIcon: Icon(Icons.account_balance_wallet),
+                        border: OutlineInputBorder(),
+                      ),
+                      items: _wallets.map<DropdownMenuItem<String>>((wallet) {
+                        return DropdownMenuItem<String>(
+                          value: wallet.id as String,
+                          child: Row(
+                            children: [
+                              Icon(
+                                wallet.type == 'cash'
+                                    ? Icons.money
+                                    : wallet.type == 'bank'
+                                        ? Icons.account_balance
+                                        : Icons.credit_card,
+                                size: 20,
+                                color: Color(int.parse(wallet.color as String)),
+                              ),
+                              const SizedBox(width: 8),
+                              Text(wallet.name as String),
+                            ],
+                          ),
+                        );
+                      }).toList(),
+                      onChanged: (value) {
+                        setState(() => _selectedWalletId = value);
+                      },
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Lütfen ödeme aracı seçin';
+                        }
+                        return null;
+                      },
                     ),
                     const SizedBox(height: 16),
                   ],
@@ -435,12 +570,14 @@ class _AddBillTemplateScreenState extends State<AddBillTemplateScreen> {
                   // Aktif/Pasif switch
                   SwitchListTile(
                     title: const Text('Aktif'),
-                    subtitle: const Text('Pasif faturalar ana ekranda görünmez'),
+                    subtitle: const Text(
+                      'Pasif faturalar ana ekranda görünmez',
+                    ),
                     value: _isActive,
                     onChanged: (value) {
                       setState(() => _isActive = value);
                     },
-                    activeColor: const Color(0xFF00BFA5),
+                    activeTrackColor: const Color(0xFF00BFA5),
                   ),
                   const SizedBox(height: 32),
 

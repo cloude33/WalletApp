@@ -66,8 +66,10 @@ class _MakeCreditCardPaymentScreenState
     setState(() => _isLoading = true);
 
     try {
-      final statement = await _statementRepo.findCurrentStatement(widget.card.id);
-      
+      final statement = await _statementRepo.findCurrentStatement(
+        widget.card.id,
+      );
+
       setState(() {
         _currentStatement = statement;
         _isLoading = false;
@@ -75,9 +77,9 @@ class _MakeCreditCardPaymentScreenState
     } catch (e) {
       setState(() => _isLoading = false);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Hata: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Hata: $e')));
       }
     }
   }
@@ -96,38 +98,36 @@ class _MakeCreditCardPaymentScreenState
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Ödeme Yap'),
-      ),
+      appBar: AppBar(title: const Text('Ödeme Yap')),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : _currentStatement == null
-              ? _buildNoStatementView()
-              : Form(
-                  key: _formKey,
-                  child: ListView(
-                    padding: const EdgeInsets.all(16),
-                    children: [
-                      _buildCardInfo(),
-                      const SizedBox(height: 16),
-                      _buildStatementInfo(),
-                      const SizedBox(height: 24),
-                      _buildAmountField(),
-                      const SizedBox(height: 16),
-                      _buildQuickAmountButtons(),
-                      const SizedBox(height: 16),
-                      _buildDateField(),
-                      const SizedBox(height: 16),
-                      _buildPaymentMethodField(),
-                      const SizedBox(height: 16),
-                      _buildNoteField(),
-                      const SizedBox(height: 24),
-                      _buildPaymentSummary(),
-                      const SizedBox(height: 16),
-                      _buildSaveButton(),
-                    ],
-                  ),
-                ),
+          ? _buildNoStatementView()
+          : Form(
+              key: _formKey,
+              child: ListView(
+                padding: const EdgeInsets.all(16),
+                children: [
+                  _buildCardInfo(),
+                  const SizedBox(height: 16),
+                  _buildStatementInfo(),
+                  const SizedBox(height: 24),
+                  _buildAmountField(),
+                  const SizedBox(height: 16),
+                  _buildQuickAmountButtons(),
+                  const SizedBox(height: 16),
+                  _buildDateField(),
+                  const SizedBox(height: 16),
+                  _buildPaymentMethodField(),
+                  const SizedBox(height: 16),
+                  _buildNoteField(),
+                  const SizedBox(height: 24),
+                  _buildPaymentSummary(),
+                  const SizedBox(height: 16),
+                  _buildSaveButton(),
+                ],
+              ),
+            ),
     );
   }
 
@@ -156,10 +156,7 @@ class _MakeCreditCardPaymentScreenState
             Text(
               'Bu kart için henüz ödeme yapılacak bir ekstre bulunmuyor.',
               textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 14,
-                color: Colors.grey[600],
-              ),
+              style: TextStyle(fontSize: 14, color: Colors.grey[600]),
             ),
           ],
         ),
@@ -174,11 +171,7 @@ class _MakeCreditCardPaymentScreenState
         padding: const EdgeInsets.all(16),
         child: Row(
           children: [
-            Icon(
-              Icons.credit_card,
-              color: widget.card.color,
-              size: 32,
-            ),
+            Icon(Icons.credit_card, color: widget.card.color, size: 32),
             const SizedBox(width: 12),
             Expanded(
               child: Column(
@@ -193,10 +186,7 @@ class _MakeCreditCardPaymentScreenState
                   ),
                   Text(
                     '•••• ${widget.card.last4Digits}',
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.grey[600],
-                    ),
+                    style: TextStyle(fontSize: 14, color: Colors.grey[600]),
                   ),
                 ],
               ),
@@ -216,7 +206,7 @@ class _MakeCreditCardPaymentScreenState
 
     Color statusColor = Colors.orange;
     String statusText = 'Bekliyor';
-    
+
     if (isOverdue) {
       statusColor = Colors.red;
       statusText = 'Gecikmiş (${statement.daysOverdue} gün)';
@@ -242,10 +232,7 @@ class _MakeCreditCardPaymentScreenState
               children: [
                 const Text(
                   'Ekstre Bilgileri',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
                 Container(
                   padding: const EdgeInsets.symmetric(
@@ -301,13 +288,7 @@ class _MakeCreditCardPaymentScreenState
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 14,
-            color: Colors.grey[600],
-          ),
-        ),
+        Text(label, style: TextStyle(fontSize: 14, color: Colors.grey[600])),
         Text(
           value,
           style: TextStyle(
@@ -355,8 +336,10 @@ class _MakeCreditCardPaymentScreenState
         Expanded(
           child: OutlinedButton(
             onPressed: () {
-              _amountController.text =
-                  NumberFormat('#,##0.00', 'tr_TR').format(_currentStatement!.minimumPayment);
+              _amountController.text = NumberFormat(
+                '#,##0.00',
+                'tr_TR',
+              ).format(_currentStatement!.minimumPayment);
               _calculateRemainingDebt();
             },
             child: const Text('Asgari'),
@@ -366,8 +349,10 @@ class _MakeCreditCardPaymentScreenState
         Expanded(
           child: OutlinedButton(
             onPressed: () {
-              _amountController.text =
-                  NumberFormat('#,##0.00', 'tr_TR').format(_currentStatement!.remainingDebt);
+              _amountController.text = NumberFormat(
+                '#,##0.00',
+                'tr_TR',
+              ).format(_currentStatement!.remainingDebt);
               _calculateRemainingDebt();
             },
             child: const Text('Tam Ödeme'),
@@ -403,10 +388,7 @@ class _MakeCreditCardPaymentScreenState
         border: OutlineInputBorder(),
       ),
       items: _paymentMethods.entries.map((entry) {
-        return DropdownMenuItem(
-          value: entry.key,
-          child: Text(entry.value),
-        );
+        return DropdownMenuItem(value: entry.key, child: Text(entry.value));
       }).toList(),
       onChanged: (value) {
         if (value != null) {
@@ -456,10 +438,7 @@ class _MakeCreditCardPaymentScreenState
                 const SizedBox(width: 8),
                 const Text(
                   'Ödeme Özeti',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                 ),
               ],
             ),
@@ -474,10 +453,7 @@ class _MakeCreditCardPaymentScreenState
                 const SizedBox(height: 8),
                 Text(
                   'Fazla ödeme bir sonraki ekstreye avans olarak aktarılacak',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.orange[700],
-                  ),
+                  style: TextStyle(fontSize: 12, color: Colors.orange[700]),
                 ),
               ],
             ],
@@ -492,14 +468,9 @@ class _MakeCreditCardPaymentScreenState
       onPressed: _savePayment,
       style: ElevatedButton.styleFrom(
         padding: const EdgeInsets.symmetric(vertical: 16),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
       ),
-      child: const Text(
-        'Ödemeyi Kaydet',
-        style: TextStyle(fontSize: 16),
-      ),
+      child: const Text('Ödemeyi Kaydet', style: TextStyle(fontSize: 16)),
     );
   }
 
@@ -525,23 +496,41 @@ class _MakeCreditCardPaymentScreenState
     }
 
     if (_currentStatement == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Ekstre bulunamadı')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Ekstre bulunamadı')));
       return;
     }
 
     setState(() => _isLoading = true);
 
     try {
+      final paymentAmount = double.parse(_amountController.text);
+      final currentDebt = _currentStatement!.remainingDebt;
+      
+      // Determine payment type
+      String paymentType;
+      if (paymentAmount >= currentDebt) {
+        paymentType = 'full';
+      } else if (paymentAmount <= _currentStatement!.minimumPayment) {
+        paymentType = 'minimum';
+      } else {
+        paymentType = 'partial';
+      }
+      
+      // Calculate remaining debt after payment
+      final remainingDebt = (currentDebt - paymentAmount).clamp(0.0, double.infinity);
+      
       final payment = CreditCardPayment(
         id: const Uuid().v4(),
         cardId: widget.card.id,
         statementId: _currentStatement!.id,
-        amount: double.parse(_amountController.text),
+        amount: paymentAmount,
         paymentDate: _selectedDate,
         paymentMethod: _selectedPaymentMethod,
         note: _noteController.text.trim(),
+        paymentType: paymentType,
+        remainingDebtAfterPayment: remainingDebt,
         createdAt: DateTime.now(),
       );
 
@@ -567,10 +556,7 @@ class _MakeCreditCardPaymentScreenState
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Hata: $e'),
-            backgroundColor: Colors.red,
-          ),
+          SnackBar(content: Text('Hata: $e'), backgroundColor: Colors.red),
         );
       }
     } finally {

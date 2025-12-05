@@ -28,6 +28,8 @@ class Goal {
     name: json['name'],
     targetAmount: json['targetAmount'],
     currentAmount: json['currentAmount'],
-    deadline: json['deadline'] != null ? DateTime.parse(json['deadline']) : null,
+    deadline: json['deadline'] != null
+        ? DateTime.parse(json['deadline'])
+        : null,
   );
 }

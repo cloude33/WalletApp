@@ -18,14 +18,14 @@ class ScheduledNotification {
   });
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'platformId': platformId,
-        'type': type,
-        'scheduledFor': scheduledFor.toIso8601String(),
-        'data': data,
-        'isRecurring': isRecurring,
-        'repeatInterval': repeatInterval,
-      };
+    'id': id,
+    'platformId': platformId,
+    'type': type,
+    'scheduledFor': scheduledFor.toIso8601String(),
+    'data': data,
+    'isRecurring': isRecurring,
+    'repeatInterval': repeatInterval,
+  };
 
   factory ScheduledNotification.fromJson(Map<String, dynamic> json) {
     return ScheduledNotification(

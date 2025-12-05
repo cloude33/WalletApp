@@ -29,10 +29,7 @@ class _ImportDialogState extends State<ImportDialog> {
   Widget build(BuildContext context) {
     return AlertDialog(
       title: const Text('İçe Aktar'),
-      content: SizedBox(
-        width: double.maxFinite,
-        child: _buildContent(),
-      ),
+      content: SizedBox(width: double.maxFinite, child: _buildContent()),
       actions: _buildActions(),
     );
   }
@@ -77,7 +74,9 @@ class _ImportDialogState extends State<ImportDialog> {
             child: ListTile(
               leading: const Icon(Icons.insert_drive_file),
               title: Text(_selectedFilePath!.split('/').last),
-              subtitle: Text('Format: ${_selectedFormat?.toUpperCase() ?? "Bilinmiyor"}'),
+              subtitle: Text(
+                'Format: ${_selectedFormat?.toUpperCase() ?? "Bilinmiyor"}',
+              ),
               trailing: IconButton(
                 icon: const Icon(Icons.close),
                 onPressed: () {
@@ -114,7 +113,9 @@ class _ImportDialogState extends State<ImportDialog> {
           child: ListTile(
             leading: const Icon(Icons.insert_drive_file),
             title: Text(_selectedFilePath!.split('/').last),
-            subtitle: Text('Format: ${_selectedFormat?.toUpperCase() ?? "Bilinmiyor"}'),
+            subtitle: Text(
+              'Format: ${_selectedFormat?.toUpperCase() ?? "Bilinmiyor"}',
+            ),
           ),
         ),
         const SizedBox(height: 16),
@@ -206,7 +207,8 @@ class _ImportDialogState extends State<ImportDialog> {
     if (_importResult != null) {
       return [
         TextButton(
-          onPressed: () => Navigator.pop(context, _importResult!.successCount > 0),
+          onPressed: () =>
+              Navigator.pop(context, _importResult!.successCount > 0),
           child: const Text('Kapat'),
         ),
       ];

@@ -23,7 +23,10 @@ class CreditCardValidators {
   }
 
   /// Validate interest rate (non-negative)
-  static String? validateInterestRate(double? rate, {String fieldName = 'Faiz oranı'}) {
+  static String? validateInterestRate(
+    double? rate, {
+    String fieldName = 'Faiz oranı',
+  }) {
     if (rate == null) {
       return '$fieldName gerekli';
     }
@@ -186,16 +189,20 @@ class CreditCardValidators {
   }
 
   /// Validate statement period
-  static String? validateStatementPeriod(DateTime? start, DateTime? end, DateTime? dueDate) {
+  static String? validateStatementPeriod(
+    DateTime? start,
+    DateTime? end,
+    DateTime? dueDate,
+  ) {
     final dateRangeError = validateDateRange(start, end);
     if (dateRangeError != null) {
       return dateRangeError;
     }
-    
+
     if (dueDate != null && dueDate.isBefore(end!)) {
       return 'Son ödeme tarihi ekstre kesim tarihinden önce olamaz';
     }
-    
+
     return null;
   }
 
@@ -258,10 +265,18 @@ class CreditCardValidators {
     final offsetError = validateDueDateOffset(dueDateOffset);
     if (offsetError != null) errors['dueDateOffset'] = offsetError;
 
-    final monthlyRateError = validateInterestRate(monthlyInterestRate, fieldName: 'Aylık faiz oranı');
-    if (monthlyRateError != null) errors['monthlyInterestRate'] = monthlyRateError;
+    final monthlyRateError = validateInterestRate(
+      monthlyInterestRate,
+      fieldName: 'Aylık faiz oranı',
+    );
+    if (monthlyRateError != null) {
+      errors['monthlyInterestRate'] = monthlyRateError;
+    }
 
-    final lateRateError = validateInterestRate(lateInterestRate, fieldName: 'Gecikme faizi oranı');
+    final lateRateError = validateInterestRate(
+      lateInterestRate,
+      fieldName: 'Gecikme faizi oranı',
+    );
     if (lateRateError != null) errors['lateInterestRate'] = lateRateError;
 
     return errors;

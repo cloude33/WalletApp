@@ -68,9 +68,9 @@ class _DebtListScreenState extends State<DebtListScreen>
     } catch (e) {
       setState(() => _isLoading = false);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Hata: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Hata: $e')));
       }
     }
   }
@@ -93,8 +93,10 @@ class _DebtListScreenState extends State<DebtListScreen>
     // Arama filtreleme
     if (_searchQuery.isNotEmpty) {
       filtered = filtered
-          .where((d) =>
-              d.personName.toLowerCase().contains(_searchQuery.toLowerCase()))
+          .where(
+            (d) =>
+                d.personName.toLowerCase().contains(_searchQuery.toLowerCase()),
+          )
           .toList();
     }
 
@@ -164,7 +166,10 @@ class _DebtListScreenState extends State<DebtListScreen>
           child: Column(
             children: [
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
+                ),
                 child: TextField(
                   decoration: InputDecoration(
                     hintText: 'Kişi ara...',
@@ -226,10 +231,7 @@ class _DebtListScreenState extends State<DebtListScreen>
           children: [
             const Text(
               'Özet',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 16),
             Row(
@@ -262,18 +264,16 @@ class _DebtListScreenState extends State<DebtListScreen>
   }
 
   Widget _buildSummaryItem(
-      String label, String value, Color color, IconData icon) {
+    String label,
+    String value,
+    Color color,
+    IconData icon,
+  ) {
     return Column(
       children: [
         Icon(icon, color: color, size: 32),
         const SizedBox(height: 4),
-        Text(
-          label,
-          style: TextStyle(
-            color: Colors.grey[600],
-            fontSize: 12,
-          ),
-        ),
+        Text(label, style: TextStyle(color: Colors.grey[600], fontSize: 12)),
         const SizedBox(height: 4),
         Text(
           value,
@@ -300,18 +300,12 @@ class _DebtListScreenState extends State<DebtListScreen>
           const SizedBox(height: 16),
           Text(
             'Henüz borç/alacak kaydı yok',
-            style: TextStyle(
-              fontSize: 18,
-              color: Colors.grey[600],
-            ),
+            style: TextStyle(fontSize: 18, color: Colors.grey[600]),
           ),
           const SizedBox(height: 8),
           Text(
             'Yeni eklemek için + butonuna tıklayın',
-            style: TextStyle(
-              fontSize: 14,
-              color: Colors.grey[500],
-            ),
+            style: TextStyle(fontSize: 14, color: Colors.grey[500]),
           ),
         ],
       ),
@@ -415,10 +409,12 @@ class _DebtListScreenState extends State<DebtListScreen>
                       debt.dueDateStatus,
                       style: TextStyle(
                         fontSize: 12,
-                        color:
-                            debt.isOverdue ? Colors.orange : Colors.grey[600],
-                        fontWeight:
-                            debt.isOverdue ? FontWeight.bold : FontWeight.normal,
+                        color: debt.isOverdue
+                            ? Colors.orange
+                            : Colors.grey[600],
+                        fontWeight: debt.isOverdue
+                            ? FontWeight.bold
+                            : FontWeight.normal,
                       ),
                     ),
                   ],
@@ -427,10 +423,7 @@ class _DebtListScreenState extends State<DebtListScreen>
                 const SizedBox(height: 8),
                 Text(
                   debt.description!,
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.grey[600],
-                  ),
+                  style: TextStyle(fontSize: 12, color: Colors.grey[600]),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -445,10 +438,7 @@ class _DebtListScreenState extends State<DebtListScreen>
                 const SizedBox(height: 4),
                 Text(
                   '%${debt.paymentPercentage.toStringAsFixed(0)} ödendi',
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: Colors.grey[600],
-                  ),
+                  style: TextStyle(fontSize: 11, color: Colors.grey[600]),
                 ),
               ],
             ],
@@ -457,5 +447,4 @@ class _DebtListScreenState extends State<DebtListScreen>
       ),
     );
   }
-
 }

@@ -6,13 +6,13 @@ part 'recurrence_frequency.g.dart';
 enum RecurrenceFrequency {
   @HiveField(0)
   daily,
-  
+
   @HiveField(1)
   weekly,
-  
+
   @HiveField(2)
   monthly,
-  
+
   @HiveField(3)
   yearly;
 

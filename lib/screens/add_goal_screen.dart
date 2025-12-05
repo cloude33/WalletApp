@@ -94,13 +94,18 @@ class _AddGoalScreenState extends State<AddGoalScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text('Hedef Adı', style: TextStyle(fontWeight: FontWeight.bold)),
+                      const Text(
+                        'Hedef Adı',
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
                       const SizedBox(height: 8),
                       TextFormField(
                         controller: _nameController,
                         decoration: InputDecoration(
                           hintText: 'Örn: Araba almak, Tatil',
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
                         ),
                         validator: (value) {
                           if (value == null || value.isEmpty) {
@@ -110,14 +115,19 @@ class _AddGoalScreenState extends State<AddGoalScreen> {
                         },
                       ),
                       const SizedBox(height: 20),
-                      const Text('Hedef Tutar', style: TextStyle(fontWeight: FontWeight.bold)),
+                      const Text(
+                        'Hedef Tutar',
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
                       const SizedBox(height: 8),
                       TextFormField(
                         controller: _targetController,
                         keyboardType: TextInputType.number,
                         decoration: InputDecoration(
                           prefixText: '₺ ',
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
                         ),
                         validator: (value) {
                           if (value == null || value.isEmpty) {
@@ -130,14 +140,19 @@ class _AddGoalScreenState extends State<AddGoalScreen> {
                         },
                       ),
                       const SizedBox(height: 20),
-                      const Text('Mevcut Tutar', style: TextStyle(fontWeight: FontWeight.bold)),
+                      const Text(
+                        'Mevcut Tutar',
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
                       const SizedBox(height: 8),
                       TextFormField(
                         controller: _currentController,
                         keyboardType: TextInputType.number,
                         decoration: InputDecoration(
                           prefixText: '₺ ',
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
                         ),
                         validator: (value) {
                           if (value == null || value.isEmpty) {
@@ -150,7 +165,10 @@ class _AddGoalScreenState extends State<AddGoalScreen> {
                         },
                       ),
                       const SizedBox(height: 20),
-                      const Text('Son Tarih (Opsiyonel)', style: TextStyle(fontWeight: FontWeight.bold)),
+                      const Text(
+                        'Son Tarih (Opsiyonel)',
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
                       const SizedBox(height: 8),
                       InkWell(
                         onTap: _selectDate,
@@ -166,9 +184,13 @@ class _AddGoalScreenState extends State<AddGoalScreen> {
                               Text(
                                 _selectedDate == null
                                     ? 'Tarih seçin'
-                                    : DateFormat('dd/MM/yyyy').format(_selectedDate!),
+                                    : DateFormat(
+                                        'dd/MM/yyyy',
+                                      ).format(_selectedDate!),
                                 style: TextStyle(
-                                  color: _selectedDate == null ? Colors.grey : Colors.black,
+                                  color: _selectedDate == null
+                                      ? Colors.grey
+                                      : Colors.black,
                                 ),
                               ),
                               const Icon(Icons.calendar_today),

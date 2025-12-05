@@ -4,6 +4,7 @@ import '../models/credit_card.dart';
 import '../services/credit_card_service.dart';
 import 'add_credit_card_screen.dart';
 import 'credit_card_detail_screen.dart';
+import 'card_reporting_screen.dart';
 
 class CreditCardListScreen extends StatefulWidget {
   const CreditCardListScreen({super.key});
@@ -114,6 +115,18 @@ class _CreditCardListScreenState extends State<CreditCardListScreen> {
       appBar: AppBar(
         title: const Text('Kredi Kartlarım'),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.bar_chart),
+            tooltip: 'Raporlar',
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const CardReportingScreen(),
+                ),
+              );
+            },
+          ),
           IconButton(icon: const Icon(Icons.refresh), onPressed: _loadCards),
         ],
       ),

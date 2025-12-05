@@ -1,40 +1,32 @@
 // ignore_for_file: use_build_context_synchronously
 
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import 'dart:convert';
 
 import '../models/wallet.dart';
 import '../models/transaction.dart';
 import '../models/goal.dart';
-import '../models/budget.dart';
 import '../models/user.dart';
 import '../models/category.dart';
+import '../models/loan.dart';
 import '../services/data_service.dart';
-import '../services/budget_alert_service.dart';
 import '../services/notification_service.dart';
 import '../utils/currency_helper.dart';
 import 'notification_history_screen.dart';
 import 'add_transaction_screen.dart';
 import 'add_wallet_screen.dart';
-import 'add_budget_screen.dart';
 import 'edit_transaction_screen.dart';
 import 'manage_goals_screen.dart';
-import 'manage_budgets_screen.dart';
 import 'calendar_screen.dart';
 import 'statistics_screen.dart';
 import 'settings_screen.dart';
-import 'bill_history_screen.dart';
 import 'add_bill_screen.dart';
-import 'bill_templates_screen.dart';
 import '../services/credit_card_service.dart';
-import '../services/bill_payment_service.dart';
-import '../services/bill_template_service.dart';
-import '../models/bill_payment.dart';
-import '../models/bill_template.dart';
+import '../services/transaction_filter_service.dart';
 import '../models/credit_card_transaction.dart';
 import '../models/credit_card.dart';
 import 'edit_credit_card_transaction_screen.dart';
+import 'credit_card_list_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -46,21 +38,25 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   int _selectedIndex = 0;
   final DataService _dataService = DataService();
-  final BudgetAlertService _budgetAlertService = BudgetAlertService();
   final NotificationService _notificationService = NotificationService();
   final CreditCardService _creditCardService = CreditCardService();
+  final TransactionFilterService _filterService = TransactionFilterService();
 
   User? _currentUser;
   List<Wallet> wallets = [];
   List<Goal> goals = [];
   List<Transaction> transactions = [];
-  List<Budget> budgets = [];
-  List<BudgetWarning> budgetWarnings = [];
   List<Category> _categories = [];
   List<CreditCardTransaction> _creditCardTransactions = [];
   Map<String, CreditCard> _creditCards = {};
+  List<Loan> _loans = [];
   bool _loading = true;
   int _unreadNotificationCount = 0;
+  
+  // Transaction filter state
+  // ignore: prefer_final_fields
+  List<String> _selectedCardIds = [];
+  bool _isFilterActive = false;
 
   @override
   void initState() {
@@ -108,9 +104,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     final loadedWallets = await _dataService.getWallets();
     final loadedGoals = await _dataService.getGoals();
     final loadedTransactions = await _dataService.getTransactions();
-    final loadedBudgets = await _dataService.getBudgets();
-    final warnings = await _budgetAlertService.checkBudgets();
     final loadedCategories = (await _dataService.getCategories()).cast<Category>();
+    final loadedLoans = await _dataService.getLoans();
     final unreadCount = await _notificationService.getUnreadCount();
 
     // Load credit card transactions
@@ -138,9 +133,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       wallets = loadedWallets;
       goals = loadedGoals;
       transactions = loadedTransactions;
-      budgets = loadedBudgets;
-      budgetWarnings = warnings;
       _categories = loadedCategories;
+      _loans = loadedLoans;
       _unreadNotificationCount = unreadCount;
       _creditCardTransactions = allCCTransactions;
       _creditCards = cardMap;
@@ -209,12 +203,13 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       body: _selectedIndex == 0
           ? _buildHomeContent()
           : _selectedIndex == 1
-          ? CalendarScreen(transactions: transactions)
+          ? const CreditCardListScreen()
           : _selectedIndex == 2
+          ? CalendarScreen(transactions: transactions)
+          : _selectedIndex == 3
           ? StatisticsScreen(
               transactions: transactions,
               wallets: wallets,
-              budgets: budgets,
               creditCardTransactions: _creditCardTransactions,
             )
           : const SettingsScreen(),
@@ -250,6 +245,11 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                   icon: Icon(Icons.home_outlined),
                   activeIcon: Icon(Icons.home),
                   label: 'Ana Sayfa',
+                ),
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.credit_card_outlined),
+                  activeIcon: Icon(Icons.credit_card),
+                  label: 'Kredi Kartları',
                 ),
                 BottomNavigationBarItem(
                   icon: Icon(Icons.calendar_today_outlined),
@@ -342,16 +342,6 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                             ),
                             ListTile(
                               leading: const Icon(
-                                Icons.account_balance,
-                                color: Color(0xFFFDB32A),
-                              ),
-                              title: const Text('Bütçe Ekle'),
-                              onTap: () {
-                                Navigator.pop(context, 'budget');
-                              },
-                            ),
-                            ListTile(
-                              leading: const Icon(
                                 Icons.receipt_long,
                                 color: Color(0xFFFDB32A),
                               ),
@@ -417,19 +407,6 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                           _loadData();
                         }
                         break;
-                      case 'budget':
-                        // Add budget
-                        if (!mounted) return;
-                        final budgetResult = await Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const AddBudgetScreen(),
-                          ),
-                        );
-                        if (budgetResult == true) {
-                          _loadData();
-                        }
-                        break;
                       case 'bill':
                         // Add bill with unified screen
                         if (!mounted) return;
@@ -490,12 +467,6 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
               const SizedBox(height: 20),
               _buildSummaryCard(),
               const SizedBox(height: 20),
-              if (budgetWarnings.isNotEmpty) ...[
-                _buildBudgetWarnings(),
-                const SizedBox(height: 20),
-              ],
-              _buildBudgetsSection(), // Bütçeler
-              const SizedBox(height: 20),
               _buildAllTransactions(), // Tüm işlemler (normal + kredi kartı)
               const SizedBox(height: 20),
               _buildGoalsSection(), // Hedeflerim
@@ -508,20 +479,27 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   }
 
   Widget _buildAllTransactions() {
+    // Apply filter to credit card transactions if active
+    List<CreditCardTransaction> filteredCCTransactions = _isFilterActive
+        ? _filterService.filterByCards(_creditCardTransactions, _selectedCardIds)
+        : _creditCardTransactions;
+
     // Tüm işlemleri birleştir (normal + kredi kartı)
     List<Map<String, dynamic>> allTransactions = [];
 
-    // Normal işlemleri ekle
-    for (var transaction in transactions) {
-      allTransactions.add({
-        'type': 'normal',
-        'data': transaction,
-        'date': transaction.date,
-      });
+    // Normal işlemleri ekle (sadece filtre aktif değilse)
+    if (!_isFilterActive) {
+      for (var transaction in transactions) {
+        allTransactions.add({
+          'type': 'normal',
+          'data': transaction,
+          'date': transaction.date,
+        });
+      }
     }
 
-    // Kredi kartı işlemlerini ekle
-    for (var ccTransaction in _creditCardTransactions) {
+    // Kredi kartı işlemlerini ekle (filtrelenmiş)
+    for (var ccTransaction in filteredCCTransactions) {
       allTransactions.add({
         'type': 'credit_card',
         'data': ccTransaction,
@@ -548,19 +526,69 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       groupedTransactions[dateKey]!.add(item);
     }
 
+    // Calculate filtered total if filter is active
+    final filteredTotal = _isFilterActive
+        ? _filterService.calculateFilteredTotal(filteredCCTransactions)
+        : 0.0;
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'İşlemler',
-            style: TextStyle(
-              fontSize: 22,
-              fontWeight: FontWeight.bold,
-              color: Theme.of(context).textTheme.displayLarge?.color,
-            ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'İşlemler',
+                style: TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                  color: Theme.of(context).textTheme.displayLarge?.color,
+                ),
+              ),
+              if (_creditCards.isNotEmpty)
+                IconButton(
+                  icon: Icon(
+                    _isFilterActive ? Icons.filter_alt : Icons.filter_alt_outlined,
+                    color: _isFilterActive ? const Color(0xFF00BFA5) : const Color(0xFF8E8E93),
+                  ),
+                  onPressed: _showFilterDialog,
+                ),
+            ],
           ),
+          if (_isFilterActive) ...[
+            const SizedBox(height: 8),
+            _buildFilterChips(),
+            const SizedBox(height: 8),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: const Color(0xFF00BFA5).withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    'Filtrelenmiş Toplam:',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  Text(
+                    CurrencyHelper.formatAmount(filteredTotal, _currentUser),
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF00BFA5),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
           const SizedBox(height: 12),
           ...groupedTransactions.entries.map((entry) {
             return Column(
@@ -985,7 +1013,6 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
 
   Widget _buildSummaryCard() {
     final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
 
     // Calculate monthly income and expenses
     final monthlyTransactions = transactions.where(
@@ -1012,76 +1039,88 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
 
     final monthlyExpense = regularMonthlyExpense + creditCardMonthlyExpense;
 
-    // Calculate net balance and savings
+    // Calculate net balance
     final netBalance = monthlyIncome - monthlyExpense;
-    final savingsRate = monthlyIncome > 0
-        ? ((monthlyIncome - monthlyExpense) / monthlyIncome * 100)
-        : 0.0;
 
-    // Get active budgets with proper date checking
-    final activeBudgets = budgets.where(
-      (b) =>
-          b.isActive &&
-          b.startDate.isBefore(today.add(const Duration(days: 1))) &&
-          b.endDate.isAfter(today.subtract(const Duration(days: 1))),
-    );
+    // Calculate total debts
+    // 1. Credit card debts (from wallets only, as they contain current balance)
+    final creditCardDebts = wallets
+        .where((w) => w.type == 'credit_card')
+        .fold(0.0, (sum, w) => sum + w.balance.abs());
 
-    // Calculate category-based budget usage including both regular and credit card transactions
-    double totalBudget = 0;
-    double totalSpent = 0;
-    int budgetsExceeded = 0;
+    // 2. KMH debts (negative balances in overdraft accounts)
+    final kmhDebts = wallets
+        .where((w) => w.type == 'overdraft' && w.creditLimit > 0 && w.balance < 0)
+        .fold(0.0, (sum, w) => sum + w.balance.abs());
 
-    for (var budget in activeBudgets) {
-      totalBudget += budget.amount;
+    // 3. Loan debts
+    final loanDebts = _loans.fold(0.0, (sum, loan) => sum + loan.remainingAmount);
 
-      // Calculate spending for this budget's category from regular transactions
-      final regularCategorySpent = monthlyTransactions
-          .where((t) => t.type == 'expense' && t.category == budget.category)
-          .fold(0.0, (sum, t) => sum + t.amount);
+    // Total debts
+    final totalDebts = creditCardDebts + kmhDebts + loanDebts;
+    
+    debugPrint('=== DEBT DEBUG ===');
+    debugPrint('Total wallets: ${wallets.length}');
+    debugPrint('Credit card debts: $creditCardDebts');
+    debugPrint('KMH debts: $kmhDebts');
+    debugPrint('Loan debts: $loanDebts');
+    debugPrint('Total debts: $totalDebts');
+    debugPrint('==================');
 
-      // Calculate spending for this budget's category from credit card transactions
-      final creditCardCategorySpent = _creditCardTransactions
-          .where(
-            (t) =>
-                t.transactionDate.month == now.month &&
-                t.transactionDate.year == now.year &&
-                t.category == budget.category,
-          )
-          .fold(0.0, (sum, t) => sum + t.amount);
-
-      final categorySpent = regularCategorySpent + creditCardCategorySpent;
-
-      totalSpent += categorySpent;
-
-      if (categorySpent > budget.amount) {
-        budgetsExceeded++;
-      }
-    }
-
-    // If no budgets, use total expense logic removed. Default is 0.
-
-    final remainingBudget = totalBudget - totalSpent;
-    final usagePercentage = totalBudget > 0 ? (totalSpent / totalBudget) : 0.0;
-    final clampedPercentage = usagePercentage.clamp(0.0, 1.0);
-
-    // Determine status message
-    String statusMessage;
-
-    if (totalBudget == 0) {
-      statusMessage = 'Bütçe Tanımlanmadı';
-    } else if (usagePercentage >= 1.0) {
-      statusMessage = 'Bütçe Aşıldı!';
-    } else if (usagePercentage >= 0.9) {
-      statusMessage = 'Dikkat: Bütçe Dolmak Üzere';
-    } else if (usagePercentage >= 0.75) {
-      statusMessage = 'İyi Gidiyorsunuz';
-    } else {
-      statusMessage = 'Harika! Bütçe Kontrolünde';
-    }
+    // Get month name in Turkish
+    final monthNames = [
+      'Ocak',
+      'Şubat',
+      'Mart',
+      'Nisan',
+      'Mayıs',
+      'Haziran',
+      'Temmuz',
+      'Ağustos',
+      'Eylül',
+      'Ekim',
+      'Kasım',
+      'Aralık',
+    ];
+    final monthName = monthNames[now.month - 1];
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: Container(
+      child: SizedBox(
+        height: 200,
+        child: PageView(
+          padEnds: false,
+          controller: PageController(viewportFraction: 1.0),
+          children: [
+          // Card 1: Net Balance
+          _buildNetBalanceCard(
+            monthName: monthName,
+            year: now.year,
+            netBalance: netBalance,
+            monthlyIncome: monthlyIncome,
+            monthlyExpense: monthlyExpense,
+          ),
+          // Card 2: Total Debts
+          _buildTotalDebtsCard(
+            totalDebts: totalDebts,
+            creditCardDebts: creditCardDebts,
+            kmhDebts: kmhDebts,
+            loanDebts: loanDebts,
+          ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildNetBalanceCard({
+    required String monthName,
+    required int year,
+    required double netBalance,
+    required double monthlyIncome,
+    required double monthlyExpense,
+  }) {
+    return Container(
         decoration: BoxDecoration(
           color: Theme.of(context).cardColor,
           borderRadius: BorderRadius.circular(24),
@@ -1095,183 +1134,35 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         ),
         child: Column(
           children: [
-            // Top Colored Section - Budget Status
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                borderRadius: const BorderRadius.vertical(
-                  top: Radius.circular(24),
+            // Income/Expense Balance
+            Expanded(
+              child: Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+                  color: netBalance >= 0
+                      ? const Color(0xFF34C759).withValues(alpha: 0.1)
+                      : const Color(0xFFFF3B30).withValues(alpha: 0.1),
                 ),
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: Theme.of(context).brightness == Brightness.dark
-                      ? [const Color(0xFF4A5568), const Color(0xFF2D3748)]
-                      : [const Color(0xFF667eea), const Color(0xFF764ba2)],
-                ),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text(
-                        'Bütçe Durumu',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 6,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.2),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Text(
-                          statusMessage,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 11,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      Text(
-                        CurrencyHelper.formatAmount(
-                          totalBudget == 0 ? totalSpent : remainingBudget.abs(),
-                          _currentUser,
-                        ),
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 28,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(width: 6),
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: 6),
-                        child: Text(
-                          totalBudget == 0
-                              ? 'Toplam Harcama'
-                              : (remainingBudget >= 0 ? 'Kalan' : 'Aşım'),
-                          style: TextStyle(
-                            color: Colors.white.withValues(alpha: 0.9),
-                            fontSize: 12,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        '${(usagePercentage * 100).toStringAsFixed(1)}% Kullanıldı',
-                        style: TextStyle(
-                          color: Colors.white.withValues(alpha: 0.9),
-                          fontSize: 11,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                      Text(
-                        '${CurrencyHelper.formatAmount(totalSpent, _currentUser)} / ${CurrencyHelper.formatAmount(totalBudget, _currentUser)}',
-                        style: TextStyle(
-                          color: Colors.white.withValues(alpha: 0.9),
-                          fontSize: 11,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 6),
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(10),
-                    child: LinearProgressIndicator(
-                      value: clampedPercentage,
-                      backgroundColor: Colors.white.withValues(alpha: 0.2),
-                      valueColor: const AlwaysStoppedAnimation<Color>(
-                        Colors.white,
-                      ),
-                      minHeight: 6,
+                child: Row(
+                  children: [
+                    Icon(
+                      netBalance >= 0
+                          ? Icons.trending_up
+                          : Icons.trending_down,
+                      color: netBalance >= 0
+                          ? const Color(0xFF34C759)
+                          : const Color(0xFFFF3B30),
+                      size: 24,
                     ),
-                  ),
-                  if (budgetsExceeded > 0) ...[
-                    const SizedBox(height: 12),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 8,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.15),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Row(
-                        children: [
-                          const Icon(
-                            Icons.warning_amber_rounded,
-                            color: Colors.white,
-                            size: 16,
-                          ),
-                          const SizedBox(width: 8),
-                          Text(
-                            '$budgetsExceeded kategori bütçesi aşıldı',
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 12,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ],
-              ),
-            ),
-
-            // Middle Section - Income/Expense Balance
-            Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: netBalance >= 0
-                    ? const Color(0xFF34C759).withValues(alpha: 0.1)
-                    : const Color(0xFFFF3B30).withValues(alpha: 0.1),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Row(
-                    children: [
-                      Icon(
-                        netBalance >= 0
-                            ? Icons.trending_up
-                            : Icons.trending_down,
-                        color: netBalance >= 0
-                            ? const Color(0xFF34C759)
-                            : const Color(0xFFFF3B30),
-                        size: 24,
-                      ),
-                      const SizedBox(width: 12),
-                      Column(
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Text(
-                            netBalance >= 0 ? 'Net Kazanç' : 'Net Kayıp',
+                            '$monthName $year ${netBalance >= 0 ? 'Net Kazanç' : 'Net Kayıp'}',
                             style: const TextStyle(
                               fontSize: 13,
                               color: Color(0xFF8E8E93),
@@ -1294,53 +1185,15 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                           ),
                         ],
                       ),
-                    ],
-                  ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 12,
                     ),
-                    decoration: BoxDecoration(
-                      color: Theme.of(context).cardColor,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: savingsRate >= 20
-                            ? const Color(0xFF34C759)
-                            : const Color(0xFF8E8E93),
-                        width: 2,
-                      ),
-                    ),
-                    child: Column(
-                      children: [
-                        Text(
-                          '${savingsRate.toStringAsFixed(0)}%',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: savingsRate >= 20
-                                ? const Color(0xFF34C759)
-                                : const Color(0xFF8E8E93),
-                          ),
-                        ),
-                        const SizedBox(height: 2),
-                        const Text(
-                          'Tasarruf',
-                          style: TextStyle(
-                            fontSize: 11,
-                            color: Color(0xFF8E8E93),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
 
             // Bottom Section - Detailed Stats
             Padding(
-              padding: const EdgeInsets.all(20),
+              padding: const EdgeInsets.all(16),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
@@ -1361,22 +1214,167 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                     Icons.arrow_upward,
                     const Color(0xFFFF3B30),
                   ),
-                  Container(
-                    width: 1,
-                    height: 40,
-                    color: const Color(0xFFE5E5EA),
-                  ),
-                  _buildDetailedStat(
-                    'Bütçe',
-                    totalBudget,
-                    Icons.account_balance_wallet,
-                    const Color(0xFF5E5CE6),
-                  ),
                 ],
               ),
             ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTotalDebtsCard({
+    required double totalDebts,
+    required double creditCardDebts,
+    required double kmhDebts,
+    required double loanDebts,
+  }) {
+    return Container(
+        decoration: BoxDecoration(
+          color: Theme.of(context).cardColor,
+          borderRadius: BorderRadius.circular(24),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.05),
+              blurRadius: 20,
+              offset: const Offset(0, 10),
+            ),
           ],
         ),
+        child: Column(
+          children: [
+            // Total Debts Header
+            Expanded(
+              child: Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+                  color: const Color(0xFFFF3B30).withValues(alpha: 0.1),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(
+                      Icons.account_balance_wallet_outlined,
+                      color: Color(0xFFFF3B30),
+                      size: 24,
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Text(
+                            'Toplam Borçlar',
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: Color(0xFF8E8E93),
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            CurrencyHelper.formatAmount(totalDebts, _currentUser),
+                            style: const TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFFFF3B30),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
+            // Bottom Section - Debt Breakdown
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  if (creditCardDebts > 0)
+                    _buildDebtStat(
+                      'Kredi Kartı',
+                      creditCardDebts,
+                      Icons.credit_card,
+                    ),
+                  if (kmhDebts > 0) ...[
+                    if (creditCardDebts > 0)
+                      Container(
+                        width: 1,
+                        height: 40,
+                        color: const Color(0xFFE5E5EA),
+                      ),
+                    _buildDebtStat(
+                      'KMH',
+                      kmhDebts,
+                      Icons.account_balance,
+                    ),
+                  ],
+                  if (loanDebts > 0) ...[
+                    if (creditCardDebts > 0 || kmhDebts > 0)
+                      Container(
+                        width: 1,
+                        height: 40,
+                        color: const Color(0xFFE5E5EA),
+                      ),
+                    _buildDebtStat(
+                      'Krediler',
+                      loanDebts,
+                      Icons.payments,
+                    ),
+                  ],
+                  if (totalDebts == 0)
+                    const Expanded(
+                      child: Text(
+                        'Borç bulunmamaktadır',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: Color(0xFF8E8E93),
+                          fontSize: 14,
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDebtStat(String label, double amount, IconData icon) {
+    return Expanded(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, color: const Color(0xFFFF3B30), size: 18),
+          const SizedBox(height: 6),
+          Text(
+            label,
+            style: const TextStyle(
+              color: Color(0xFF8E8E93),
+              fontSize: 11,
+              fontWeight: FontWeight.w500,
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+          const SizedBox(height: 2),
+          Text(
+            CurrencyHelper.formatAmount(amount, _currentUser),
+            style: const TextStyle(
+              color: Color(0xFFFF3B30),
+              fontSize: 13,
+              fontWeight: FontWeight.bold,
+            ),
+            textAlign: TextAlign.center,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ],
       ),
     );
   }
@@ -1515,293 +1513,31 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     );
   }
 
-  Widget _buildBudgetsSection() {
-    return FutureBuilder<List<Budget>>(
-      future: _dataService.getBudgets(),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 20),
-            child: Center(child: CircularProgressIndicator()),
-          );
-        }
-
-        if (!snapshot.hasData || snapshot.data!.isEmpty) {
-          return const SizedBox.shrink();
-        }
-
-        final budgets = snapshot.data!;
-        final now = DateTime.now();
-        final activeBudgets = budgets.where((budget) {
-          return budget.isActive &&
-              budget.startDate.isBefore(now) &&
-              budget.endDate.isAfter(now);
-        }).toList();
-
-        if (activeBudgets.isEmpty) {
-          return const SizedBox.shrink();
-        }
-
-        return Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    'Bütçelerim',
-                    style: TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                      color: Theme.of(context).brightness == Brightness.dark
-                          ? Colors.grey[200]
-                          : const Color(0xFF1C1C1E),
-                    ),
-                  ),
-                  TextButton(
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const ManageBudgetsScreen(),
-                        ),
-                      ).then((value) => _loadData());
-                    },
-                    child: const Text('Tümünü Gör'),
-                  ),
-                ],
+  void _showImagePreview(BuildContext context, List<String> images) {
+    showDialog(
+      context: context,
+      builder: (context) => Dialog(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            SizedBox(
+              height: 400,
+              child: PageView.builder(
+                itemCount: images.length,
+                itemBuilder: (context, index) {
+                  return Image.memory(
+                    base64Decode(images[index]),
+                    fit: BoxFit.contain,
+                  );
+                },
               ),
-              const SizedBox(height: 12),
-              SizedBox(
-                height: 150,
-                child: ListView.builder(
-                  scrollDirection: Axis.horizontal,
-                  itemCount: activeBudgets.length,
-                  itemBuilder: (context, index) {
-                    final budget = activeBudgets[index];
-                    final percentage = budget.percentage;
-                    final remaining = budget.remaining;
-
-                    return Container(
-                      width: 200,
-                      margin: const EdgeInsets.only(right: 12),
-                      decoration: BoxDecoration(
-                        color: Theme.of(context).cardColor,
-                        borderRadius: BorderRadius.circular(16),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.05),
-                            blurRadius: 10,
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.all(16),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Expanded(
-                                  child: Text(
-                                    budget.name,
-                                    style: TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.bold,
-                                      color:
-                                          Theme.of(context).brightness ==
-                                              Brightness.dark
-                                          ? Colors.grey[200]
-                                          : const Color(0xFF1C1C1E),
-                                    ),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 8,
-                                    vertical: 4,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: percentage > 90
-                                        ? Colors.red.withValues(alpha: 0.2)
-                                        : percentage > 75
-                                        ? Colors.orange.withValues(alpha: 0.2)
-                                        : Colors.green.withValues(alpha: 0.2),
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  child: Text(
-                                    '${percentage.toStringAsFixed(1)}%',
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      color: percentage > 90
-                                          ? Colors.red
-                                          : percentage > 75
-                                          ? Colors.orange
-                                          : Colors.green,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              budget.category,
-                              style: const TextStyle(
-                                fontSize: 14,
-                                color: Color(0xFF8E8E93),
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            ClipRRect(
-                              borderRadius: BorderRadius.circular(4),
-                              child: LinearProgressIndicator(
-                                value: (percentage / 100).clamp(0.0, 1.0),
-                                backgroundColor: const Color(0xFFE5E5EA),
-                                valueColor: AlwaysStoppedAnimation<Color>(
-                                  percentage > 90
-                                      ? Colors.red
-                                      : percentage > 75
-                                      ? Colors.orange
-                                      : Colors.green,
-                                ),
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text(
-                                  CurrencyHelper.formatAmount(
-                                    remaining,
-                                    _currentUser,
-                                  ),
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.bold,
-                                    color: remaining < 0
-                                        ? Colors.red
-                                        : Colors.green,
-                                  ),
-                                ),
-                                Text(
-                                  CurrencyHelper.formatAmount(
-                                    budget.amount,
-                                    _currentUser,
-                                  ),
-                                  style: const TextStyle(
-                                    fontSize: 14,
-                                    color: Color(0xFF8E8E93),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-                    );
-                  },
-                ),
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildBudgetWarnings() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Bütçe Uyarıları',
-            style: TextStyle(
-              fontSize: 22,
-              fontWeight: FontWeight.bold,
-              color: Color(0xFF1C1C1E),
             ),
-          ),
-          const SizedBox(height: 12),
-          ...budgetWarnings.map((warning) {
-            Color color;
-            IconData icon;
-            Color bgColor;
-
-            switch (warning.severity) {
-              case BudgetWarningSeverity.exceeded:
-                color = const Color(0xFFFF3B30);
-                icon = Icons.error;
-                bgColor = const Color(0xFFFF3B30).withValues(alpha: 0.1);
-                break;
-              case BudgetWarningSeverity.critical:
-                color = const Color(0xFFFF9500);
-                icon = Icons.warning;
-                bgColor = const Color(0xFFFF9500).withValues(alpha: 0.1);
-                break;
-              case BudgetWarningSeverity.warning:
-                color = const Color(0xFFFFCC00);
-                icon = Icons.info;
-                bgColor = const Color(0xFFFFCC00).withValues(alpha: 0.1);
-                break;
-            }
-
-            return Container(
-              margin: const EdgeInsets.only(bottom: 12),
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: bgColor,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: color.withValues(alpha: 0.3)),
-              ),
-              child: Row(
-                children: [
-                  Icon(icon, color: color, size: 24),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          warning.message,
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                            color: color,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          '${NumberFormat('#,##0', 'tr_TR').format(warning.currentSpending)} / ${NumberFormat('#,##0', 'tr_TR').format(warning.budgetAmount)} ₺',
-                          style: const TextStyle(
-                            fontSize: 14,
-                            color: Color(0xFF8E8E93),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Text(
-                    '%${warning.percentage.toStringAsFixed(0)}',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: color,
-                    ),
-                  ),
-                ],
-              ),
-            );
-          }),
-        ],
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Kapat'),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -1835,275 +1571,119 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     return allWallets;
   }
 
-  void _showImagePreview(BuildContext context, List<String> images) {
+  // Transaction filter methods
+  void _showFilterDialog() {
     showDialog(
       context: context,
-      builder: (context) => Dialog(
-        backgroundColor: Colors.transparent,
-        child: Stack(
-          children: [
-            PageView.builder(
-              itemCount: images.length,
-              itemBuilder: (context, index) {
-                return InteractiveViewer(
-                  minScale: 0.5,
-                  maxScale: 4.0,
-                  child: Center(
-                    child: Image.memory(
-                      base64Decode(images[index]),
-                      fit: BoxFit.contain,
-                    ),
-                  ),
-                );
-              },
-            ),
-            Positioned(
-              top: 16,
-              right: 16,
-              child: IconButton(
-                icon: const Icon(Icons.close, color: Colors.white, size: 32),
-                onPressed: () => Navigator.pop(context),
-              ),
-            ),
-            if (images.length > 1)
-              Positioned(
-                bottom: 16,
-                left: 0,
-                right: 0,
-                child: Center(
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 6,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.black.withValues(alpha: 0.7),
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: Text(
-                      '${images.length} Fiş',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildBillsSection() {
-    return FutureBuilder(
-      future: _loadBillsData(),
-      builder: (context, snapshot) {
-        if (!snapshot.hasData) {
-          return const SizedBox.shrink();
-        }
-
-        final data = snapshot.data as Map<String, dynamic>;
-        final pendingPayments = data['pendingPayments'] as List<BillPayment>;
-        final overduePayments = data['overduePayments'] as List<BillPayment>;
-        final templates = data['templates'] as Map<String, BillTemplate>;
-
-        if (pendingPayments.isEmpty && overduePayments.isEmpty) {
-          return const SizedBox.shrink();
-        }
-
-        return Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    'Faturalar',
-                    style: TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                      color: Theme.of(context).textTheme.displayLarge?.color,
-                    ),
-                  ),
-                  Row(
-                    children: [
-                      TextButton.icon(
-                        onPressed: () async {
-                          final result = await Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => const BillHistoryScreen(),
-                            ),
-                          );
-                          if (result == true) {
-                            _loadData();
-                          }
-                        },
-                        icon: const Icon(Icons.history, size: 18),
-                        label: const Text('Geçmiş'),
-                        style: TextButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(horizontal: 8),
-                        ),
-                      ),
-                      TextButton(
-                        onPressed: () async {
-                          await Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => const BillTemplatesScreen(),
-                            ),
-                          );
-                          _loadData();
-                        },
-                        child: const Text('Faturalarım'),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-
-              // Vadesi geçmiş faturalar
-              ...overduePayments
-                  .take(3)
-                  .map(
-                    (payment) => Padding(
-                      padding: const EdgeInsets.only(bottom: 8),
-                      child: _buildBillPaymentCard(
-                        payment,
-                        templates[payment.templateId],
-                        isOverdue: true,
-                      ),
-                    ),
-                  ),
-
-              // Bekleyen faturalar
-              ...pendingPayments
-                  .take(3)
-                  .map(
-                    (payment) => Padding(
-                      padding: const EdgeInsets.only(bottom: 8),
-                      child: _buildBillPaymentCard(
-                        payment,
-                        templates[payment.templateId],
-                        isOverdue: false,
-                      ),
-                    ),
-                  ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildBillPaymentCard(
-    BillPayment payment,
-    BillTemplate? template,
-    {required bool isOverdue}
-  ) {
-    final color = isOverdue ? Colors.red : Colors.orange;
-    final icon = isOverdue ? Icons.warning : Icons.schedule;
-
-    final templateName = template?.name ?? 'Bilinmeyen Fatura';
-    final provider = template?.provider;
-
-    return Card(
-      color: color.withValues(alpha: 0.1),
-      child: ListTile(
-        leading: Icon(icon, color: color),
-        title: Text(
-          templateName,
-          style: TextStyle(fontWeight: FontWeight.bold, color: color),
-        ),
-        subtitle: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Vade: ${_formatDate(payment.dueDate)}${provider != null ? ' • $provider' : ''}',
-              style: TextStyle(fontSize: 12, color: Colors.grey[700]),
-            ),
-            Text(
-              'Tutar: ${CurrencyHelper.formatAmount(payment.amount, _currentUser)}',
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                color: color,
-              ),
-            ),
-            Text(
-              payment.periodDisplayName,
-              style: TextStyle(
-                fontSize: 11,
-                fontStyle: FontStyle.italic,
-                color: Colors.grey[600],
-              ),
-            ),
-          ],
-        ),
-        trailing: IconButton(
-          icon: const Icon(Icons.payment, size: 20),
-          color: color,
-          onPressed: () async {
-            // TODO: Ödeme ekranına yönlendir
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Ödeme özelliği yakında eklenecek'),
+      builder: (context) => AlertDialog(
+        title: const Text('Kart Filtrele'),
+        content: StatefulBuilder(
+          builder: (context, setDialogState) {
+            return SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: _creditCards.values.map((card) {
+                  final isSelected = _selectedCardIds.contains(card.id);
+                  return CheckboxListTile(
+                    title: Text('${card.bankName} ${card.cardName}'),
+                    subtitle: Text('•••• ${card.last4Digits}'),
+                    value: isSelected,
+                    activeColor: const Color(0xFF00BFA5),
+                    onChanged: (value) {
+                      setDialogState(() {
+                        if (value == true) {
+                          _selectedCardIds.add(card.id);
+                        } else {
+                          _selectedCardIds.remove(card.id);
+                        }
+                      });
+                    },
+                  );
+                }).toList(),
               ),
             );
           },
-          tooltip: 'Öde',
         ),
-        onTap: () {
-          // TODO: Detay ekranına yönlendir
-        },
+        actions: [
+          TextButton(
+            onPressed: () {
+              setState(() {
+                _selectedCardIds.clear();
+                _isFilterActive = false;
+              });
+              Navigator.pop(context);
+            },
+            child: const Text('Temizle'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+            },
+            child: const Text('İptal'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              setState(() {
+                _isFilterActive = _selectedCardIds.isNotEmpty;
+              });
+              Navigator.pop(context);
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF00BFA5),
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Uygula'),
+          ),
+        ],
       ),
     );
   }
 
-  String _formatDate(DateTime? date) {
-    if (date == null) return 'Tarih girilmedi';
-    final day = date.day.toString().padLeft(2, '0');
-    final month = date.month.toString().padLeft(2, '0');
-    return '$day.$month.${date.year}';
-  }
-
-  Future<Map<String, dynamic>> _loadBillsData() async {
-    try {
-      final paymentService = BillPaymentService();
-      final templateService = BillTemplateService();
-
-      // Bekleyen ve vadesi geçmiş ödemeleri getir
-      final pendingPayments = await paymentService.getPendingPayments();
-      final overduePayments = await paymentService.getOverduePayments();
-
-      // Template bilgilerini ekle
-      final Map<String, BillTemplate> templates = {};
-      for (var payment in [...pendingPayments, ...overduePayments]) {
-        if (!templates.containsKey(payment.templateId)) {
-          final template = await templateService.getTemplate(payment.templateId);
-          if (template != null) {
-            templates[payment.templateId] = template;
-          }
-        }
-      }
-
-      return {
-        'pendingPayments': pendingPayments,
-        'overduePayments': overduePayments,
-        'templates': templates,
-      };
-    } catch (e) {
-      return {
-        'pendingPayments': <BillPayment>[],
-        'overduePayments': <BillPayment>[],
-        'templates': <String, BillTemplate>{},
-      };
-    }
+  Widget _buildFilterChips() {
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: [
+        ..._selectedCardIds.map((cardId) {
+          final card = _creditCards[cardId];
+          if (card == null) return const SizedBox.shrink();
+          
+          return Chip(
+            label: Text(
+              '${card.bankName} •••• ${card.last4Digits}',
+              style: const TextStyle(fontSize: 12),
+            ),
+            deleteIcon: const Icon(Icons.close, size: 16),
+            onDeleted: () {
+              setState(() {
+                _selectedCardIds.remove(cardId);
+                if (_selectedCardIds.isEmpty) {
+                  _isFilterActive = false;
+                }
+              });
+            },
+            backgroundColor: const Color(0xFF00BFA5).withValues(alpha: 0.1),
+            deleteIconColor: const Color(0xFF00BFA5),
+            labelStyle: const TextStyle(color: Color(0xFF00BFA5)),
+          );
+        }),
+        if (_selectedCardIds.isNotEmpty)
+          ActionChip(
+            label: const Text(
+              'Tümünü Temizle',
+              style: TextStyle(fontSize: 12),
+            ),
+            onPressed: () {
+              setState(() {
+                _selectedCardIds.clear();
+                _isFilterActive = false;
+              });
+            },
+            backgroundColor: Colors.red.withValues(alpha: 0.1),
+            labelStyle: const TextStyle(color: Colors.red),
+          ),
+      ],
+    );
   }
 }
+

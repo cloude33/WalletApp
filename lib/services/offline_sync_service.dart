@@ -22,7 +22,9 @@ class OfflineSyncService {
     isOnline = !result.contains(ConnectivityResult.none);
 
     // Listen to connectivity changes
-    _connectivitySubscription = connectivity.onConnectivityChanged.listen((results) {
+    _connectivitySubscription = connectivity.onConnectivityChanged.listen((
+      results,
+    ) {
       final wasOnline = isOnline;
       isOnline = !results.contains(ConnectivityResult.none);
 
@@ -31,21 +33,19 @@ class OfflineSyncService {
         syncAll();
       }
 
-      _syncController.add(SyncStatus(
-        isOnline: isOnline,
-        queueSize: _queue.length,
-      ));
+      _syncController.add(
+        SyncStatus(isOnline: isOnline, queueSize: _queue.length),
+      );
     });
   }
 
   /// Queue an operation for later sync
   Future<void> queueOperation(OfflineOperation operation) async {
     _queue.add(operation);
-    
-    _syncController.add(SyncStatus(
-      isOnline: isOnline,
-      queueSize: _queue.length,
-    ));
+
+    _syncController.add(
+      SyncStatus(isOnline: isOnline, queueSize: _queue.length),
+    );
 
     // If online, try to sync immediately
     if (isOnline) {
@@ -57,11 +57,9 @@ class OfflineSyncService {
   Future<void> syncAll() async {
     if (!isOnline || _queue.isEmpty) return;
 
-    _syncController.add(SyncStatus(
-      isOnline: isOnline,
-      queueSize: _queue.length,
-      isSyncing: true,
-    ));
+    _syncController.add(
+      SyncStatus(isOnline: isOnline, queueSize: _queue.length, isSyncing: true),
+    );
 
     final operations = List<OfflineOperation>.from(_queue);
     final failedOperations = <OfflineOperation>[];
@@ -72,7 +70,7 @@ class OfflineSyncService {
         _queue.remove(operation);
       } catch (e) {
         debugPrint('Failed to sync operation ${operation.id}: $e');
-        
+
         // Increment retry count
         final updatedOp = operation.copyWith(
           retryCount: operation.retryCount + 1,
@@ -80,7 +78,7 @@ class OfflineSyncService {
 
         // Remove old and add updated
         _queue.remove(operation);
-        
+
         // Only retry up to 3 times
         if (updatedOp.retryCount < 3) {
           failedOperations.add(updatedOp);
@@ -93,11 +91,13 @@ class OfflineSyncService {
       _queue.add(op);
     }
 
-    _syncController.add(SyncStatus(
-      isOnline: isOnline,
-      queueSize: _queue.length,
-      isSyncing: false,
-    ));
+    _syncController.add(
+      SyncStatus(
+        isOnline: isOnline,
+        queueSize: _queue.length,
+        isSyncing: false,
+      ),
+    );
   }
 
   /// Execute a single operation
@@ -105,7 +105,7 @@ class OfflineSyncService {
     // This would call the appropriate service method based on operation type
     // For now, just simulate execution
     await Future.delayed(const Duration(milliseconds: 100));
-    
+
     // In real implementation:
     // switch (operation.type) {
     //   case OperationType.create:
@@ -122,7 +122,7 @@ class OfflineSyncService {
     // Strategy: Local changes win (as per requirements)
     debugPrint('Conflict detected: ${conflict.description}');
     debugPrint('Prioritizing local changes');
-    
+
     // Log conflict for review
     // In production, you might want to store conflicts for user review
   }
@@ -136,10 +136,7 @@ class OfflineSyncService {
   /// Clear all queued operations
   void clearQueue() {
     _queue.clear();
-    _syncController.add(SyncStatus(
-      isOnline: isOnline,
-      queueSize: 0,
-    ));
+    _syncController.add(SyncStatus(isOnline: isOnline, queueSize: 0));
   }
 
   /// Dispose resources
@@ -187,11 +184,7 @@ class OfflineOperation {
 }
 
 /// Operation types
-enum OperationType {
-  create,
-  update,
-  delete,
-}
+enum OperationType { create, update, delete }
 
 /// Sync status
 class SyncStatus {

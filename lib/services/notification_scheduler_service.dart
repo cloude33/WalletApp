@@ -4,12 +4,7 @@ import 'package:timezone/timezone.dart' as tz;
 import 'package:flutter/material.dart';
 
 // Notification priority enum
-enum NotificationPriority {
-  low,
-  normal,
-  high,
-  urgent,
-}
+enum NotificationPriority { low, normal, high, urgent }
 
 class NotificationSchedulerService {
   static final NotificationSchedulerService _instance =
@@ -31,7 +26,9 @@ class NotificationSchedulerService {
     tz.setLocalLocation(tz.getLocation('Europe/Istanbul'));
 
     // Android initialization settings
-    const androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
+    const androidSettings = AndroidInitializationSettings(
+      '@mipmap/ic_launcher',
+    );
 
     // iOS initialization settings
     const iosSettings = DarwinInitializationSettings(
@@ -56,9 +53,10 @@ class NotificationSchedulerService {
   /// Request notification permissions
   Future<bool> requestPermissions() async {
     // Android 13+ requires runtime permission
-    final androidPlugin =
-        _notifications.resolvePlatformSpecificImplementation<
-            AndroidFlutterLocalNotificationsPlugin>();
+    final androidPlugin = _notifications
+        .resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin
+        >();
 
     bool? androidGranted;
     if (androidPlugin != null) {
@@ -66,8 +64,10 @@ class NotificationSchedulerService {
     }
 
     // iOS permissions
-    final iosPlugin = _notifications.resolvePlatformSpecificImplementation<
-        IOSFlutterLocalNotificationsPlugin>();
+    final iosPlugin = _notifications
+        .resolvePlatformSpecificImplementation<
+          IOSFlutterLocalNotificationsPlugin
+        >();
 
     bool? iosGranted;
     if (iosPlugin != null) {
@@ -92,9 +92,9 @@ class NotificationSchedulerService {
     NotificationPriority priority = NotificationPriority.normal,
   }) async {
     final androidDetails = AndroidNotificationDetails(
-      'budget_notifications',
-      'Budget Notifications',
-      channelDescription: 'Notifications for budget alerts and reminders',
+      'general_notifications',
+      'General Notifications',
+      channelDescription: 'General app notifications and reminders',
       importance: _getImportance(priority),
       priority: Priority.high,
       actions: actions,
@@ -271,4 +271,3 @@ class NotificationSchedulerService {
     }
   }
 }
-

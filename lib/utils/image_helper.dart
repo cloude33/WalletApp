@@ -1,15 +1,23 @@
 import 'dart:io';
 import 'dart:convert';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:image_cropper/image_cropper.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as path;
+import 'image_optimizer.dart';
 
 class ImageHelper {
   static final ImagePicker _picker = ImagePicker();
 
   /// Kameradan veya galeriden resim seç
-  static Future<String?> pickImage({required ImageSource source}) async {
+  /// Automatically optimizes images for better performance
+  static Future<String?> pickImage({
+    required ImageSource source,
+    bool optimize = true,
+    bool enableCrop = true,
+  }) async {
     try {
       final XFile? image = await _picker.pickImage(
         source: source,
@@ -18,19 +26,126 @@ class ImageHelper {
         imageQuality: 85,
       );
 
-      if (image == null) return null;
+      if (image == null) {
+        debugPrint('Resim seçilmedi');
+        return null;
+      }
 
-      // Resmi base64 olarak kaydet
-      final bytes = await image.readAsBytes();
-      return base64Encode(bytes);
-    } catch (e) {
+      String imagePath = image.path;
+      debugPrint('Resim seçildi: $imagePath');
+
+      // Crop image if requested
+      if (enableCrop) {
+        try {
+          final croppedFile = await _cropImage(imagePath);
+          if (croppedFile != null) {
+            imagePath = croppedFile.path;
+            debugPrint('Resim kırpıldı: $imagePath');
+          } else {
+            debugPrint('Resim kırpma iptal edildi, orijinal resim kullanılacak');
+          }
+        } catch (e) {
+          debugPrint('Resim kırpma hatası, orijinal resim kullanılacak: $e');
+          // Kırpma başarısız olursa orijinal resmi kullan
+        }
+      }
+
+      // Check if file exists
+      final file = File(imagePath);
+      if (!await file.exists()) {
+        debugPrint('Resim dosyası bulunamadı: $imagePath');
+        return null;
+      }
+
+      // Read image bytes
+      Uint8List bytes = await file.readAsBytes();
+      debugPrint('Resim okundu: ${bytes.length} bytes');
+
+      // Optimize image if requested
+      if (optimize) {
+        try {
+          final originalSize = bytes.length;
+          bytes = await ImageOptimizer.optimizeImage(bytes);
+          final optimizedSize = bytes.length;
+
+          final reduction = ImageOptimizer.calculateReduction(
+            originalSize,
+            optimizedSize,
+          );
+          debugPrint(
+            'Image optimized: ${(originalSize / 1024).toStringAsFixed(1)}KB → '
+            '${(optimizedSize / 1024).toStringAsFixed(1)}KB '
+            '(${reduction.toStringAsFixed(1)}% reduction)',
+          );
+        } catch (e) {
+          debugPrint('Resim optimizasyon hatası, orijinal resim kullanılacak: $e');
+          // Optimizasyon başarısız olursa orijinal bytes'ı kullan
+        }
+      }
+
+      // Convert to base64
+      final base64String = base64Encode(bytes);
+      debugPrint('Resim base64\'e çevrildi: ${base64String.length} karakterler');
+      return base64String;
+    } catch (e, stackTrace) {
       debugPrint('Resim seçme hatası: $e');
+      debugPrint('Stack trace: $stackTrace');
+      return null;
+    }
+  }
+
+  /// Resmi kırp
+  static Future<CroppedFile?> _cropImage(String imagePath) async {
+    try {
+      final croppedFile = await ImageCropper().cropImage(
+        sourcePath: imagePath,
+        compressQuality: 85,
+        maxWidth: 1920,
+        maxHeight: 1080,
+        compressFormat: ImageCompressFormat.jpg,
+        uiSettings: [
+          AndroidUiSettings(
+            toolbarTitle: 'Resmi Kırp',
+            toolbarColor: const Color(0xFF5E5CE6),
+            toolbarWidgetColor: Colors.white,
+            initAspectRatio: CropAspectRatioPreset.ratio16x9,
+            lockAspectRatio: false,
+            hideBottomControls: false,
+            aspectRatioPresets: [
+              CropAspectRatioPreset.square,
+              CropAspectRatioPreset.ratio3x2,
+              CropAspectRatioPreset.ratio4x3,
+              CropAspectRatioPreset.ratio16x9,
+              CropAspectRatioPreset.original,
+            ],
+          ),
+          IOSUiSettings(
+            title: 'Resmi Kırp',
+            aspectRatioLockEnabled: false,
+            resetAspectRatioEnabled: true,
+            aspectRatioPresets: [
+              CropAspectRatioPreset.square,
+              CropAspectRatioPreset.ratio3x2,
+              CropAspectRatioPreset.ratio4x3,
+              CropAspectRatioPreset.ratio16x9,
+              CropAspectRatioPreset.original,
+            ],
+          ),
+        ],
+      );
+      return croppedFile;
+    } catch (e) {
+      debugPrint('Resim kırpma hatası: $e');
       return null;
     }
   }
 
   /// Birden fazla resim seç (sadece galeri)
-  static Future<List<String>> pickMultipleImages() async {
+  /// Automatically optimizes images for better performance
+  static Future<List<String>> pickMultipleImages({
+    bool optimize = true,
+    bool enableCrop = true,
+  }) async {
     try {
       final List<XFile> images = await _picker.pickMultiImage(
         maxWidth: 1920,
@@ -40,7 +155,36 @@ class ImageHelper {
 
       List<String> savedPaths = [];
       for (var image in images) {
-        final bytes = await image.readAsBytes();
+        String imagePath = image.path;
+
+        // Crop image if requested
+        if (enableCrop) {
+          final croppedFile = await _cropImage(imagePath);
+          if (croppedFile != null) {
+            imagePath = croppedFile.path;
+          }
+        }
+
+        // Read image bytes
+        Uint8List bytes = await File(imagePath).readAsBytes();
+
+        // Optimize image if requested
+        if (optimize) {
+          final originalSize = bytes.length;
+          bytes = await ImageOptimizer.optimizeImage(bytes);
+          final optimizedSize = bytes.length;
+
+          final reduction = ImageOptimizer.calculateReduction(
+            originalSize,
+            optimizedSize,
+          );
+          debugPrint(
+            'Image optimized: ${(originalSize / 1024).toStringAsFixed(1)}KB → '
+            '${(optimizedSize / 1024).toStringAsFixed(1)}KB '
+            '(${reduction.toStringAsFixed(1)}% reduction)',
+          );
+        }
+
         final base64Image = base64Encode(bytes);
         savedPaths.add(base64Image);
       }
@@ -56,7 +200,8 @@ class ImageHelper {
   static Future<String?> saveImage(String imagePath) async {
     try {
       final appDir = await getApplicationDocumentsDirectory();
-      final fileName = '${DateTime.now().millisecondsSinceEpoch}${path.extension(imagePath)}';
+      final fileName =
+          '${DateTime.now().millisecondsSinceEpoch}${path.extension(imagePath)}';
       final savedImage = File('${appDir.path}/$fileName');
 
       // Resmi kopyala
@@ -86,80 +231,85 @@ class ImageHelper {
 
   /// Resim seçme dialog'u göster
   static Future<String?> showImageSourceDialog(BuildContext context) async {
-    return showModalBottomSheet<String>(
-      context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (context) => SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: Colors.grey.shade300,
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-              const SizedBox(height: 20),
-              const Text(
-                'Fotoğraf Ekle',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 20),
-              ListTile(
-                leading: Container(
-                  padding: const EdgeInsets.all(10),
+    try {
+      final ImageSource? source = await showModalBottomSheet<ImageSource>(
+        context: context,
+        isScrollControlled: true,
+        isDismissible: true,
+        enableDrag: true,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        builder: (context) => SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 40,
+                  height: 4,
                   decoration: BoxDecoration(
-                    color: const Color(0xFF5E5CE6).withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: const Icon(
-                    Icons.camera_alt,
-                    color: Color(0xFF5E5CE6),
+                    color: Colors.grey.shade300,
+                    borderRadius: BorderRadius.circular(2),
                   ),
                 ),
-                title: const Text('Kamera'),
-                subtitle: const Text('Fotoğraf çek'),
-                onTap: () async {
-                  final imagePath = await pickImage(source: ImageSource.camera);
-                  if (context.mounted) {
-                    Navigator.pop(context, imagePath);
-                  }
-                },
-              ),
-              ListTile(
-                leading: Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF5E5CE6).withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: const Icon(
-                    Icons.photo_library,
-                    color: Color(0xFF5E5CE6),
-                  ),
+                const SizedBox(height: 20),
+                const Text(
+                  'Fotoğraf Ekle',
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                 ),
-                title: const Text('Galeri'),
-                subtitle: const Text('Galeriden seç'),
-                onTap: () async {
-                  final imagePath = await pickImage(source: ImageSource.gallery);
-                  if (context.mounted) {
-                    Navigator.pop(context, imagePath);
-                  }
-                },
-              ),
-            ],
+                const SizedBox(height: 20),
+                ListTile(
+                  leading: Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF5E5CE6).withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Icon(Icons.camera_alt, color: Color(0xFF5E5CE6)),
+                  ),
+                  title: const Text('Kamera'),
+                  subtitle: const Text('Fotoğraf çek ve kırp'),
+                  onTap: () {
+                    Navigator.pop(context, ImageSource.camera);
+                  },
+                ),
+                ListTile(
+                  leading: Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF5E5CE6).withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Icon(
+                      Icons.photo_library,
+                      color: Color(0xFF5E5CE6),
+                    ),
+                  ),
+                  title: const Text('Galeri'),
+                  subtitle: const Text('Galeriden seç ve kırp'),
+                  onTap: () {
+                    Navigator.pop(context, ImageSource.gallery);
+                  },
+                ),
+              ],
+            ),
           ),
         ),
-      ),
-    );
+      );
+
+      if (source == null) return null;
+
+      // Dialog kapandıktan sonra resim seçme işlemini başlat
+      await Future.delayed(const Duration(milliseconds: 300));
+      return await pickImage(
+        source: source,
+        enableCrop: true,
+      );
+    } catch (e) {
+      debugPrint('Dialog gösterme hatası: $e');
+      return null;
+    }
   }
 }

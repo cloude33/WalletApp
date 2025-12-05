@@ -99,11 +99,17 @@ class _RecurringTransactionDetailScreenState
             ]),
             const SizedBox(height: 16),
             _buildInfoCard('Tarih Bilgileri', [
-              _buildInfoRow('Başlangıç', dateFormat.format(transaction.startDate)),
+              _buildInfoRow(
+                'Başlangıç',
+                dateFormat.format(transaction.startDate),
+              ),
               if (transaction.endDate != null)
                 _buildInfoRow('Bitiş', dateFormat.format(transaction.endDate!)),
               if (transaction.lastCreatedDate != null)
-                _buildInfoRow('Son Oluşturma', dateFormat.format(transaction.lastCreatedDate!)),
+                _buildInfoRow(
+                  'Son Oluşturma',
+                  dateFormat.format(transaction.lastCreatedDate!),
+                ),
               if (nextDate != null)
                 _buildInfoRow('Sonraki', dateFormat.format(nextDate)),
             ]),
@@ -143,10 +149,7 @@ class _RecurringTransactionDetailScreenState
           children: [
             Text(
               title,
-              style: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 12),
             ...children,
@@ -162,19 +165,10 @@ class _RecurringTransactionDetailScreenState
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 14,
-              color: Colors.grey[600],
-            ),
-          ),
+          Text(label, style: TextStyle(fontSize: 14, color: Colors.grey[600])),
           Text(
             value,
-            style: const TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
-            ),
+            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
           ),
         ],
       ),

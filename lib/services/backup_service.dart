@@ -17,7 +17,6 @@ class BackupService {
   Future<File> createBackup() async {
     // Gather all data
     final transactions = await _dataService.getTransactions();
-    final budgets = await _dataService.getBudgets();
     final wallets = await _dataService.getWallets();
 
     // Get recurring transactions from repository
@@ -32,7 +31,6 @@ class BackupService {
       version: '1.0',
       createdAt: DateTime.now(),
       transactionCount: transactions.length,
-      budgetCount: budgets.length,
       walletCount: wallets.length,
     );
 
@@ -40,7 +38,6 @@ class BackupService {
     final backupData = {
       'metadata': metadata.toJson(),
       'transactions': transactions.map((t) => t.toJson()).toList(),
-      'budgets': budgets.map((b) => b.toJson()).toList(),
       'wallets': wallets.map((w) => w.toJson()).toList(),
       'recurringTransactions': recurringTransactions
           .map((rt) => rt.toJson())

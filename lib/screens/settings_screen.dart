@@ -22,9 +22,9 @@ import 'help_screen.dart';
 import 'about_screen.dart';
 import 'manage_wallets_screen.dart';
 import 'notification_settings_screen.dart';
-import 'credit_card_list_screen.dart';
 import 'recurring_transaction_list_screen.dart';
 import 'pin_setup_screen.dart';
+import 'sms_suggestions_screen.dart';
 import '../services/recurring_transaction_service.dart';
 import '../repositories/recurring_transaction_repository.dart';
 import '../widgets/export_dialog.dart';
@@ -143,7 +143,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     if (result == null || result.files.single.path == null) return;
 
     if (!mounted) return;
-    
+
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -334,74 +334,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
         ]),
         const SizedBox(height: 20),
-        _buildSection('Güvenlik', [
-          FutureBuilder<bool>(
-            future: AuthService().hasPinCode(),
-            builder: (context, snapshot) {
-              final hasPin = snapshot.data ?? false;
-              return _buildSettingItem(
-                icon: Icons.pin,
-                title: hasPin ? 'PIN Kodunu Değiştir' : 'PIN Kodu Ayarla',
-                subtitle: hasPin ? 'PIN kodunuzu değiştirin' : 'Uygulama için PIN kodu oluşturun',
-                trailing: const Icon(
-                  Icons.arrow_forward_ios,
-                  size: 16,
-                  color: Color(0xFF8E8E93),
-                ),
-                onTap: () async {
-                  await _handlePinSetup(hasPin);
-                },
-              );
-            },
-          ),
-          _buildSettingItem(
-            icon: Icons.lock_clock,
-            title: 'Otomatik Kilit',
-            subtitle:
-                'Uygulama ${AppLockService().getLockTimeout()} dakika sonra kilitlenir',
-            trailing: const Icon(
-              Icons.arrow_forward_ios,
-              size: 16,
-              color: Color(0xFF8E8E93),
-            ),
-            onTap: () async {
-              await _showLockTimeoutDialog();
-            },
-          ),
-          if (_isBiometricAvailable)
-            _buildSettingItem(
-              icon: Icons.fingerprint,
-              title: 'Biyometrik Kimlik Doğrulama',
-              subtitle: 'Parmak izi ile kilidi aç',
-              trailing: FutureBuilder<bool>(
-                future: AuthService().isBiometricEnabled(),
-                builder: (context, snapshot) {
-                  final isEnabled = snapshot.data ?? false;
-                  return Switch(
-                    value: isEnabled,
-                    onChanged: (value) async {
-                      // PIN kodu yoksa önce PIN ayarlamasını iste
-                      if (value) {
-                        final hasPin = await AuthService().hasPinCode();
-                        if (!hasPin) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Biyometrik doğrulama için önce PIN kodu ayarlamalısınız'),
-                              backgroundColor: Colors.orange,
-                            ),
-                          );
-                          return;
-                        }
-                      }
-                      await AuthService().setBiometricEnabled(value);
-                      setState(() {});
-                    },
-                  );
-                },
-              ),
-            ),
-        ]),
-        const SizedBox(height: 20),
         _buildSection('Genel', [
           _buildSettingItem(
             icon: Icons.account_balance_wallet,
@@ -421,24 +353,25 @@ class _SettingsScreenState extends State<SettingsScreen> {
               );
             },
           ),
-          _buildSettingItem(
-            icon: Icons.credit_card,
-            title: 'Kredi Kartları',
-            subtitle: 'Kredi kartlarınızı yönetin',
-            trailing: const Icon(
-              Icons.arrow_forward_ios,
-              size: 16,
-              color: Color(0xFF8E8E93),
+          if (Platform.isAndroid)
+            _buildSettingItem(
+              icon: Icons.sms,
+              title: 'SMS İşlem Önerileri',
+              subtitle: 'Banka SMS\'lerinden otomatik işlem oluştur',
+              trailing: const Icon(
+                Icons.arrow_forward_ios,
+                size: 16,
+                color: Color(0xFF8E8E93),
+              ),
+              onTap: () async {
+                await Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const SMSSuggestionsScreen(),
+                  ),
+                );
+              },
             ),
-            onTap: () async {
-              await Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const CreditCardListScreen(),
-                ),
-              );
-            },
-          ),
           _buildSettingItem(
             icon: Icons.account_balance,
             title: 'Kredilerim',
@@ -475,7 +408,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               );
 
               if (!mounted) return;
-              
+
               await Navigator.push(
                 context,
                 MaterialPageRoute(
@@ -497,7 +430,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
             onTap: () async {
               await Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => const BillTemplatesScreen()),
+                MaterialPageRoute(
+                  builder: (context) => const BillTemplatesScreen(),
+                ),
               );
               _loadUser(); // Refresh data
             },
@@ -571,6 +506,78 @@ class _SettingsScreenState extends State<SettingsScreen> {
             trailing: const ThemeToggleButton(),
             onTap: null,
           ),
+        ]),
+        const SizedBox(height: 20),
+        _buildSection('Güvenlik', [
+          FutureBuilder<bool>(
+            future: AuthService().hasPinCode(),
+            builder: (context, snapshot) {
+              final hasPin = snapshot.data ?? false;
+              return _buildSettingItem(
+                icon: Icons.pin,
+                title: hasPin ? 'PIN Kodunu Değiştir' : 'PIN Kodu Ayarla',
+                subtitle: hasPin
+                    ? 'PIN kodunuzu değiştirin'
+                    : 'Uygulama için PIN kodu oluşturun',
+                trailing: const Icon(
+                  Icons.arrow_forward_ios,
+                  size: 16,
+                  color: Color(0xFF8E8E93),
+                ),
+                onTap: () async {
+                  await _handlePinSetup(hasPin);
+                },
+              );
+            },
+          ),
+          _buildSettingItem(
+            icon: Icons.lock_clock,
+            title: 'Otomatik Kilit',
+            subtitle:
+                'Uygulama ${AppLockService().getLockTimeout()} dakika sonra kilitlenir',
+            trailing: const Icon(
+              Icons.arrow_forward_ios,
+              size: 16,
+              color: Color(0xFF8E8E93),
+            ),
+            onTap: () async {
+              await _showLockTimeoutDialog();
+            },
+          ),
+          if (_isBiometricAvailable)
+            _buildSettingItem(
+              icon: Icons.fingerprint,
+              title: 'Biyometrik Kimlik Doğrulama',
+              subtitle: 'Parmak izi ile kilidi aç',
+              trailing: FutureBuilder<bool>(
+                future: AuthService().isBiometricEnabled(),
+                builder: (context, snapshot) {
+                  final isEnabled = snapshot.data ?? false;
+                  return Switch(
+                    value: isEnabled,
+                    onChanged: (value) async {
+                      // PIN kodu yoksa önce PIN ayarlamasını iste
+                      if (value) {
+                        final hasPin = await AuthService().hasPinCode();
+                        if (!hasPin) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text(
+                                'Biyometrik doğrulama için önce PIN kodu ayarlamalısınız',
+                              ),
+                              backgroundColor: Colors.orange,
+                            ),
+                          );
+                          return;
+                        }
+                      }
+                      await AuthService().setBiometricEnabled(value);
+                      setState(() {});
+                    },
+                  );
+                },
+              ),
+            ),
         ]),
         const SizedBox(height: 20),
         _buildSection('Veri Yönetimi', [
@@ -998,18 +1005,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
           builder: (context) => const PinSetupScreen(isVerifying: true),
         ),
       );
-      
+
       if (verified != true) return;
     }
-    
+
     // Yeni PIN ayarla
     final result = await Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (context) => const PinSetupScreen(),
-      ),
+      MaterialPageRoute(builder: (context) => const PinSetupScreen()),
     );
-    
+
     if (result == true && mounted) {
       setState(() {});
     }
@@ -1155,7 +1160,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     if (firstConfirm != true) return;
 
     if (!mounted) return;
-    
+
     // İkinci onay dialogu (daha ciddi)
     final secondConfirm = await showDialog<bool>(
       context: context,
@@ -1195,7 +1200,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     if (secondConfirm != true) return;
 
     if (!mounted) return;
-    
+
     // Yükleme göstergesi
     showDialog(
       context: context,

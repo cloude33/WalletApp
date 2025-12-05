@@ -53,9 +53,9 @@ class _DebtDetailScreenState extends State<DebtDetailScreen> {
     } catch (e) {
       setState(() => _isLoading = false);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Hata: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Hata: $e')));
       }
     }
   }
@@ -81,9 +81,12 @@ class _DebtDetailScreenState extends State<DebtDetailScreen> {
                   decoration: InputDecoration(
                     labelText: 'Tutar',
                     suffixText: '₺',
-                    hintText: 'Kalan: ₺${NumberFormat('#,##0.00', 'tr_TR').format(_debt!.remainingAmount)}',
+                    hintText:
+                        'Kalan: ₺${NumberFormat('#,##0.00', 'tr_TR').format(_debt!.remainingAmount)}',
                   ),
-                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                  ),
                   autofocus: true,
                 ),
                 const SizedBox(height: 16),
@@ -122,7 +125,8 @@ class _DebtDetailScreenState extends State<DebtDetailScreen> {
             ElevatedButton(
               onPressed: () async {
                 final amount = double.tryParse(
-                    amountController.text.replaceAll(',', '.'));
+                  amountController.text.replaceAll(',', '.'),
+                );
 
                 if (amount == null || amount <= 0) {
                   ScaffoldMessenger.of(context).showSnackBar(
@@ -134,7 +138,8 @@ class _DebtDetailScreenState extends State<DebtDetailScreen> {
                 if (amount > _debt!.remainingAmount) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
-                        content: Text('Tutar kalan tutardan fazla olamaz')),
+                      content: Text('Tutar kalan tutardan fazla olamaz'),
+                    ),
                   );
                   return;
                 }
@@ -157,9 +162,9 @@ class _DebtDetailScreenState extends State<DebtDetailScreen> {
                   }
                 } catch (e) {
                   if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Hata: $e')),
-                    );
+                    ScaffoldMessenger.of(
+                      context,
+                    ).showSnackBar(SnackBar(content: Text('Hata: $e')));
                   }
                 }
               },
@@ -180,7 +185,9 @@ class _DebtDetailScreenState extends State<DebtDetailScreen> {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Borç/Alacak Sil'),
-        content: const Text('Bu borç/alacağı silmek istediğinizden emin misiniz?'),
+        content: const Text(
+          'Bu borç/alacağı silmek istediğinizden emin misiniz?',
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
@@ -200,15 +207,15 @@ class _DebtDetailScreenState extends State<DebtDetailScreen> {
         await _debtService.deleteDebt(widget.debtId);
         if (mounted) {
           Navigator.pop(context, true);
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Borç/alacak silindi')),
-          );
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(const SnackBar(content: Text('Borç/alacak silindi')));
         }
       } catch (e) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Hata: $e')),
-          );
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text('Hata: $e')));
         }
       }
     }
@@ -219,7 +226,9 @@ class _DebtDetailScreenState extends State<DebtDetailScreen> {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Ödendi Olarak İşaretle'),
-        content: const Text('Bu borç/alacağı tamamen ödendi olarak işaretlemek istediğinizden emin misiniz?'),
+        content: const Text(
+          'Bu borç/alacağı tamamen ödendi olarak işaretlemek istediğinizden emin misiniz?',
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
@@ -244,9 +253,9 @@ class _DebtDetailScreenState extends State<DebtDetailScreen> {
         }
       } catch (e) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Hata: $e')),
-          );
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text('Hata: $e')));
         }
       }
     }
@@ -275,9 +284,9 @@ class _DebtDetailScreenState extends State<DebtDetailScreen> {
       await launchUrl(uri);
     } else {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('SMS gönderilemedi')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('SMS gönderilemedi')));
       }
     }
   }
@@ -320,10 +329,7 @@ class _DebtDetailScreenState extends State<DebtDetailScreen> {
               }
             },
           ),
-          IconButton(
-            icon: const Icon(Icons.delete),
-            onPressed: _deleteDebt,
-          ),
+          IconButton(icon: const Icon(Icons.delete), onPressed: _deleteDebt),
         ],
       ),
       body: RefreshIndicator(
@@ -378,10 +384,7 @@ class _DebtDetailScreenState extends State<DebtDetailScreen> {
                         _debt!.type == DebtType.lent
                             ? 'Borç Verdim'
                             : 'Borç Aldım',
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Colors.grey[600],
-                        ),
+                        style: TextStyle(fontSize: 14, color: Colors.grey[600]),
                       ),
                       const SizedBox(height: 4),
                       Text(
@@ -416,10 +419,7 @@ class _DebtDetailScreenState extends State<DebtDetailScreen> {
               const SizedBox(height: 8),
               Text(
                 '%${_debt!.paymentPercentage.toStringAsFixed(0)} ödendi',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: Colors.grey[600],
-                ),
+                style: TextStyle(fontSize: 12, color: Colors.grey[600]),
               ),
             ],
             const Divider(height: 32),
@@ -482,8 +482,12 @@ class _DebtDetailScreenState extends State<DebtDetailScreen> {
     );
   }
 
-  Widget _buildInfoRow(IconData icon, String label, String value,
-      {Color? color}) {
+  Widget _buildInfoRow(
+    IconData icon,
+    String label,
+    String value, {
+    Color? color,
+  }) {
     return Row(
       children: [
         Icon(icon, size: 20, color: color ?? Colors.grey[600]),
@@ -494,10 +498,7 @@ class _DebtDetailScreenState extends State<DebtDetailScreen> {
             children: [
               Text(
                 label,
-                style: TextStyle(
-                  fontSize: 12,
-                  color: Colors.grey[600],
-                ),
+                style: TextStyle(fontSize: 12, color: Colors.grey[600]),
               ),
               const SizedBox(height: 2),
               Text(
@@ -524,10 +525,7 @@ class _DebtDetailScreenState extends State<DebtDetailScreen> {
           children: [
             const Text(
               'İletişim',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-              ),
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 16),
             Row(
@@ -564,10 +562,7 @@ class _DebtDetailScreenState extends State<DebtDetailScreen> {
           children: [
             const Text(
               'Ödeme Geçmişi',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-              ),
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 16),
             if (_payments.isEmpty)
@@ -581,7 +576,9 @@ class _DebtDetailScreenState extends State<DebtDetailScreen> {
                 ),
               )
             else
-              ..._payments.map((payment) => _buildPaymentItem(payment, formatter)),
+              ..._payments.map(
+                (payment) => _buildPaymentItem(payment, formatter),
+              ),
           ],
         ),
       ),
@@ -613,7 +610,9 @@ class _DebtDetailScreenState extends State<DebtDetailScreen> {
             context: context,
             builder: (context) => AlertDialog(
               title: const Text('Ödeme Sil'),
-              content: const Text('Bu ödemeyi silmek istediğinizden emin misiniz?'),
+              content: const Text(
+                'Bu ödemeyi silmek istediğinizden emin misiniz?',
+              ),
               actions: [
                 TextButton(
                   onPressed: () => Navigator.pop(context, false),
@@ -633,15 +632,15 @@ class _DebtDetailScreenState extends State<DebtDetailScreen> {
               await _debtService.deletePayment(widget.debtId, payment.id);
               _loadDebt();
               if (mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Ödeme silindi')),
-                );
+                ScaffoldMessenger.of(
+                  context,
+                ).showSnackBar(const SnackBar(content: Text('Ödeme silindi')));
               }
             } catch (e) {
               if (mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Hata: $e')),
-                );
+                ScaffoldMessenger.of(
+                  context,
+                ).showSnackBar(SnackBar(content: Text('Hata: $e')));
               }
             }
           }

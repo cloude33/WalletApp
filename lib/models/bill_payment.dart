@@ -109,7 +109,7 @@ class BillPayment {
       'Eylül',
       'Ekim',
       'Kasım',
-      'Aralık'
+      'Aralık',
     ];
     return '${months[periodStart.month - 1]} ${periodStart.year}';
   }

@@ -64,10 +64,7 @@ class _AddCategoryScreenState extends State<AddCategoryScreen> {
       appBar: AppBar(
         title: const Text('Kategori Ekle'),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.save),
-            onPressed: _saveCategory,
-          ),
+          IconButton(icon: const Icon(Icons.save), onPressed: _saveCategory),
         ],
       ),
       body: Form(
@@ -78,13 +75,18 @@ class _AddCategoryScreenState extends State<AddCategoryScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Name field
-              const Text('Kategori Adı', style: TextStyle(fontWeight: FontWeight.bold)),
+              const Text(
+                'Kategori Adı',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
               const SizedBox(height: 8),
               TextFormField(
                 controller: _nameController,
                 decoration: InputDecoration(
                   hintText: 'Kategori adı girin',
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
                 ),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
@@ -104,7 +106,9 @@ class _AddCategoryScreenState extends State<AddCategoryScreen> {
                     label: const Text('Gelir'),
                     selected: _selectedType == 'income',
                     onSelected: (selected) {
-                      setState(() => _selectedType = selected ? 'income' : 'expense');
+                      setState(
+                        () => _selectedType = selected ? 'income' : 'expense',
+                      );
                     },
                   ),
                   const SizedBox(width: 10),
@@ -112,7 +116,9 @@ class _AddCategoryScreenState extends State<AddCategoryScreen> {
                     label: const Text('Gider'),
                     selected: _selectedType == 'expense',
                     onSelected: (selected) {
-                      setState(() => _selectedType = selected ? 'expense' : 'income');
+                      setState(
+                        () => _selectedType = selected ? 'expense' : 'income',
+                      );
                     },
                   ),
                 ],
@@ -165,7 +171,11 @@ class _AddCategoryScreenState extends State<AddCategoryScreen> {
                           color: _selectedColor,
                           borderRadius: BorderRadius.circular(10),
                         ),
-                        child: Icon(_selectedIcon, color: Colors.white, size: 32),
+                        child: Icon(
+                          _selectedIcon,
+                          color: Colors.white,
+                          size: 32,
+                        ),
                       ),
                       const SizedBox(width: 16),
                       const Expanded(
@@ -174,7 +184,11 @@ class _AddCategoryScreenState extends State<AddCategoryScreen> {
                           style: TextStyle(fontSize: 16),
                         ),
                       ),
-                      Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey.shade600),
+                      Icon(
+                        Icons.arrow_forward_ios,
+                        size: 16,
+                        color: Colors.grey.shade600,
+                      ),
                     ],
                   ),
                 ),
@@ -212,7 +226,10 @@ class _AddCategoryScreenState extends State<AddCategoryScreen> {
               const SizedBox(height: 40),
 
               // Preview
-              const Text('Önizleme', style: TextStyle(fontWeight: FontWeight.bold)),
+              const Text(
+                'Önizleme',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
               const SizedBox(height: 8),
               Container(
                 padding: const EdgeInsets.all(15),
@@ -240,8 +257,13 @@ class _AddCategoryScreenState extends State<AddCategoryScreen> {
                     const SizedBox(width: 15),
                     Expanded(
                       child: Text(
-                        _nameController.text.isEmpty ? 'Kategori Adı' : _nameController.text,
-                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+                        _nameController.text.isEmpty
+                            ? 'Kategori Adı'
+                            : _nameController.text,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w500,
+                        ),
                       ),
                     ),
                   ],

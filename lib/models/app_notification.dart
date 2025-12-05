@@ -1,9 +1,6 @@
 import 'package:flutter/material.dart';
 
 enum NotificationType {
-  budgetWarning,
-  budgetCritical,
-  budgetExceeded,
   dailySummary,
   weeklySummary,
   monthlySummary,
@@ -15,12 +12,7 @@ enum NotificationType {
   savingsSuggestion,
 }
 
-enum NotificationPriority {
-  low,
-  normal,
-  high,
-  urgent,
-}
+enum NotificationPriority { low, normal, high, urgent }
 
 class NotificationAction {
   final String id;
@@ -34,10 +26,10 @@ class NotificationAction {
   });
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'title': title,
-        'requiresInput': requiresInput,
-      };
+    'id': id,
+    'title': title,
+    'requiresInput': requiresInput,
+  };
 
   factory NotificationAction.fromJson(Map<String, dynamic> json) {
     return NotificationAction(
@@ -93,7 +85,7 @@ class AppNotification {
       id: json['id'],
       type: NotificationType.values.firstWhere(
         (e) => e.name == json['type'],
-        orElse: () => NotificationType.budgetWarning,
+        orElse: () => NotificationType.dailySummary,
       ),
       priority: json['priority'] != null
           ? NotificationPriority.values.firstWhere(
@@ -109,8 +101,8 @@ class AppNotification {
       data: json['data'],
       actions: json['actions'] != null
           ? (json['actions'] as List)
-              .map((a) => NotificationAction.fromJson(a))
-              .toList()
+                .map((a) => NotificationAction.fromJson(a))
+                .toList()
           : null,
     );
   }
@@ -143,12 +135,6 @@ class AppNotification {
 
   IconData getIcon() {
     switch (type) {
-      case NotificationType.budgetWarning:
-        return Icons.warning_amber;
-      case NotificationType.budgetCritical:
-        return Icons.warning;
-      case NotificationType.budgetExceeded:
-        return Icons.error;
       case NotificationType.dailySummary:
       case NotificationType.weeklySummary:
       case NotificationType.monthlySummary:
@@ -170,12 +156,6 @@ class AppNotification {
 
   Color getColor() {
     switch (type) {
-      case NotificationType.budgetWarning:
-        return Colors.orange;
-      case NotificationType.budgetCritical:
-        return Colors.deepOrange;
-      case NotificationType.budgetExceeded:
-        return Colors.red;
       case NotificationType.dailySummary:
       case NotificationType.weeklySummary:
       case NotificationType.monthlySummary:

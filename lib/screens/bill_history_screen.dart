@@ -37,7 +37,7 @@ class _BillHistoryScreenState extends State<BillHistoryScreen> {
     try {
       // Ödenen faturaları getir
       final payments = await _paymentService.getPaidPayments();
-      
+
       // Tarihe göre sırala (en yeni önce)
       payments.sort((a, b) => b.paidDate!.compareTo(a.paidDate!));
 
@@ -45,7 +45,9 @@ class _BillHistoryScreenState extends State<BillHistoryScreen> {
       final Map<String, BillTemplate> templates = {};
       for (var payment in payments) {
         if (!templates.containsKey(payment.templateId)) {
-          final template = await _templateService.getTemplate(payment.templateId);
+          final template = await _templateService.getTemplate(
+            payment.templateId,
+          );
           if (template != null) {
             templates[payment.templateId] = template;
           }
@@ -83,19 +85,19 @@ class _BillHistoryScreenState extends State<BillHistoryScreen> {
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : _paidPayments.isEmpty
-              ? _buildEmptyState()
-              : RefreshIndicator(
-                  onRefresh: _loadData,
-                  child: ListView.builder(
-                    padding: const EdgeInsets.all(16),
-                    itemCount: _paidPayments.length,
-                    itemBuilder: (context, index) {
-                      final payment = _paidPayments[index];
-                      final template = _templates[payment.templateId];
-                      return _buildPaymentCard(payment, template, user);
-                    },
-                  ),
-                ),
+          ? _buildEmptyState()
+          : RefreshIndicator(
+              onRefresh: _loadData,
+              child: ListView.builder(
+                padding: const EdgeInsets.all(16),
+                itemCount: _paidPayments.length,
+                itemBuilder: (context, index) {
+                  final payment = _paidPayments[index];
+                  final template = _templates[payment.templateId];
+                  return _buildPaymentCard(payment, template, user);
+                },
+              ),
+            ),
     );
   }
 
@@ -104,11 +106,7 @@ class _BillHistoryScreenState extends State<BillHistoryScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            Icons.history,
-            size: 80,
-            color: Colors.grey[400],
-          ),
+          Icon(Icons.history, size: 80, color: Colors.grey[400]),
           const SizedBox(height: 16),
           Text(
             'Henüz ödeme geçmişi yok',
@@ -121,10 +119,7 @@ class _BillHistoryScreenState extends State<BillHistoryScreen> {
           const SizedBox(height: 8),
           Text(
             'Ödediğiniz faturalar burada görünecek',
-            style: TextStyle(
-              fontSize: 14,
-              color: Colors.grey[500],
-            ),
+            style: TextStyle(fontSize: 14, color: Colors.grey[500]),
           ),
         ],
       ),
@@ -161,16 +156,10 @@ class _BillHistoryScreenState extends State<BillHistoryScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             if (provider != null)
-              Text(
-                provider,
-                style: const TextStyle(fontSize: 12),
-              ),
+              Text(provider, style: const TextStyle(fontSize: 12)),
             Text(
               'Ödeme: ${DateFormat('dd MMM yyyy', 'tr_TR').format(payment.paidDate!)}',
-              style: TextStyle(
-                fontSize: 12,
-                color: Colors.grey[600],
-              ),
+              style: TextStyle(fontSize: 12, color: Colors.grey[600]),
             ),
             Text(
               payment.periodDisplayName,
@@ -202,7 +191,7 @@ class _BillHistoryScreenState extends State<BillHistoryScreen> {
 
   IconData _getCategoryIcon(BillTemplateCategory? category) {
     if (category == null) return Icons.receipt;
-    
+
     switch (category) {
       case BillTemplateCategory.electricity:
         return Icons.bolt;

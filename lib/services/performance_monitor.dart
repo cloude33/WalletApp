@@ -60,7 +60,9 @@ class PerformanceMonitor {
       );
       _warnings.add(warning);
 
-      debugPrint('⚠️ Performance Warning: $name took ${duration.inMilliseconds}ms');
+      debugPrint(
+        '⚠️ Performance Warning: $name took ${duration.inMilliseconds}ms',
+      );
     }
 
     // Keep only last 100 metrics per operation
@@ -95,14 +97,13 @@ class PerformanceMonitor {
       final durations = entry.value;
       if (durations.isEmpty) continue;
 
-      final total = durations.fold<int>(
-        0,
-        (sum, d) => sum + d.inMilliseconds,
-      );
+      final total = durations.fold<int>(0, (sum, d) => sum + d.inMilliseconds);
       final average = Duration(milliseconds: total ~/ durations.length);
       final min = durations.reduce((a, b) => a < b ? a : b);
       final max = durations.reduce((a, b) => a > b ? a : b);
-      final warningCount = durations.where((d) => d.inMilliseconds > 500).length;
+      final warningCount = durations
+          .where((d) => d.inMilliseconds > 500)
+          .length;
 
       stats[entry.key] = PerformanceStats(
         operation: entry.key,
@@ -185,7 +186,4 @@ class PerformanceWarning {
 }
 
 /// Warning types
-enum WarningType {
-  slowOperation,
-  highMemory,
-}
+enum WarningType { slowOperation, highMemory }

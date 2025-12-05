@@ -28,6 +28,12 @@ class CreditCardPayment extends HiveObject {
   @HiveField(7)
   DateTime createdAt;
 
+  @HiveField(8)
+  String paymentType; // 'minimum', 'full', 'partial'
+
+  @HiveField(9)
+  double remainingDebtAfterPayment;
+
   CreditCardPayment({
     required this.id,
     required this.cardId,
@@ -37,6 +43,8 @@ class CreditCardPayment extends HiveObject {
     this.paymentMethod = 'other',
     this.note = '',
     required this.createdAt,
+    this.paymentType = 'partial',
+    this.remainingDebtAfterPayment = 0,
   });
 
   String get paymentMethodText {
@@ -50,6 +58,18 @@ class CreditCardPayment extends HiveObject {
       case 'other':
       default:
         return 'Diğer';
+    }
+  }
+
+  String get paymentTypeText {
+    switch (paymentType) {
+      case 'minimum':
+        return 'Asgari Ödeme';
+      case 'full':
+        return 'Tam Ödeme';
+      case 'partial':
+      default:
+        return 'Kısmi Ödeme';
     }
   }
 
@@ -79,6 +99,8 @@ class CreditCardPayment extends HiveObject {
     String? paymentMethod,
     String? note,
     DateTime? createdAt,
+    String? paymentType,
+    double? remainingDebtAfterPayment,
   }) {
     return CreditCardPayment(
       id: id ?? this.id,
@@ -89,6 +111,8 @@ class CreditCardPayment extends HiveObject {
       paymentMethod: paymentMethod ?? this.paymentMethod,
       note: note ?? this.note,
       createdAt: createdAt ?? this.createdAt,
+      paymentType: paymentType ?? this.paymentType,
+      remainingDebtAfterPayment: remainingDebtAfterPayment ?? this.remainingDebtAfterPayment,
     );
   }
 

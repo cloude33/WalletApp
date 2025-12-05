@@ -20,22 +20,22 @@ class UserProfile {
   });
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'name': name,
-        'email': email,
-        'photoUrl': photoUrl,
-        'createdAt': createdAt.toIso8601String(),
-        'authMethod': authMethod,
-      };
+    'id': id,
+    'name': name,
+    'email': email,
+    'photoUrl': photoUrl,
+    'createdAt': createdAt.toIso8601String(),
+    'authMethod': authMethod,
+  };
 
   factory UserProfile.fromJson(Map<String, dynamic> json) => UserProfile(
-        id: json['id'],
-        name: json['name'],
-        email: json['email'],
-        photoUrl: json['photoUrl'],
-        createdAt: DateTime.parse(json['createdAt']),
-        authMethod: json['authMethod'],
-      );
+    id: json['id'],
+    name: json['name'],
+    email: json['email'],
+    photoUrl: json['photoUrl'],
+    createdAt: DateTime.parse(json['createdAt']),
+    authMethod: json['authMethod'],
+  );
 }
 
 class UserService {

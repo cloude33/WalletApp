@@ -3,11 +3,7 @@ class Currency {
   final String symbol;
   final String name;
 
-  Currency({
-    required this.code,
-    required this.symbol,
-    required this.name,
-  });
+  Currency({required this.code, required this.symbol, required this.name});
 
   Map<String, dynamic> toJson() => {
     'code': code,
@@ -15,11 +11,8 @@ class Currency {
     'name': name,
   };
 
-  factory Currency.fromJson(Map<String, dynamic> json) => Currency(
-    code: json['code'],
-    symbol: json['symbol'],
-    name: json['name'],
-  );
+  factory Currency.fromJson(Map<String, dynamic> json) =>
+      Currency(code: json['code'], symbol: json['symbol'], name: json['name']);
 }
 
 final List<Currency> availableCurrencies = [

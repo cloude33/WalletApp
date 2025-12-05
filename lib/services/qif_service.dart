@@ -21,7 +21,9 @@ class QifService {
     // Group transactions by wallet
     final transactionsByWallet = <String, List<Transaction>>{};
     for (var transaction in transactions) {
-      transactionsByWallet.putIfAbsent(transaction.walletId, () => []).add(transaction);
+      transactionsByWallet
+          .putIfAbsent(transaction.walletId, () => [])
+          .add(transaction);
     }
 
     // Export each wallet's transactions
@@ -106,12 +108,14 @@ class QifService {
             date: date,
           );
         } catch (e) {
-          errors.add(ImportError(
-            rowNumber: lineNumber,
-            field: 'Date',
-            message: 'Invalid date format',
-            value: line.substring(1),
-          ));
+          errors.add(
+            ImportError(
+              rowNumber: lineNumber,
+              field: 'Date',
+              message: 'Invalid date format',
+              value: line.substring(1),
+            ),
+          );
           failureCount++;
         }
       } else if (line.startsWith('T')) {
@@ -125,12 +129,14 @@ class QifService {
               type: amount < 0 ? 'expense' : 'income',
             );
           } catch (e) {
-            errors.add(ImportError(
-              rowNumber: lineNumber,
-              field: 'Amount',
-              message: 'Invalid amount format',
-              value: line.substring(1),
-            ));
+            errors.add(
+              ImportError(
+                rowNumber: lineNumber,
+                field: 'Amount',
+                message: 'Invalid amount format',
+                value: line.substring(1),
+              ),
+            );
           }
         }
       } else if (line.startsWith('P')) {
@@ -162,11 +168,13 @@ class QifService {
             transactions.add(currentTransaction);
             successCount++;
           } else {
-            errors.add(ImportError(
-              rowNumber: lineNumber,
-              field: 'Transaction',
-              message: 'Invalid transaction data',
-            ));
+            errors.add(
+              ImportError(
+                rowNumber: lineNumber,
+                field: 'Transaction',
+                message: 'Invalid transaction data',
+              ),
+            );
             failureCount++;
           }
           currentTransaction = null;
@@ -190,7 +198,9 @@ class QifService {
     buffer.writeln('D${_formatQifDate(transaction.date)}');
 
     // Amount (negative for expenses)
-    final amount = transaction.type == 'expense' ? -transaction.amount : transaction.amount;
+    final amount = transaction.type == 'expense'
+        ? -transaction.amount
+        : transaction.amount;
     buffer.writeln('T${amount.toStringAsFixed(2)}');
 
     // Payee/Description
@@ -269,7 +279,7 @@ class QifService {
   /// Validate transaction data
   bool _validateTransaction(Transaction transaction) {
     return transaction.amount > 0 &&
-           transaction.description.isNotEmpty &&
-           transaction.category.isNotEmpty;
+        transaction.description.isNotEmpty &&
+        transaction.category.isNotEmpty;
   }
 }

@@ -13,9 +13,9 @@ class BillTemplateService {
     try {
       final prefs = await SharedPreferences.getInstance();
       final jsonString = prefs.getString(_storageKey);
-      
+
       if (jsonString == null) return [];
-      
+
       final List<dynamic> jsonList = json.decode(jsonString);
       return jsonList.map((json) => BillTemplate.fromJson(json)).toList();
     } catch (e) {
@@ -47,6 +47,7 @@ class BillTemplateService {
     String? accountNumber,
     String? phoneNumber,
     String? description,
+    String? walletId,
   }) async {
     final now = DateTime.now();
     final template = BillTemplate(
@@ -57,6 +58,7 @@ class BillTemplateService {
       accountNumber: accountNumber?.trim(),
       phoneNumber: phoneNumber?.trim(),
       description: description?.trim(),
+      walletId: walletId,
       isActive: true,
       createdDate: now,
       updatedDate: now,
@@ -80,7 +82,7 @@ class BillTemplateService {
   Future<void> updateTemplate(BillTemplate template) async {
     final templates = await getTemplates();
     final index = templates.indexWhere((t) => t.id == template.id);
-    
+
     if (index == -1) {
       throw Exception('Şablon bulunamadı');
     }
@@ -100,7 +102,7 @@ class BillTemplateService {
   Future<void> toggleActive(String id) async {
     final templates = await getTemplates();
     final index = templates.indexWhere((t) => t.id == id);
-    
+
     if (index == -1) {
       throw Exception('Şablon bulunamadı');
     }
@@ -124,7 +126,9 @@ class BillTemplateService {
     BillTemplateCategory category,
   ) async {
     final templates = await getTemplates();
-    return templates.where((t) => t.category == category && t.isActive).toList();
+    return templates
+        .where((t) => t.category == category && t.isActive)
+        .toList();
   }
 
   /// Tüm şablonları temizle (migration için)

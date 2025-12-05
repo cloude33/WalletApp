@@ -27,32 +27,38 @@ class _ManageWalletsScreenState extends State<ManageWalletsScreen> {
   // Wallet name'den kesim ve ödeme tarihi bilgilerini temizle
   String _cleanWalletName(String name) {
     String cleaned = name;
-    
+
     // Kesim tarihi bilgisini kaldır
     if (cleaned.contains('(Kesim: ')) {
       final start = cleaned.indexOf('(Kesim: ');
       final end = cleaned.indexOf(')', start);
       if (end > start) {
-        cleaned = cleaned.substring(0, start).trim() + cleaned.substring(end + 1).trim();
+        cleaned =
+            cleaned.substring(0, start).trim() +
+            cleaned.substring(end + 1).trim();
       }
     }
-    
+
     // Son ödeme tarihi bilgisini kaldır
     if (cleaned.contains('(Son Ödeme: ')) {
       final start = cleaned.indexOf('(Son Ödeme: ');
       final end = cleaned.indexOf(')', start);
       if (end > start) {
-        cleaned = cleaned.substring(0, start).trim() + cleaned.substring(end + 1).trim();
+        cleaned =
+            cleaned.substring(0, start).trim() +
+            cleaned.substring(end + 1).trim();
       }
     }
-    
+
     return cleaned.trim();
   }
 
   Future<void> _loadWallets() async {
     final wallets = await _dataService.getWallets();
     // Sadece kredi kartı olmayanları göster
-    final nonCreditCardWallets = wallets.where((w) => w.type != 'credit_card').toList();
+    final nonCreditCardWallets = wallets
+        .where((w) => w.type != 'credit_card')
+        .toList();
     setState(() {
       _wallets = nonCreditCardWallets;
       _loading = false;
@@ -62,7 +68,7 @@ class _ManageWalletsScreenState extends State<ManageWalletsScreen> {
   Future<void> _deleteWallet(String id) async {
     // Find the wallet to check if it's a credit card
     final wallet = _wallets.firstWhere((w) => w.id == id);
-    
+
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -106,16 +112,18 @@ class _ManageWalletsScreenState extends State<ManageWalletsScreen> {
             return;
           }
         }
-        
+
         // Delete wallet
         await _dataService.deleteWallet(id);
         _loadWallets();
-        
+
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
-                wallet.type == 'credit_card' ? 'Kredi kartı silindi' : 'Cüzdan silindi',
+                wallet.type == 'credit_card'
+                    ? 'Kredi kartı silindi'
+                    : 'Cüzdan silindi',
               ),
             ),
           );
@@ -123,10 +131,7 @@ class _ManageWalletsScreenState extends State<ManageWalletsScreen> {
       } catch (e) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Hata: $e'),
-              backgroundColor: Colors.red,
-            ),
+            SnackBar(content: Text('Hata: $e'), backgroundColor: Colors.red),
           );
         }
       }
@@ -154,14 +159,21 @@ class _ManageWalletsScreenState extends State<ManageWalletsScreen> {
               decoration: BoxDecoration(
                 color: Theme.of(context).appBarTheme.backgroundColor,
                 boxShadow: const [
-                  BoxShadow(color: Colors.black12, blurRadius: 4, offset: Offset(0, 2)),
+                  BoxShadow(
+                    color: Colors.black12,
+                    blurRadius: 4,
+                    offset: Offset(0, 2),
+                  ),
                 ],
               ),
               child: Row(
                 children: [
                   GestureDetector(
                     onTap: () => Navigator.pop(context, true),
-                    child: const Icon(Icons.arrow_back, color: Color(0xFF5E5CE6)),
+                    child: const Icon(
+                      Icons.arrow_back,
+                      color: Color(0xFF5E5CE6),
+                    ),
                   ),
                   const Expanded(
                     child: Text(
@@ -259,7 +271,9 @@ class _ManageWalletsScreenState extends State<ManageWalletsScreen> {
                                       Container(
                                         padding: const EdgeInsets.all(12),
                                         decoration: BoxDecoration(
-                                          color: Colors.white.withValues(alpha: 0.2),
+                                          color: Colors.white.withValues(
+                                            alpha: 0.2,
+                                          ),
                                           borderRadius: BorderRadius.circular(
                                             10,
                                           ),
@@ -300,7 +314,10 @@ class _ManageWalletsScreenState extends State<ManageWalletsScreen> {
                                                 fontSize: 16,
                                               ),
                                             ),
-                                            if ((wallet.type == 'credit_card' || wallet.type == 'overdraft') && wallet.creditLimit > 0) ...[
+                                            if ((wallet.type == 'credit_card' ||
+                                                    wallet.type ==
+                                                        'overdraft') &&
+                                                wallet.creditLimit > 0) ...[
                                               const SizedBox(height: 4),
                                               Text(
                                                 'Limit: ₺${NumberFormat('#,##0', 'tr_TR').format(wallet.creditLimit)}',
@@ -321,7 +338,10 @@ class _ManageWalletsScreenState extends State<ManageWalletsScreen> {
                                         ),
                                       ),
                                       PopupMenuButton<String>(
-                                        icon: const Icon(Icons.more_vert, color: Colors.white),
+                                        icon: const Icon(
+                                          Icons.more_vert,
+                                          color: Colors.white,
+                                        ),
                                         onSelected: (value) {
                                           if (value == 'edit') {
                                             _editWallet(wallet);

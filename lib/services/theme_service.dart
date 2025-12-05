@@ -235,10 +235,7 @@ class ThemeService extends ChangeNotifier {
           fontSize: 20,
           fontWeight: FontWeight.bold,
         ),
-        contentTextStyle: TextStyle(
-          color: Color(0xFFE5E5EA),
-          fontSize: 14,
-        ),
+        contentTextStyle: TextStyle(color: Color(0xFFE5E5EA), fontSize: 14),
       ),
       snackBarTheme: const SnackBarThemeData(
         backgroundColor: Color(0xFF2C2C2E),

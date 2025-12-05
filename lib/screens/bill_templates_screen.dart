@@ -80,18 +80,18 @@ class _BillTemplatesScreenState extends State<BillTemplatesScreen> {
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : _templates.isEmpty
-              ? _buildEmptyState()
-              : RefreshIndicator(
-                  onRefresh: _loadTemplates,
-                  child: ListView.builder(
-                    padding: const EdgeInsets.all(16),
-                    itemCount: _templates.length,
-                    itemBuilder: (context, index) {
-                      final template = _templates[index];
-                      return _buildTemplateCard(template);
-                    },
-                  ),
-                ),
+          ? _buildEmptyState()
+          : RefreshIndicator(
+              onRefresh: _loadTemplates,
+              child: ListView.builder(
+                padding: const EdgeInsets.all(16),
+                itemCount: _templates.length,
+                itemBuilder: (context, index) {
+                  final template = _templates[index];
+                  return _buildTemplateCard(template);
+                },
+              ),
+            ),
     );
   }
 
@@ -100,11 +100,7 @@ class _BillTemplatesScreenState extends State<BillTemplatesScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            Icons.receipt_long_outlined,
-            size: 80,
-            color: Colors.grey[400],
-          ),
+          Icon(Icons.receipt_long_outlined, size: 80, color: Colors.grey[400]),
           const SizedBox(height: 16),
           Text(
             'Henüz fatura tanımlamadınız',
@@ -118,10 +114,7 @@ class _BillTemplatesScreenState extends State<BillTemplatesScreen> {
           Text(
             'Elektrik, su, doğalgaz gibi\nfaturalarınızı buradan tanımlayın',
             textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 14,
-              color: Colors.grey[500],
-            ),
+            style: TextStyle(fontSize: 14, color: Colors.grey[500]),
           ),
           const SizedBox(height: 24),
           ElevatedButton.icon(
@@ -172,10 +165,10 @@ class _BillTemplatesScreenState extends State<BillTemplatesScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Telefon kategorisi için sadece numara göster (provider zaten başlıkta)
-            if (template.category == BillTemplateCategory.phone && 
+            if (template.category == BillTemplateCategory.phone &&
                 template.phoneNumber != null)
               Text(
-                template.phoneNumber!.startsWith('0') 
+                template.phoneNumber!.startsWith('0')
                     ? template.phoneNumber!
                     : '0${template.phoneNumber!}',
                 style: const TextStyle(
@@ -184,15 +177,12 @@ class _BillTemplatesScreenState extends State<BillTemplatesScreen> {
                 ),
               ),
             // Telefon dışındaki kategoriler için provider göster
-            if (template.category != BillTemplateCategory.phone && 
+            if (template.category != BillTemplateCategory.phone &&
                 template.provider != null)
               Text(template.provider!),
             Text(
               template.categoryDisplayName,
-              style: const TextStyle(
-                fontSize: 12,
-                color: Color(0xFF757575),
-              ),
+              style: const TextStyle(fontSize: 12, color: Color(0xFF757575)),
             ),
           ],
         ),
@@ -206,10 +196,7 @@ class _BillTemplatesScreenState extends State<BillTemplatesScreen> {
                   color: Colors.grey[300],
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: const Text(
-                  'Pasif',
-                  style: TextStyle(fontSize: 11),
-                ),
+                child: const Text('Pasif', style: TextStyle(fontSize: 11)),
               ),
             const SizedBox(width: 8),
             const Icon(Icons.chevron_right),
@@ -219,7 +206,8 @@ class _BillTemplatesScreenState extends State<BillTemplatesScreen> {
           final result = await Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) => BillTemplateDetailScreen(template: template),
+              builder: (context) =>
+                  BillTemplateDetailScreen(template: template),
             ),
           );
           if (result == true) {

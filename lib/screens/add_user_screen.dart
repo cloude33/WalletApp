@@ -32,7 +32,7 @@ class _AddUserScreenState extends State<AddUserScreen> {
         maxHeight: 512,
         imageQuality: 85,
       );
-      
+
       if (image != null) {
         final bytes = await image.readAsBytes();
         setState(() {
@@ -42,9 +42,9 @@ class _AddUserScreenState extends State<AddUserScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Resim seçilemedi')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Resim seçilemedi')));
       }
     }
   }
@@ -64,7 +64,7 @@ class _AddUserScreenState extends State<AddUserScreen> {
       final users = await _dataService.getAllUsers();
       users.add(user);
       await _dataService.saveAllUsers(users);
-      
+
       // Yeni oluşturulan kullanıcıyı aktif kullanıcı olarak ayarla
       await _dataService.saveUser(user);
 
@@ -127,7 +127,11 @@ class _AddUserScreenState extends State<AddUserScreen> {
                                     ? MemoryImage(_avatarBytes!)
                                     : null,
                                 child: _avatarBytes == null
-                                    ? Icon(Icons.person, size: 60, color: Colors.grey.shade400)
+                                    ? Icon(
+                                        Icons.person,
+                                        size: 60,
+                                        color: Colors.grey.shade400,
+                                      )
                                     : null,
                               ),
                               Positioned(
@@ -139,7 +143,11 @@ class _AddUserScreenState extends State<AddUserScreen> {
                                     color: Color(0xFF00BFA5),
                                     shape: BoxShape.circle,
                                   ),
-                                  child: const Icon(Icons.camera_alt, color: Colors.white, size: 20),
+                                  child: const Icon(
+                                    Icons.camera_alt,
+                                    color: Colors.white,
+                                    size: 20,
+                                  ),
                                 ),
                               ),
                             ],
@@ -150,10 +158,7 @@ class _AddUserScreenState extends State<AddUserScreen> {
                       const Text(
                         'Profil resmi eklemek için tıklayın',
                         textAlign: TextAlign.center,
-                        style: TextStyle(
-                          color: Colors.grey,
-                          fontSize: 12,
-                        ),
+                        style: TextStyle(color: Colors.grey, fontSize: 12),
                       ),
                       const SizedBox(height: 40),
                       TextFormField(

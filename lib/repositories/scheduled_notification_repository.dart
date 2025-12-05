@@ -21,13 +21,13 @@ class ScheduledNotificationRepository {
   /// Save scheduled notification
   Future<void> save(ScheduledNotification notification) async {
     final notifications = await getAll();
-    
+
     // Remove existing notification with same ID if exists
     notifications.removeWhere((n) => n.id == notification.id);
-    
+
     // Add new notification
     notifications.add(notification);
-    
+
     // Save to storage
     final prefs = await SharedPreferences.getInstance();
     final json = jsonEncode(notifications.map((n) => n.toJson()).toList());
@@ -45,7 +45,7 @@ class ScheduledNotificationRepository {
   Future<void> delete(String id) async {
     final notifications = await getAll();
     notifications.removeWhere((n) => n.id == id);
-    
+
     final prefs = await SharedPreferences.getInstance();
     final json = jsonEncode(notifications.map((n) => n.toJson()).toList());
     await prefs.setString(_key, json);
@@ -55,7 +55,7 @@ class ScheduledNotificationRepository {
   Future<void> deleteByPlatformId(int platformId) async {
     final notifications = await getAll();
     notifications.removeWhere((n) => n.platformId == platformId);
-    
+
     final prefs = await SharedPreferences.getInstance();
     final json = jsonEncode(notifications.map((n) => n.toJson()).toList());
     await prefs.setString(_key, json);
@@ -87,11 +87,11 @@ class ScheduledNotificationRepository {
   Future<void> cleanupPast() async {
     final notifications = await getAll();
     final now = DateTime.now();
-    
+
     final active = notifications.where((n) {
       return n.scheduledFor.isAfter(now) || n.isRecurring;
     }).toList();
-    
+
     await saveAll(active);
   }
 }

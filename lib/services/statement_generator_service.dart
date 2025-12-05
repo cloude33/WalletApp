@@ -8,8 +8,10 @@ import 'interest_calculator_service.dart';
 
 class StatementGeneratorService {
   final CreditCardRepository _cardRepo = CreditCardRepository();
-  final CreditCardStatementRepository _statementRepo = CreditCardStatementRepository();
-  final CreditCardTransactionRepository _transactionRepo = CreditCardTransactionRepository();
+  final CreditCardStatementRepository _statementRepo =
+      CreditCardStatementRepository();
+  final CreditCardTransactionRepository _transactionRepo =
+      CreditCardTransactionRepository();
   final InterestCalculatorService _interestCalc = InterestCalculatorService();
 
   // ==================== STATEMENT GENERATION ====================
@@ -32,10 +34,10 @@ class StatementGeneratorService {
   /// Check if a card needs statement generation and generate if needed
   Future<CreditCardStatement?> _checkAndGenerateForCard(CreditCard card) async {
     final now = DateTime.now();
-    
+
     // Calculate this month's statement date
     var statementDate = DateTime(now.year, now.month, card.statementDay);
-    
+
     // Handle months with fewer days
     if (card.statementDay > 28) {
       final lastDayOfMonth = DateTime(now.year, now.month + 1, 0).day;
@@ -54,7 +56,7 @@ class StatementGeneratorService {
       card.id,
       statementDate,
     );
-    
+
     if (existingStatement != null) {
       return null; // Already generated
     }
@@ -66,10 +68,10 @@ class StatementGeneratorService {
   /// Generate a statement for a card
   Future<CreditCardStatement> generateStatement(CreditCard card) async {
     final now = DateTime.now();
-    
+
     // Calculate statement period
     var periodEnd = DateTime(now.year, now.month, card.statementDay);
-    
+
     // Handle months with fewer days
     if (card.statementDay > 28) {
       final lastDayOfMonth = DateTime(now.year, now.month + 1, 0).day;
@@ -79,7 +81,9 @@ class StatementGeneratorService {
     }
 
     // Get previous statement to determine period start
-    final previousStatement = await _statementRepo.findPreviousStatement(card.id);
+    final previousStatement = await _statementRepo.findPreviousStatement(
+      card.id,
+    );
     final periodStart = previousStatement != null
         ? previousStatement.periodEnd.add(const Duration(days: 1))
         : DateTime(now.year, now.month - 1, card.statementDay);
@@ -88,8 +92,16 @@ class StatementGeneratorService {
     final dueDate = periodEnd.add(Duration(days: card.dueDateOffset));
 
     // Calculate new purchases and installment payments
-    final newPurchases = await calculateNewPurchases(card.id, periodStart, periodEnd);
-    final installmentPayments = await calculateInstallmentPayments(card.id, periodStart, periodEnd);
+    final newPurchases = await calculateNewPurchases(
+      card.id,
+      periodStart,
+      periodEnd,
+    );
+    final installmentPayments = await calculateInstallmentPayments(
+      card.id,
+      periodStart,
+      periodEnd,
+    );
 
     // Get previous balance and calculate interest
     double previousBalance = 0;
@@ -97,11 +109,11 @@ class StatementGeneratorService {
 
     if (previousStatement != null && previousStatement.remainingDebt > 0) {
       previousBalance = previousStatement.remainingDebt;
-      
+
       // Calculate interest on carry-over debt
       final isOverdue = previousStatement.isOverdue;
       final daysOverdue = previousStatement.daysOverdue;
-      
+
       interestCharged = _interestCalc.calculateCarryOverInterest(
         previousBalance: previousBalance,
         monthlyRate: card.monthlyInterestRate,
@@ -112,8 +124,9 @@ class StatementGeneratorService {
     }
 
     // Calculate total debt before applying credit
-    double totalDebt = previousBalance + interestCharged + newPurchases + installmentPayments;
-    
+    double totalDebt =
+        previousBalance + interestCharged + newPurchases + installmentPayments;
+
     // Apply available credit from overpayments
     final availableCredit = await getAvailableCredit(card.id);
     if (availableCredit > 0) {
@@ -164,8 +177,12 @@ class StatementGeneratorService {
     DateTime start,
     DateTime end,
   ) async {
-    final transactions = await _transactionRepo.findByDateRange(cardId, start, end);
-    
+    final transactions = await _transactionRepo.findByDateRange(
+      cardId,
+      start,
+      end,
+    );
+
     // Sum all cash purchases (installmentCount == 1)
     final cashPurchases = transactions
         .where((t) => t.installmentCount == 1)
@@ -182,12 +199,13 @@ class StatementGeneratorService {
   ) async {
     // Get all installment transactions (not just in this period)
     final allTransactions = await _transactionRepo.findByCardId(cardId);
-    
+
     // Filter for installment transactions that have payments due in this period
-    final installmentTransactions = allTransactions.where((t) =>
-      t.installmentCount > 1 &&
-      !t.isCompleted &&
-      t.transactionDate.isBefore(end.add(const Duration(days: 1)))
+    final installmentTransactions = allTransactions.where(
+      (t) =>
+          t.installmentCount > 1 &&
+          !t.isCompleted &&
+          t.transactionDate.isBefore(end.add(const Duration(days: 1))),
     );
 
     double totalInstallmentPayments = 0;
@@ -205,25 +223,31 @@ class StatementGeneratorService {
     if (totalDebt <= 0) {
       return 0;
     }
-    
+
     // Minimum payment is typically 30-40% of total debt in Turkey
     final minimum = totalDebt * minimumRate;
-    
+
     // Some banks have a minimum floor (e.g., 50 TL)
     const minimumFloor = 50.0;
-    
+
     return minimum < minimumFloor ? minimumFloor : minimum;
   }
 
   /// Update installment counters after statement generation
-  Future<void> updateInstallmentCounters(String cardId, DateTime statementDate) async {
+  Future<void> updateInstallmentCounters(
+    String cardId,
+    DateTime statementDate,
+  ) async {
     final allTransactions = await _transactionRepo.findByCardId(cardId);
-    
+
     // Find installment transactions that need counter update
-    final installmentTransactions = allTransactions.where((t) =>
-      t.installmentCount > 1 &&
-      !t.isCompleted &&
-      t.transactionDate.isBefore(statementDate.add(const Duration(days: 1)))
+    final installmentTransactions = allTransactions.where(
+      (t) =>
+          t.installmentCount > 1 &&
+          !t.isCompleted &&
+          t.transactionDate.isBefore(
+            statementDate.add(const Duration(days: 1)),
+          ),
     );
 
     for (var transaction in installmentTransactions) {
@@ -231,7 +255,7 @@ class StatementGeneratorService {
       final updatedTransaction = transaction.copyWith(
         installmentsPaid: transaction.installmentsPaid + 1,
       );
-      
+
       await _transactionRepo.update(updatedTransaction);
     }
   }
@@ -257,7 +281,7 @@ class StatementGeneratorService {
   /// Returns the total overpayment amount that can be applied to next statement
   Future<double> getAvailableCredit(String cardId) async {
     final statements = await _statementRepo.findByCardId(cardId);
-    
+
     // Sum all overpayments (where paidAmount > totalDebt)
     double totalCredit = 0;
     for (var statement in statements) {
@@ -265,7 +289,7 @@ class StatementGeneratorService {
         totalCredit += (statement.paidAmount - statement.totalDebt);
       }
     }
-    
+
     return totalCredit;
   }
 
@@ -273,7 +297,10 @@ class StatementGeneratorService {
 
   /// Apply payment to a statement
   /// Returns overpayment amount if payment exceeds total debt
-  Future<double> applyPaymentToStatement(String statementId, double amount) async {
+  Future<double> applyPaymentToStatement(
+    String statementId,
+    double amount,
+  ) async {
     final statement = await _statementRepo.findById(statementId);
     if (statement == null) {
       throw Exception('Ekstre bulunamadı');
@@ -286,7 +313,7 @@ class StatementGeneratorService {
     // Calculate new paid amount and remaining debt
     final newPaidAmount = statement.paidAmount + amount;
     final newRemainingDebt = statement.totalDebt - newPaidAmount;
-    
+
     // Calculate overpayment (if any)
     final overpayment = newRemainingDebt < 0 ? -newRemainingDebt : 0.0;
 
@@ -298,10 +325,10 @@ class StatementGeneratorService {
     );
 
     await _statementRepo.update(updatedStatement);
-    
+
     // Update status after saving
     await updateStatementStatus(updatedStatement.id);
-    
+
     return overpayment;
   }
 
@@ -313,7 +340,7 @@ class StatementGeneratorService {
     }
 
     String newStatus;
-    
+
     if (statement.isPaidFully) {
       newStatus = 'paid';
     } else if (statement.isOverdue) {
@@ -343,7 +370,7 @@ class StatementGeneratorService {
   /// Get statement summary for a card
   Future<Map<String, dynamic>> getStatementSummary(String cardId) async {
     final statements = await _statementRepo.findByCardId(cardId);
-    
+
     if (statements.isEmpty) {
       return {
         'totalStatements': 0,
@@ -359,13 +386,19 @@ class StatementGeneratorService {
     final paidStatements = statements.where((s) => s.isPaidFully).length;
     final unpaidStatements = statements.where((s) => !s.isPaidFully).length;
     final overdueStatements = statements.where((s) => s.isOverdue).length;
-    
+
     final totalDebt = statements
         .where((s) => !s.isPaidFully)
         .fold<double>(0, (sum, s) => sum + s.remainingDebt);
-    
-    final totalPaid = statements.fold<double>(0, (sum, s) => sum + s.paidAmount);
-    final totalInterest = statements.fold<double>(0, (sum, s) => sum + s.interestCharged);
+
+    final totalPaid = statements.fold<double>(
+      0,
+      (sum, s) => sum + s.paidAmount,
+    );
+    final totalInterest = statements.fold<double>(
+      0,
+      (sum, s) => sum + s.interestCharged,
+    );
 
     return {
       'totalStatements': statements.length,
@@ -388,17 +421,23 @@ class StatementGeneratorService {
   }
 
   /// Calculate next statement preview
-  Future<Map<String, dynamic>> calculateNextStatementPreview(String cardId) async {
+  Future<Map<String, dynamic>> calculateNextStatementPreview(
+    String cardId,
+  ) async {
     final card = await _cardRepo.findById(cardId);
     if (card == null) {
       throw Exception('Kart bulunamadı');
     }
 
     final now = DateTime.now();
-    
+
     // Calculate next statement date
-    var nextStatementDate = DateTime(now.year, now.month + 1, card.statementDay);
-    
+    var nextStatementDate = DateTime(
+      now.year,
+      now.month + 1,
+      card.statementDay,
+    );
+
     // Handle months with fewer days
     if (card.statementDay > 28) {
       final lastDayOfMonth = DateTime(now.year, now.month + 2, 0).day;
@@ -419,7 +458,7 @@ class StatementGeneratorService {
       periodStart,
       nextStatementDate,
     );
-    
+
     final projectedInstallments = await calculateInstallmentPayments(
       cardId,
       periodStart,
@@ -437,12 +476,16 @@ class StatementGeneratorService {
       );
     }
 
-    final projectedTotalDebt = projectedPreviousBalance +
+    final projectedTotalDebt =
+        projectedPreviousBalance +
         projectedInterest +
         projectedNewPurchases +
         projectedInstallments;
 
-    final projectedMinimumPayment = calculateMinimumPayment(projectedTotalDebt, 0.33);
+    final projectedMinimumPayment = calculateMinimumPayment(
+      projectedTotalDebt,
+      0.33,
+    );
 
     return {
       'nextStatementDate': nextStatementDate,

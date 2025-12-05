@@ -52,12 +52,7 @@ class PdfExportService {
         header: (context) => _buildHeader(dateRange),
         footer: (context) => _buildFooter(context),
         build: (context) => [
-          _buildSummarySection(
-            totalIncome,
-            totalExpense,
-            netBalance,
-            currency,
-          ),
+          _buildSummarySection(totalIncome, totalExpense, netBalance, currency),
           pw.SizedBox(height: 20),
           _buildCategoryChart(categoryTotals, currency),
           pw.SizedBox(height: 20),
@@ -95,10 +90,7 @@ class PdfExportService {
         children: [
           pw.Text(
             'Financial Report',
-            style: pw.TextStyle(
-              fontSize: 24,
-              fontWeight: pw.FontWeight.bold,
-            ),
+            style: pw.TextStyle(fontSize: 24, fontWeight: pw.FontWeight.bold),
           ),
           pw.SizedBox(height: 8),
           pw.Text(
@@ -191,10 +183,7 @@ class PdfExportService {
         children: [
           pw.Text(
             'Expense by Category',
-            style: pw.TextStyle(
-              fontSize: 16,
-              fontWeight: pw.FontWeight.bold,
-            ),
+            style: pw.TextStyle(fontSize: 16, fontWeight: pw.FontWeight.bold),
           ),
           pw.SizedBox(height: 12),
           ...sortedCategories.take(5).map((entry) {
@@ -227,10 +216,7 @@ class PdfExportService {
       children: [
         pw.Text(
           'Transaction Details',
-          style: pw.TextStyle(
-            fontSize: 16,
-            fontWeight: pw.FontWeight.bold,
-          ),
+          style: pw.TextStyle(fontSize: 16, fontWeight: pw.FontWeight.bold),
         ),
         pw.SizedBox(height: 12),
         pw.TableHelper.fromTextArray(
@@ -239,9 +225,7 @@ class PdfExportService {
             fontSize: 10,
           ),
           cellStyle: const pw.TextStyle(fontSize: 9),
-          headerDecoration: const pw.BoxDecoration(
-            color: PdfColors.grey300,
-          ),
+          headerDecoration: const pw.BoxDecoration(color: PdfColors.grey300),
           cellHeight: 25,
           cellAlignments: {
             0: pw.Alignment.centerLeft,
