@@ -790,7 +790,6 @@ class _CalendarScreenState extends State<CalendarScreen> {
     final isWeekend = dayOfWeek == 5 || dayOfWeek == 6;
     final income = _getDayIncome(date);
     final expense = _getDayExpense(date);
-    final total = _getDayTotal(date);
     final hasTransactions = income > 0 || expense > 0;
 
     return GestureDetector(

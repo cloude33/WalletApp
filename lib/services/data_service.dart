@@ -9,10 +9,14 @@ import '../models/loan.dart';
 import '../models/category.dart';
 import '../models/recurring_transaction.dart';
 import '../models/kmh_transaction.dart';
+import '../models/bill_template.dart';
+import '../models/bill_payment.dart';
 import 'cache_service.dart';
 import 'credit_card_service.dart';
 import 'kmh_box_service.dart';
 import 'secure_storage_service.dart';
+import 'bill_template_service.dart';
+import 'bill_payment_service.dart';
 import '../repositories/recurring_transaction_repository.dart';
 import '../repositories/scheduled_notification_repository.dart';
 import '../repositories/kmh_repository.dart';
@@ -506,6 +510,24 @@ class DataService {
         final kmhRepo = KmhRepository();
         for (var transaction in kmhTransactions) {
           await kmhRepo.addTransaction(transaction);
+        }
+      }
+      if (backupData.containsKey('billTemplates')) {
+        final billTemplates = (backupData['billTemplates'] as List)
+            .map((bt) => BillTemplate.fromJson(bt))
+            .toList();
+        final billTemplateService = BillTemplateService();
+        for (var template in billTemplates) {
+          await billTemplateService.addTemplateDirect(template);
+        }
+      }
+      if (backupData.containsKey('billPayments')) {
+        final billPayments = (backupData['billPayments'] as List)
+            .map((bp) => BillPayment.fromJson(bp))
+            .toList();
+        final billPaymentService = BillPaymentService();
+        for (var payment in billPayments) {
+          await billPaymentService.addPaymentDirect(payment);
         }
       }
     } catch (e) {

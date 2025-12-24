@@ -12,7 +12,6 @@ import 'services/user_service.dart';
 import 'services/app_lock_service.dart';
 import 'services/notification_scheduler_service.dart';
 import 'services/auth/auth_service.dart' as security_auth;
-import 'services/auth/pin_service.dart';
 import 'routes/auth_guard.dart';
 import 'models/recurring_transaction.dart';
 import 'models/recurrence_frequency.dart';

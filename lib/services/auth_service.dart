@@ -15,13 +15,9 @@ class AuthService {
   late final GoogleSignIn _googleSignIn;
 
   AuthService._internal() {
-    if (kIsWeb) {
-      _googleSignIn = GoogleSignIn(
-        clientId: '',
-      );
-    } else {
-      _googleSignIn = GoogleSignIn();
-    }
+    _googleSignIn = GoogleSignIn(
+      scopes: ['email', 'profile'],
+    );
   }
 
   SharedPreferences? _prefs;
@@ -84,12 +80,6 @@ class AuthService {
 
       final bool didAuthenticate = await _localAuth.authenticate(
         localizedReason: 'Uygulamaya giriş yapmak için kimliğinizi doğrulayın',
-        options: const AuthenticationOptions(
-          stickyAuth: true,
-          biometricOnly: false,
-          useErrorDialogs: true,
-          sensitiveTransaction: false,
-        ),
       );
       return didAuthenticate;
     } on PlatformException catch (e) {

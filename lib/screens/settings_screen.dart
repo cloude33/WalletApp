@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:intl/intl.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 import 'dart:io';
 import '../models/user.dart';
@@ -49,12 +50,31 @@ class _SettingsScreenState extends State<SettingsScreen> {
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   bool _isBiometricAvailable = false;
+  bool _allowPastBillDates = false;
+
+  static const String _allowPastBillDatesKey = 'allow_past_bill_dates';
 
   @override
   void initState() {
     super.initState();
     _loadUser();
     _checkBiometricAvailability();
+    _loadBillSettings();
+  }
+
+  Future<void> _loadBillSettings() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _allowPastBillDates = prefs.getBool(_allowPastBillDatesKey) ?? false;
+    });
+  }
+
+  Future<void> _saveAllowPastBillDates(bool value) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_allowPastBillDatesKey, value);
+    setState(() {
+      _allowPastBillDates = value;
+    });
   }
 
   Future<void> _checkBiometricAvailability() async {
@@ -436,6 +456,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
               );
               _loadUser();
             },
+          ),
+          _buildSettingItem(
+            icon: Icons.history,
+            title: 'Geriye Dönük Fatura Ekleme',
+            subtitle: 'Geçmiş tarihli faturalar ekleyebilme',
+            trailing: Switch(
+              value: _allowPastBillDates,
+              onChanged: (value) {
+                _saveAllowPastBillDates(value);
+              },
+            ),
           ),
           _buildSettingItem(
             icon: Icons.category_outlined,

@@ -97,7 +97,6 @@ class _LoginScreenState extends State<LoginScreen>
   Future<void> _checkBiometricAndPin() async {
     final available = await _authService.isBiometricAvailable();
     final enabled = await _authService.isBiometricEnabled();
-    final hasPin = await _authService.hasPinCode();
     if (mounted) {
       setState(() {
         _isBiometricAvailable = available && enabled;

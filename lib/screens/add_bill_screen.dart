@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../models/bill_template.dart';
 import '../services/bill_template_service.dart';
 import '../services/bill_payment_service.dart';
@@ -27,12 +28,23 @@ class _AddBillScreenState extends State<AddBillScreen> {
   DateTime? _periodEnd;
   bool _isLoading = true;
   bool _isSaving = false;
+  bool _allowPastBillDates = false;
+
+  static const String _allowPastBillDatesKey = 'allow_past_bill_dates';
 
   @override
   void initState() {
     super.initState();
     _loadTemplates();
     _calculatePeriod();
+    _loadBillSettings();
+  }
+
+  Future<void> _loadBillSettings() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _allowPastBillDates = prefs.getBool(_allowPastBillDatesKey) ?? false;
+    });
   }
 
   @override
@@ -77,11 +89,19 @@ class _AddBillScreenState extends State<AddBillScreen> {
   }
 
   Future<void> _selectDueDate() async {
+    final now = DateTime.now();
+    // Geriye dönük fatura ekleme ayarı açıksa 5 yıl geriye, değilse bugünden başla
+    final firstDate = _allowPastBillDates 
+        ? DateTime(now.year - 5, 1, 1)
+        : now;
+    // 5 yıl ileriye kadar fatura eklenebilir
+    final lastDate = DateTime(now.year + 5, 12, 31);
+    
     final picked = await showDatePicker(
       context: context,
       initialDate: _dueDate,
-      firstDate: DateTime.now(),
-      lastDate: DateTime.now().add(const Duration(days: 365)),
+      firstDate: firstDate,
+      lastDate: lastDate,
       locale: const Locale('tr', 'TR'),
       builder: (context, child) {
         return Theme(

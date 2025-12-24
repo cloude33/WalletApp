@@ -63,9 +63,6 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
     return amountMap;
   }
 
-  int get _incomeCount => _categories.where((c) => c.type == 'income').length;
-  int get _expenseCount => _categories.where((c) => c.type == 'expense').length;
-
   Future<void> _addCategory() async {
     final result = await Navigator.push(
       context,

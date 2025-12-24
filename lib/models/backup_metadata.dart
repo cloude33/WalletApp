@@ -41,5 +41,8 @@ class BackupMetadata {
 
   bool get isAndroidBackup => platform.toLowerCase() == 'android';
   bool get isIOSBackup => platform.toLowerCase() == 'ios';
-  bool get isCrossPlatformCompatible => version == '1.0' || version == '2.0';
+  bool get isCrossPlatformCompatible => 
+      version == '1.0' || 
+      version == '2.0' || 
+      version.startsWith('2.');
 }

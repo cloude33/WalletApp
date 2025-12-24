@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'dart:convert';
 import 'package:archive/archive.dart';
+import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as path;
@@ -10,8 +11,12 @@ import '../models/backup_metadata.dart';
 import 'data_service.dart';
 import '../repositories/recurring_transaction_repository.dart';
 import '../repositories/kmh_repository.dart';
+import 'bill_template_service.dart';
+import 'bill_payment_service.dart';
 class BackupService {
   final DataService _dataService = DataService();
+  final BillTemplateService _billTemplateService = BillTemplateService();
+  final BillPaymentService _billPaymentService = BillPaymentService();
   
   Future<String> _getPlatformInfo() async {
     if (Platform.isAndroid) {
@@ -48,11 +53,15 @@ class BackupService {
     final kmhRepo = KmhRepository();
     final kmhTransactions = await kmhRepo.findAll();
     
+    // Bill templates and payments
+    final billTemplates = await _billTemplateService.getTemplates();
+    final billPayments = await _billPaymentService.getPayments();
+    
     final platform = await _getPlatformInfo();
     final deviceModel = await _getDeviceModel();
     
     final metadata = BackupMetadata(
-      version: '1.0',
+      version: '2.0',
       createdAt: DateTime.now(),
       transactionCount: transactions.length,
       walletCount: wallets.length,
@@ -68,6 +77,8 @@ class BackupService {
           .toList(),
       'categories': categories,
       'kmhTransactions': kmhTransactions.map((kt) => kt.toJson()).toList(),
+      'billTemplates': billTemplates.map((bt) => bt.toJson()).toList(),
+      'billPayments': billPayments.map((bp) => bp.toJson()).toList(),
     };
     final jsonString = jsonEncode(backupData);
     final jsonBytes = utf8.encode(jsonString);
@@ -177,11 +188,6 @@ class BackupService {
     }
   }
   Future<void> scheduleAutomaticBackup(TimeOfDay time) async {
+    // TODO: Implement automatic backup scheduling
   }
-}
-class TimeOfDay {
-  final int hour;
-  final int minute;
-
-  const TimeOfDay({required this.hour, required this.minute});
 }
