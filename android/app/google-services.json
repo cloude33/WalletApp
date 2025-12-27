@@ -1,0 +1,54 @@
+{
+  "project_info": {
+    "project_number": "195092382674",
+    "project_id": "walletapp-ece89",
+    "storage_bucket": "walletapp-ece89.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:195092382674:android:dbac2b1620ade1b93a3e0b",
+        "android_client_info": {
+          "package_name": "com.example.money"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "195092382674-pnj540auubdc5kqe8hhhf00t8rf4ejqs.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.money",
+            "certificate_hash": "b24044a0f095f5c81b3cf2aff2ae23da1ec824fa"
+          }
+        },
+        {
+          "client_id": "195092382674-ca5q05m7idrstrqpfb5bc6e00thqiu20.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAI1UmlIB4EHWhy-eEB1BdCMsRILeEk6l0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "195092382674-ca5q05m7idrstrqpfb5bc6e00thqiu20.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "195092382674-bjrfeii11bo447tjp3vmouv4rskndisn.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.money"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

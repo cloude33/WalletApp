@@ -1,0 +1,93 @@
+# Miscellaneous
+*.class
+*.log
+*.pyc
+*.swp
+.DS_Store
+.atom/
+.build/
+.buildlog/
+.history
+.svn/
+.swiftpm/
+migrate_working_dir/
+
+# IntelliJ related
+*.iml
+*.ipr
+*.iws
+.idea/
+
+# VS Code
+.vscode/
+
+# Flutter/Dart/Pub related
+**/doc/api/
+**/ios/Flutter/.last_build_id
+.dart_tool/
+.flutter-plugins-dependencies
+.pub-cache/
+.pub/
+/build/
+/coverage/
+
+# Test Hive databases (temporary test files)
+test_hive*/
+
+# Analysis reports
+analysis_report.txt
+
+# Symbolication related
+app.*.symbols
+
+# Obfuscation related
+app.*.map.json
+
+# Android Studio will place build artifacts here
+/android/app/debug
+/android/app/profile
+/android/app/release
+*.apk
+
+# Temporary files and logs
+build_log.txt
+build_output.txt
+test_results*.json
+devtools_options.yaml
+
+# Java heap dump files
+*.hprof
+
+# Java error logs
+hs_err_*.log
+replay_*.log
+
+# macOS specific (already in Miscellaneous, but added here for completeness)
+.AppleDouble
+.LSOverride
+
+# Thumbnails
+._*
+
+# Files that might appear in the root of a volume
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+
+# iOS Pods
+**/ios/Pods/
+**/macos/Pods/
+**/Pods/
+
+# Duplicate dependency files
+.flutter-plugins-dependencies*
+!.flutter-plugins-dependencies
+
+# Duplicate Podfile locks
+ios/Podfile*.lock
+!ios/Podfile.lock
+android/.kotlin/

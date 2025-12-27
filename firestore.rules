@@ -1,0 +1,19 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Kullanıcılar sadece kendi verilerine erişebilir
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+      
+      // Kullanıcının alt koleksiyonları (yedekler, ayarlar vb.)
+      match /{document=**} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+      }
+    }
+    
+    // Genel kurallar - kimlik doğrulaması gerekli
+    match /{document=**} {
+      allow read, write: if request.auth != null;
+    }
+  }
+}
