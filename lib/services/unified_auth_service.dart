@@ -9,16 +9,6 @@ import '../models/security/security_models.dart';
 import '../services/data_service.dart';
 import '../models/user.dart' as app_user;
 
-/// Unified Authentication Service
-/// 
-/// This service integrates both local authentication (biometric/PIN) and Firebase authentication
-/// to ensure users must have a Firebase account before they can use biometric authentication.
-/// 
-/// Flow:
-/// 1. User must first create/login to Firebase account
-/// 2. Only then can they enable and use biometric authentication
-/// 3. Biometric auth is tied to the Firebase user account
-/// 4. Backup/restore operations require both authentications to be valid
 class UnifiedAuthService {
   static final UnifiedAuthService _instance = UnifiedAuthService._internal();
   factory UnifiedAuthService() => _instance;

@@ -75,8 +75,7 @@ class CreditCardTransaction extends HiveObject {
 
   bool get isDeferred => deferredMonths != null && deferredMonths! > 0;
 
-  DateTime get effectiveStartDate =>
-      installmentStartDate ?? transactionDate;
+  DateTime get effectiveStartDate => installmentStartDate ?? transactionDate;
   String? validate() {
     if (cardId.trim().isEmpty) {
       return 'Kart ID boş olamaz';
@@ -133,6 +132,48 @@ class CreditCardTransaction extends HiveObject {
       installmentStartDate: installmentStartDate ?? this.installmentStartDate,
       isCashAdvance: isCashAdvance ?? this.isCashAdvance,
       pointsEarned: pointsEarned ?? this.pointsEarned,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'cardId': cardId,
+      'amount': amount,
+      'description': description,
+      'transactionDate': transactionDate.toIso8601String(),
+      'category': category,
+      'installmentCount': installmentCount,
+      'installmentsPaid': installmentsPaid,
+      'createdAt': createdAt.toIso8601String(),
+      'images': images,
+      'deferredMonths': deferredMonths,
+      'installmentStartDate': installmentStartDate?.toIso8601String(),
+      'isCashAdvance': isCashAdvance,
+      'pointsEarned': pointsEarned,
+    };
+  }
+
+  factory CreditCardTransaction.fromJson(Map<String, dynamic> json) {
+    return CreditCardTransaction(
+      id: json['id'] as String,
+      cardId: json['cardId'] as String,
+      amount: (json['amount'] as num).toDouble(),
+      description: json['description'] as String,
+      transactionDate: DateTime.parse(json['transactionDate'] as String),
+      category: json['category'] as String,
+      installmentCount: json['installmentCount'] as int,
+      installmentsPaid: json['installmentsPaid'] as int? ?? 0,
+      createdAt: DateTime.parse(json['createdAt'] as String),
+      images: (json['images'] as List<dynamic>?)
+          ?.map((e) => e as String)
+          .toList(),
+      deferredMonths: json['deferredMonths'] as int?,
+      installmentStartDate: json['installmentStartDate'] != null
+          ? DateTime.parse(json['installmentStartDate'] as String)
+          : null,
+      isCashAdvance: json['isCashAdvance'] as bool? ?? false,
+      pointsEarned: (json['pointsEarned'] as num?)?.toDouble(),
     );
   }
 

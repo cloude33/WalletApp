@@ -156,6 +156,54 @@ class CreditCard extends HiveObject {
     );
   }
 
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'bankName': bankName,
+      'cardName': cardName,
+      'last4Digits': last4Digits,
+      'creditLimit': creditLimit,
+      'statementDay': statementDay,
+      'dueDateOffset': dueDateOffset,
+      'monthlyInterestRate': monthlyInterestRate,
+      'lateInterestRate': lateInterestRate,
+      'cardColor': cardColor,
+      'createdAt': createdAt.toIso8601String(),
+      'isActive': isActive,
+      'initialDebt': initialDebt,
+      'cardImagePath': cardImagePath,
+      'iconName': iconName,
+      'rewardType': rewardType,
+      'pointsConversionRate': pointsConversionRate,
+      'cashAdvanceRate': cashAdvanceRate,
+      'cashAdvanceLimit': cashAdvanceLimit,
+    };
+  }
+
+  factory CreditCard.fromJson(Map<String, dynamic> json) {
+    return CreditCard(
+      id: json['id'] as String,
+      bankName: json['bankName'] as String,
+      cardName: json['cardName'] as String,
+      last4Digits: json['last4Digits'] as String,
+      creditLimit: (json['creditLimit'] as num).toDouble(),
+      statementDay: json['statementDay'] as int,
+      dueDateOffset: json['dueDateOffset'] as int,
+      monthlyInterestRate: (json['monthlyInterestRate'] as num).toDouble(),
+      lateInterestRate: (json['lateInterestRate'] as num).toDouble(),
+      cardColor: json['cardColor'] as int,
+      createdAt: DateTime.parse(json['createdAt'] as String),
+      isActive: json['isActive'] as bool? ?? true,
+      initialDebt: (json['initialDebt'] as num?)?.toDouble() ?? 0,
+      cardImagePath: json['cardImagePath'] as String?,
+      iconName: json['iconName'] as String?,
+      rewardType: json['rewardType'] as String?,
+      pointsConversionRate: (json['pointsConversionRate'] as num?)?.toDouble(),
+      cashAdvanceRate: (json['cashAdvanceRate'] as num?)?.toDouble(),
+      cashAdvanceLimit: (json['cashAdvanceLimit'] as num?)?.toDouble(),
+    );
+  }
+
   @override
   bool operator ==(Object other) {
     if (identical(this, other)) return true;

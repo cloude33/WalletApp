@@ -56,14 +56,14 @@ class BillTemplateService {
 
     final templates = await getTemplates();
     templates.add(template);
-    await _saveTemplates(templates);
+    await saveTemplates(templates);
 
     return template;
   }
   Future<void> createTemplate(BillTemplate template) async {
     final templates = await getTemplates();
     templates.add(template);
-    await _saveTemplates(templates);
+    await saveTemplates(templates);
   }
   Future<void> updateTemplate(BillTemplate template) async {
     final templates = await getTemplates();
@@ -74,12 +74,12 @@ class BillTemplateService {
     }
 
     templates[index] = template.copyWith(updatedDate: DateTime.now());
-    await _saveTemplates(templates);
+    await saveTemplates(templates);
   }
   Future<void> deleteTemplate(String id) async {
     final templates = await getTemplates();
     templates.removeWhere((t) => t.id == id);
-    await _saveTemplates(templates);
+    await saveTemplates(templates);
   }
   Future<void> toggleActive(String id) async {
     final templates = await getTemplates();
@@ -93,9 +93,9 @@ class BillTemplateService {
       isActive: !templates[index].isActive,
       updatedDate: DateTime.now(),
     );
-    await _saveTemplates(templates);
+    await saveTemplates(templates);
   }
-  Future<void> _saveTemplates(List<BillTemplate> templates) async {
+  Future<void> saveTemplates(List<BillTemplate> templates) async {
     final prefs = await SharedPreferences.getInstance();
     final jsonList = templates.map((t) => t.toJson()).toList();
     await prefs.setString(_storageKey, json.encode(jsonList));
@@ -115,6 +115,6 @@ class BillTemplateService {
   Future<void> addTemplateDirect(BillTemplate template) async {
     final templates = await getTemplates();
     templates.add(template);
-    await _saveTemplates(templates);
+    await saveTemplates(templates);
   }
 }

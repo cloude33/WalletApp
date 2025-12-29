@@ -72,6 +72,7 @@ class CreditCardPayment extends HiveObject {
         return 'Kısmi Ödeme';
     }
   }
+
   String? validate() {
     if (cardId.trim().isEmpty) {
       return 'Kart ID boş olamaz';
@@ -110,7 +111,39 @@ class CreditCardPayment extends HiveObject {
       note: note ?? this.note,
       createdAt: createdAt ?? this.createdAt,
       paymentType: paymentType ?? this.paymentType,
-      remainingDebtAfterPayment: remainingDebtAfterPayment ?? this.remainingDebtAfterPayment,
+      remainingDebtAfterPayment:
+          remainingDebtAfterPayment ?? this.remainingDebtAfterPayment,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'cardId': cardId,
+      'statementId': statementId,
+      'amount': amount,
+      'paymentDate': paymentDate.toIso8601String(),
+      'paymentMethod': paymentMethod,
+      'note': note,
+      'createdAt': createdAt.toIso8601String(),
+      'paymentType': paymentType,
+      'remainingDebtAfterPayment': remainingDebtAfterPayment,
+    };
+  }
+
+  factory CreditCardPayment.fromJson(Map<String, dynamic> json) {
+    return CreditCardPayment(
+      id: json['id'] as String,
+      cardId: json['cardId'] as String,
+      statementId: json['statementId'] as String,
+      amount: (json['amount'] as num).toDouble(),
+      paymentDate: DateTime.parse(json['paymentDate'] as String),
+      paymentMethod: json['paymentMethod'] as String? ?? 'other',
+      note: json['note'] as String? ?? '',
+      createdAt: DateTime.parse(json['createdAt'] as String),
+      paymentType: json['paymentType'] as String? ?? 'partial',
+      remainingDebtAfterPayment:
+          (json['remainingDebtAfterPayment'] as num?)?.toDouble() ?? 0,
     );
   }
 

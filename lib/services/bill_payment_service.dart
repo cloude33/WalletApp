@@ -83,7 +83,7 @@ class BillPaymentService {
 
     final payments = await getPayments();
     payments.add(payment);
-    await _savePayments(payments);
+    await savePayments(payments);
     if (isOverdue && template.walletId != null) {
       final dataService = DataService();
       final transaction = Transaction(
@@ -101,7 +101,7 @@ class BillPaymentService {
       final index = payments.indexWhere((p) => p.id == payment.id);
       if (index != -1) {
         payments[index] = updatedPayment;
-        await _savePayments(payments);
+        await savePayments(payments);
       }
     }
 
@@ -116,12 +116,12 @@ class BillPaymentService {
     }
 
     payments[index] = payment.copyWith(updatedDate: DateTime.now());
-    await _savePayments(payments);
+    await savePayments(payments);
   }
   Future<void> deletePayment(String id) async {
     final payments = await getPayments();
     payments.removeWhere((p) => p.id == id);
-    await _savePayments(payments);
+    await savePayments(payments);
   }
   Future<void> markAsPaid({
     required String paymentId,
@@ -164,9 +164,9 @@ class BillPaymentService {
       transactionId: newTransactionId,
       updatedDate: DateTime.now(),
     );
-    await _savePayments(payments);
+    await savePayments(payments);
   }
-  Future<void> _savePayments(List<BillPayment> payments) async {
+  Future<void> savePayments(List<BillPayment> payments) async {
     final prefs = await SharedPreferences.getInstance();
     final jsonList = payments.map((p) => p.toJson()).toList();
     await prefs.setString(_storageKey, json.encode(jsonList));
@@ -194,6 +194,6 @@ class BillPaymentService {
   Future<void> addPaymentDirect(BillPayment payment) async {
     final payments = await getPayments();
     payments.add(payment);
-    await _savePayments(payments);
+    await savePayments(payments);
   }
 }

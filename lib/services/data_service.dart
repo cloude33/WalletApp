@@ -11,6 +11,9 @@ import '../models/recurring_transaction.dart';
 import '../models/kmh_transaction.dart';
 import '../models/bill_template.dart';
 import '../models/bill_payment.dart';
+import '../models/credit_card.dart';
+import '../models/credit_card_transaction.dart';
+import '../models/credit_card_payment.dart';
 import 'cache_service.dart';
 import 'credit_card_service.dart';
 import 'kmh_box_service.dart';
@@ -32,7 +35,6 @@ class DataService {
   SharedPreferences? _prefs;
   final CacheService _cache = CacheService();
 
-  // In-memory data for synchronous access
   List<Wallet> _wallets = [];
   List<Transaction> _transactions = [];
   List<Category> _categories = [];
@@ -51,6 +53,7 @@ class DataService {
     }
     return _prefs!;
   }
+
   Future<User?> getCurrentUser() async {
     final userJson = _prefs?.getString('current_user');
     if (userJson == null) return null;
@@ -81,6 +84,7 @@ class DataService {
     final usersJson = json.encode(users.map((u) => u.toJson()).toList());
     await _prefs?.setString('users', usersJson);
   }
+
   Future<List<Wallet>> getWallets() async {
     final walletsJson = _prefs?.getString('wallets') ?? '[]';
     final List<dynamic> walletsList = json.decode(walletsJson);
@@ -143,6 +147,7 @@ class DataService {
     wallets.removeWhere((w) => w.id == id);
     await saveWallets(wallets);
   }
+
   Future<List<Transaction>> getTransactions() async {
     final cached = _cache.get<List<Transaction>>('transactions');
     if (cached != null) {
@@ -345,6 +350,7 @@ class DataService {
 
     await saveWallets(wallets);
   }
+
   Future<List<Goal>> getGoals() async {
     final goalsJson = _prefs?.getString('goals') ?? '[]';
     final List<dynamic> goalsList = json.decode(goalsJson);
@@ -362,12 +368,6 @@ class DataService {
     await saveGoals(goals);
   }
 
-  Future<void> deleteGoal(String id) async {
-    final goals = await getGoals();
-    goals.removeWhere((g) => g.id == id);
-    await saveGoals(goals);
-  }
-
   Future<void> updateGoal(Goal goal) async {
     final goals = await getGoals();
     final index = goals.indexWhere((g) => g.id == goal.id);
@@ -376,6 +376,13 @@ class DataService {
       await saveGoals(goals);
     }
   }
+
+  Future<void> deleteGoal(String id) async {
+    final goals = await getGoals();
+    goals.removeWhere((g) => g.id == id);
+    await saveGoals(goals);
+  }
+
   Future<List<Category>> getCategories() async {
     final categoriesJson = _prefs?.getString('categories');
     if (categoriesJson == null) {
@@ -402,12 +409,6 @@ class DataService {
     await saveCategories(categories);
   }
 
-  Future<void> deleteCategory(String id) async {
-    final categories = await getCategories();
-    categories.removeWhere((c) => c.id == id);
-    await saveCategories(categories);
-  }
-
   Future<void> updateCategory(Category category) async {
     final categories = await getCategories();
     final index = categories.indexWhere((c) => c.id == category.id);
@@ -416,9 +417,13 @@ class DataService {
       await saveCategories(categories);
     }
   }
-  Future<List<User>> getUsers() async {
-    return await getAllUsers();
+
+  Future<void> deleteCategory(String id) async {
+    final categories = await getCategories();
+    categories.removeWhere((c) => c.id == id);
+    await saveCategories(categories);
   }
+
   Future<List<Loan>> getLoans() async {
     final loansJson = _prefs?.getString('loans') ?? '[]';
     final List<dynamic> loansList = json.decode(loansJson);
@@ -436,12 +441,6 @@ class DataService {
     await saveLoans(loans);
   }
 
-  Future<void> deleteLoan(String id) async {
-    final loans = await getLoans();
-    loans.removeWhere((l) => l.id == id);
-    await saveLoans(loans);
-  }
-
   Future<void> updateLoan(Loan loan) async {
     final loans = await getLoans();
     final index = loans.indexWhere((l) => l.id == loan.id);
@@ -449,6 +448,12 @@ class DataService {
       loans[index] = loan;
       await saveLoans(loans);
     }
+  }
+
+  Future<void> deleteLoan(String id) async {
+    final loans = await getLoans();
+    loans.removeWhere((l) => l.id == id);
+    await saveLoans(loans);
   }
 
   Future<void> clearAllData() async {
@@ -484,21 +489,37 @@ class DataService {
       debugPrint('Error clearing encryption keys: $e');
     }
   }
+
   Future<void> restoreFromBackup(Map<String, dynamic> backupData) async {
     try {
+      // Clear main preferences
       await _prefs?.clear();
+      _cache.clear();
+
+      // Clear other services
+      try {
+        await KmhBoxService.clearAll();
+        await RecurringTransactionRepository().clear();
+        await BillTemplateService().clearAllTemplates();
+        await BillPaymentService().clearAllPayments();
+      } catch (e) {
+        debugPrint('Error clearing sub-services: $e');
+      }
+
       if (backupData.containsKey('transactions')) {
         final transactions = (backupData['transactions'] as List)
             .map((t) => Transaction.fromJson(t))
             .toList();
         await saveTransactions(transactions);
       }
+
       if (backupData.containsKey('wallets')) {
         final wallets = (backupData['wallets'] as List)
             .map((w) => Wallet.fromJson(w))
             .toList();
         await saveWallets(wallets);
       }
+
       if (backupData.containsKey('recurringTransactions')) {
         final recurringTransactions =
             (backupData['recurringTransactions'] as List)
@@ -510,12 +531,14 @@ class DataService {
           await repo.add(transaction);
         }
       }
+
       if (backupData.containsKey('categories')) {
         final categoriesList = (backupData['categories'] as List)
             .map((c) => Category.fromJson(c))
             .toList();
         await saveCategories(categoriesList);
       }
+
       if (backupData.containsKey('kmhTransactions')) {
         final kmhTransactions = (backupData['kmhTransactions'] as List)
             .map((kt) => KmhTransaction.fromJson(kt))
@@ -525,24 +548,89 @@ class DataService {
           await kmhRepo.addTransaction(transaction);
         }
       }
+
       if (backupData.containsKey('billTemplates')) {
         final billTemplates = (backupData['billTemplates'] as List)
             .map((bt) => BillTemplate.fromJson(bt))
             .toList();
-        final billTemplateService = BillTemplateService();
-        for (var template in billTemplates) {
-          await billTemplateService.addTemplateDirect(template);
-        }
+        await BillTemplateService().saveTemplates(billTemplates);
       }
+
       if (backupData.containsKey('billPayments')) {
         final billPayments = (backupData['billPayments'] as List)
             .map((bp) => BillPayment.fromJson(bp))
             .toList();
-        final billPaymentService = BillPaymentService();
-        for (var payment in billPayments) {
-          await billPaymentService.addPaymentDirect(payment);
+        await BillPaymentService().savePayments(billPayments);
+      }
+
+      if (backupData.containsKey('goals')) {
+        final goals = (backupData['goals'] as List)
+            .map((g) => Goal.fromJson(g))
+            .toList();
+        await saveGoals(goals);
+      }
+
+      if (backupData.containsKey('loans')) {
+        final loans = (backupData['loans'] as List)
+            .map((l) => Loan.fromJson(l))
+            .toList();
+        await saveLoans(loans);
+      }
+
+      // Restore credit card data
+      if (backupData.containsKey('creditCards') ||
+          backupData.containsKey('creditCardTransactions') ||
+          backupData.containsKey('creditCardPayments')) {
+        try {
+          final creditCardService = CreditCardService();
+
+          // Clear existing credit card data
+          await creditCardService.clearAllData();
+
+          // Restore credit cards
+          if (backupData.containsKey('creditCards')) {
+            final creditCards = (backupData['creditCards'] as List)
+                .map((cc) => CreditCard.fromJson(cc))
+                .toList();
+            for (var card in creditCards) {
+              await creditCardService.createCard(card);
+            }
+            debugPrint('Restored ${creditCards.length} credit cards');
+          }
+
+          // Restore credit card transactions
+          if (backupData.containsKey('creditCardTransactions')) {
+            final creditCardTransactions =
+                (backupData['creditCardTransactions'] as List)
+                    .map((cct) => CreditCardTransaction.fromJson(cct))
+                    .toList();
+            for (var transaction in creditCardTransactions) {
+              await creditCardService.addTransaction(transaction);
+            }
+            debugPrint(
+              'Restored ${creditCardTransactions.length} credit card transactions',
+            );
+          }
+
+          // Restore credit card payments
+          if (backupData.containsKey('creditCardPayments')) {
+            final creditCardPayments =
+                (backupData['creditCardPayments'] as List)
+                    .map((ccp) => CreditCardPayment.fromJson(ccp))
+                    .toList();
+            for (var payment in creditCardPayments) {
+              await creditCardService.recordPayment(payment);
+            }
+            debugPrint(
+              'Restored ${creditCardPayments.length} credit card payments',
+            );
+          }
+        } catch (e) {
+          debugPrint('Error restoring credit card data: $e');
         }
       }
+
+      debugPrint('Restore successful');
     } catch (e) {
       debugPrint('Error in restoreFromBackup: $e');
       rethrow;

@@ -1,6 +1,6 @@
 import 'package:uuid/uuid.dart';
 
-enum AuthMethod { email, google, facebook }
+enum AuthMethod { email, google, facebook, apple }
 
 class User {
   final String id;

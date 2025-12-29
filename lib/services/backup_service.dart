@@ -1,12 +1,14 @@
 import 'dart:io';
 import 'dart:convert';
 import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:archive/archive.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as path;
-import 'package:share_plus/share_plus.dart' show SharePlus, ShareResultStatus, ShareParams, XFile;
+import 'package:share_plus/share_plus.dart'
+    show SharePlus, ShareResultStatus, ShareParams, XFile;
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../models/backup_metadata.dart';
@@ -15,6 +17,7 @@ import '../repositories/recurring_transaction_repository.dart';
 import '../repositories/kmh_repository.dart';
 import 'bill_template_service.dart';
 import 'bill_payment_service.dart';
+import 'credit_card_service.dart';
 import 'firestore_service.dart';
 import 'unified_auth_service.dart';
 
@@ -78,6 +81,25 @@ class BackupService {
     final billTemplates = await _billTemplateService.getTemplates();
     final billPayments = await _billPaymentService.getPayments();
 
+    // Credit card data
+    final creditCardService = CreditCardService();
+    final creditCards = await creditCardService.getAllCards();
+    final creditCardTransactions = <Map<String, dynamic>>[];
+    final creditCardPayments = <Map<String, dynamic>>[];
+
+    for (var card in creditCards) {
+      final transactions = await creditCardService.getCardTransactions(card.id);
+      creditCardTransactions.addAll(
+        transactions.map((t) => t.toJson()).toList(),
+      );
+
+      final payments = await creditCardService.getCardPayments(card.id);
+      creditCardPayments.addAll(payments.map((p) => p.toJson()).toList());
+    }
+
+    final goals = await _dataService.getGoals();
+    final loans = await _dataService.getLoans();
+
     final platform = await _getPlatformInfo();
     final deviceModel = await _getDeviceModel();
 
@@ -94,12 +116,18 @@ class BackupService {
       'metadata': metadata.toJson(),
       'transactions': transactions.map((t) => t.toJson()).toList(),
       'wallets': wallets.map((w) => w.toJson()).toList(),
-      'recurringTransactions':
-          recurringTransactions.map((rt) => rt.toJson()).toList(),
+      'recurringTransactions': recurringTransactions
+          .map((rt) => rt.toJson())
+          .toList(),
       'categories': categories,
       'kmhTransactions': kmhTransactions.map((kt) => kt.toJson()).toList(),
       'billTemplates': billTemplates.map((bt) => bt.toJson()).toList(),
       'billPayments': billPayments.map((bp) => bp.toJson()).toList(),
+      'creditCards': creditCards.map((cc) => cc.toJson()).toList(),
+      'creditCardTransactions': creditCardTransactions,
+      'creditCardPayments': creditCardPayments,
+      'goals': goals.map((g) => g.toJson()).toList(),
+      'loans': loans.map((l) => l.toJson()).toList(),
     };
   }
 
@@ -119,7 +147,7 @@ class BackupService {
     final compressed = await createBackupRaw();
     final timestamp = DateFormat('yyyyMMdd_HHmmss').format(DateTime.now());
     final fileName = 'money_backup_$timestamp.mbk';
-    
+
     final directory = await getApplicationDocumentsDirectory();
     final backupDir = Directory(path.join(directory.path, 'backups'));
     if (!await backupDir.exists()) {
@@ -166,7 +194,9 @@ class BackupService {
 
   Future<bool> shareBackup() async {
     if (kIsWeb) {
-      debugPrint('Share is not fully supported on Web via SharePlus for MBK files');
+      debugPrint(
+        'Share is not fully supported on Web via SharePlus for MBK files',
+      );
       return false;
     }
     try {
@@ -188,7 +218,7 @@ class BackupService {
 
   Future<List<File>> getBackupFiles() async {
     if (kIsWeb) return [];
-    
+
     final directory = await getApplicationDocumentsDirectory();
     final backupDir = Directory(path.join(directory.path, 'backups'));
 
@@ -348,7 +378,7 @@ class BackupService {
     }
   }
 
-  Future<bool> downloadFromCloud() async {
+  Future<bool> downloadFromCloud([String? backupId]) async {
     try {
       // Unified auth kontrolü
       if (!_unifiedAuth.currentState.canUseBackup ||
@@ -364,13 +394,31 @@ class BackupService {
       cloudBackupStatus.value = CloudBackupStatus.downloading;
       debugPrint('🔄 Buluttan geri yükleme başlatılıyor...');
 
-      // En son yedeği getir
-      final backupsQuery = await _firestoreService.getData(
-        collectionName: 'backups',
-        includeDefaultOrder: false,
-        queryBuilder: (query) =>
-            query.orderBy('uploadedAt', descending: true).limit(1),
-      );
+      // En son yedeği veya belirli bir yedeği getir
+      QuerySnapshot<Map<String, dynamic>>? backupsQuery;
+
+      if (backupId != null) {
+        final doc = await _firestoreService.getDocument(
+          collectionName: 'backups',
+          documentId: backupId,
+        );
+        if (doc != null && doc.exists) {
+          // DocumentSnapshot'ı QuerySnapshot gibi taklit etmeye gerek yok,
+          // direkt veriyi alabiliriz. Ancak aşağıda .docs.first kullanıldığı için
+          // akışı bozmamak adına logic'i güncelleyelim.
+          final backupData = doc.data() as Map<String, dynamic>;
+          return await _processBackupData(backupData);
+        }
+      }
+
+      backupsQuery =
+          await _firestoreService.getData(
+                collectionName: 'backups',
+                includeDefaultOrder: false,
+                queryBuilder: (query) =>
+                    query.orderBy('uploadedAt', descending: true).limit(1),
+              )
+              as QuerySnapshot<Map<String, dynamic>>?;
 
       if (backupsQuery == null || backupsQuery.docs.isEmpty) {
         debugPrint('Bulut geri yükleme hatası: Bulutta yedek bulunamadı');
@@ -379,11 +427,19 @@ class BackupService {
       }
 
       final backupDoc = backupsQuery.docs.first;
-      final backupData = backupDoc.data() as Map<String, dynamic>;
+      final backupData = backupDoc.data();
+      return await _processBackupData(backupData);
+    } catch (e) {
+      debugPrint('Bulut geri yükleme hatası: $e');
+      cloudBackupStatus.value = CloudBackupStatus.error;
+      return false;
+    }
+  }
 
+  Future<bool> _processBackupData(Map<String, dynamic> backupData) async {
+    try {
       if (!backupData.containsKey('data')) {
         debugPrint('Bulut geri yükleme hatası: Yedek verisi bulunamadı');
-        cloudBackupStatus.value = CloudBackupStatus.error;
         return false;
       }
 
@@ -407,9 +463,6 @@ class BackupService {
         }
       }
 
-      // Geri yükle - Mobile için geçici dosya gerebilir ama _dataService.restoreFromBackup Map alıyorsa direkt kullanalım mı?
-      // restoreFromBackup File bekliyor. Web'de bunu Map alan bir versiyona çevirmeliyiz ya da File yerine bytes almalı.
-
       if (kIsWeb) {
         final decompressed = GZipDecoder().decodeBytes(backupBytes);
         final jsonString = utf8.decode(decompressed);
@@ -428,9 +481,6 @@ class BackupService {
         await restoreFromBackup(tempFile);
         await tempFile.delete();
       }
-
-      cloudBackupStatus.value = CloudBackupStatus.idle;
-      debugPrint('Buluttan geri yükleme başarılı');
       return true;
     } catch (e) {
       debugPrint('Bulut geri yükleme hatası: $e');
