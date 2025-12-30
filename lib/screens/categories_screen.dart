@@ -168,7 +168,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: _showIncome 
+        color: _showIncome
             ? const Color(0xFFFF5252) // Kırmızı header gider için
             : const Color(0xFF4CAF50), // Yeşil header gelir için
         boxShadow: const [
@@ -217,8 +217,11 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                     padding: const EdgeInsets.symmetric(vertical: 12),
                     decoration: BoxDecoration(
                       color: !_showIncome
-                          ? Colors.white // Beyaz zemin aktif gelir butonu için
-                          : Colors.white.withValues(alpha: 0.2), // Şeffaf beyaz pasif için
+                          ? Colors
+                                .white // Beyaz zemin aktif gelir butonu için
+                          : Colors.white.withValues(
+                              alpha: 0.2,
+                            ), // Şeffaf beyaz pasif için
                       borderRadius: BorderRadius.circular(10),
                       border: Border.all(
                         color: Colors.white.withValues(alpha: 0.3),
@@ -226,12 +229,16 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                       ),
                     ),
                     child: Text(
-                      '5 GELİR',
+                      '${_categories.where((c) => c.type == 'income').length} GELİR',
                       textAlign: TextAlign.center,
                       style: TextStyle(
-                        color: !_showIncome 
-                            ? const Color(0xFF4CAF50) // Yeşil yazı aktif gelir için
-                            : Colors.white.withValues(alpha: 0.7), // Şeffaf beyaz yazı pasif için
+                        color: !_showIncome
+                            ? const Color(
+                                0xFF4CAF50,
+                              ) // Yeşil yazı aktif gelir için
+                            : Colors.white.withValues(
+                                alpha: 0.7,
+                              ), // Şeffaf beyaz yazı pasif için
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -246,8 +253,11 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                     padding: const EdgeInsets.symmetric(vertical: 12),
                     decoration: BoxDecoration(
                       color: _showIncome
-                          ? Colors.white // Beyaz zemin aktif gider butonu için
-                          : Colors.white.withValues(alpha: 0.2), // Şeffaf beyaz pasif için
+                          ? Colors
+                                .white // Beyaz zemin aktif gider butonu için
+                          : Colors.white.withValues(
+                              alpha: 0.2,
+                            ), // Şeffaf beyaz pasif için
                       borderRadius: BorderRadius.circular(10),
                       border: Border.all(
                         color: Colors.white.withValues(alpha: 0.3),
@@ -255,12 +265,16 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                       ),
                     ),
                     child: Text(
-                      '10 GİDER',
+                      '${_categories.where((c) => c.type == 'expense').length} GİDER',
                       textAlign: TextAlign.center,
                       style: TextStyle(
-                        color: _showIncome 
-                            ? const Color(0xFFFF5252) // Kırmızı yazı aktif gider için
-                            : Colors.white.withValues(alpha: 0.7), // Şeffaf beyaz yazı pasif için
+                        color: _showIncome
+                            ? const Color(
+                                0xFFFF5252,
+                              ) // Kırmızı yazı aktif gider için
+                            : Colors.white.withValues(
+                                alpha: 0.7,
+                              ), // Şeffaf beyaz yazı pasif için
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -380,12 +394,16 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
           key: ValueKey(category.id),
           margin: const EdgeInsets.only(bottom: 10),
           decoration: BoxDecoration(
-            color: category.type == 'income' 
-                ? const Color(0xFF4CAF50).withValues(alpha: 0.2)  // Yeşil zemin gelir için
-                : const Color(0xFFFF5252).withValues(alpha: 0.2), // Kırmızı zemin gider için
+            color: category.type == 'income'
+                ? const Color(0xFF4CAF50).withValues(
+                    alpha: 0.2,
+                  ) // Yeşil zemin gelir için
+                : const Color(
+                    0xFFFF5252,
+                  ).withValues(alpha: 0.2), // Kırmızı zemin gider için
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: category.type == 'income' 
+              color: category.type == 'income'
                   ? const Color(0xFF4CAF50).withValues(alpha: 0.5)
                   : const Color(0xFFFF5252).withValues(alpha: 0.5),
               width: 1,

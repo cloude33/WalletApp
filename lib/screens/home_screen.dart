@@ -727,8 +727,10 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     );
 
     final isIncome = transaction.type == 'income';
-    final incomeExpenseColor = isIncome ? const Color(0xFF34C759) : const Color(0xFFFF3B30);
-    
+    final incomeExpenseColor = isIncome
+        ? const Color(0xFF34C759)
+        : const Color(0xFFFF3B30);
+
     Color categoryColor = AppIcons.getCategoryColor(transaction.category);
     Widget iconWidget;
 
@@ -1566,9 +1568,13 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
               child: PageView.builder(
                 itemCount: images.length,
                 itemBuilder: (context, index) {
-                  return Image.memory(
-                    base64Decode(images[index]),
-                    fit: BoxFit.contain,
+                  return InteractiveViewer(
+                    minScale: 0.5,
+                    maxScale: 4.0,
+                    child: Image.memory(
+                      base64Decode(images[index]),
+                      fit: BoxFit.contain,
+                    ),
                   );
                 },
               ),
