@@ -74,15 +74,35 @@ class _InteractiveBarChartState extends State<InteractiveBarChart> {
           ),
         ],
         Expanded(
-          child: Padding(
-            padding: const EdgeInsets.only(right: 16, top: 8, bottom: 8),
-            child: BarChart(
-              _createBarChartData(minY, maxY, isDark),
-              // Increased animation duration for smoother chart animations
-              duration: const Duration(milliseconds: 500),
-              curve: Curves.easeInOut,
-            ),
-          ),
+          child: widget.data.isEmpty || widget.data.values.every((v) => v == 0)
+              ? Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.bar_chart,
+                        size: 48,
+                        color: Colors.grey[400],
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        'Veri yok',
+                        style: theme.textTheme.bodyLarge?.copyWith(
+                          color: Colors.grey[600],
+                        ),
+                      ),
+                    ],
+                  ),
+                )
+              : Padding(
+                  padding: const EdgeInsets.only(right: 16, top: 8, bottom: 8),
+                  child: BarChart(
+                    _createBarChartData(minY, maxY, isDark),
+                    // Increased animation duration for smoother chart animations
+                    duration: const Duration(milliseconds: 500),
+                    curve: Curves.easeInOut,
+                  ),
+                ),
         ),
       ],
     );

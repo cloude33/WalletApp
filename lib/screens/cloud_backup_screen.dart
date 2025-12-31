@@ -157,7 +157,7 @@ class _CloudBackupScreenState extends State<CloudBackupScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.cloud_off, size: 64, color: Colors.grey.withOpacity(0.5)),
+          Icon(Icons.cloud_off, size: 64, color: Colors.grey.withValues(alpha: 0.5)),
           const SizedBox(height: 16),
           const Text(
             'Henüz bulut yedeğiniz yok',
@@ -193,7 +193,7 @@ class _CloudBackupScreenState extends State<CloudBackupScreen> {
         leading: CircleAvatar(
           backgroundColor: (platform.toString().toLowerCase() == 'android' 
               ? Colors.green 
-              : Colors.blue).withOpacity(0.1),
+              : Colors.blue).withValues(alpha: 0.1),
           child: Icon(
             platform.toString().toLowerCase() == 'android' 
                 ? Icons.android 

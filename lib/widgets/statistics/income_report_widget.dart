@@ -415,12 +415,18 @@ class IncomeReportWidget extends StatelessWidget {
       return FlSpot(entry.key.toDouble(), entry.value.income);
     }).toList();
 
+    // Calculate horizontal interval, ensuring it's never zero
+    final maxIncome = report.monthlyIncome.isNotEmpty 
+        ? report.monthlyIncome.map((e) => e.income).reduce((a, b) => a > b ? a : b)
+        : 1000.0;
+    final horizontalInterval = maxIncome > 0 ? maxIncome / 5 : 200.0;
+
     return LineChart(
       LineChartData(
         gridData: FlGridData(
           show: true,
           drawVerticalLine: true,
-          horizontalInterval: report.totalIncome / 5,
+          horizontalInterval: horizontalInterval,
           getDrawingHorizontalLine: (value) {
             return FlLine(
               color: Colors.grey.shade300,

@@ -54,12 +54,20 @@ class _SlideTransitionAnimationState extends State<SlideTransitionAnimation>
       curve: widget.curve,
     ));
 
-    // Start animation after delay
-    Future.delayed(widget.delay, () {
-      if (mounted) {
-        _controller.forward();
-      }
-    });
+    // Start animation after delay - use WidgetsBinding to avoid timer issues in tests
+    if (widget.delay == Duration.zero) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          _controller.forward();
+        }
+      });
+    } else {
+      Future.delayed(widget.delay, () {
+        if (mounted) {
+          _controller.forward();
+        }
+      });
+    }
   }
 
   Offset _getBeginOffset() {

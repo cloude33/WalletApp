@@ -1,7 +1,6 @@
 import 'dart:io';
 import 'dart:convert';
 import 'package:flutter/foundation.dart' show kIsWeb;
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:archive/archive.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -18,51 +17,36 @@ import '../repositories/kmh_repository.dart';
 import 'bill_template_service.dart';
 import 'bill_payment_service.dart';
 import 'credit_card_service.dart';
-import 'firestore_service.dart';
 import 'unified_auth_service.dart';
+import 'google_drive_service.dart';
 
-// Bulut yedekleme durumları
 enum CloudBackupStatus { idle, uploading, downloading, syncing, error }
 
 class BackupService {
   final DataService _dataService = DataService();
   final BillTemplateService _billTemplateService = BillTemplateService();
   final BillPaymentService _billPaymentService = BillPaymentService();
-  final FirestoreService _firestoreService = FirestoreService();
   final UnifiedAuthService _unifiedAuth = UnifiedAuthService();
+  final GoogleDriveService _driveService = GoogleDriveService();
 
   ValueNotifier<CloudBackupStatus> cloudBackupStatus = ValueNotifier(
     CloudBackupStatus.idle,
   );
   ValueNotifier<String?> lastCloudBackupDate = ValueNotifier(null);
   ValueNotifier<bool> autoCloudBackupEnabled = ValueNotifier(false);
+  ValueNotifier<String?> lastError = ValueNotifier(null);
 
   Future<String> _getPlatformInfo() async {
-    if (kIsWeb) {
-      return 'web';
-    }
-    if (Platform.isAndroid) {
-      return 'android';
-    } else if (Platform.isIOS) {
-      return 'ios';
-    }
+    if (kIsWeb) return 'web';
+    if (Platform.isAndroid) return 'android';
+    if (Platform.isIOS) return 'ios';
     return 'unknown';
   }
 
   Future<String> _getDeviceModel() async {
-    try {
-      if (kIsWeb) {
-        return 'Web Browser';
-      }
-      if (Platform.isAndroid) {
-        return 'Android Device';
-      } else if (Platform.isIOS) {
-        return 'iOS Device';
-      }
-    } catch (e) {
-      // Device info alınamadığında varsayılan değer döndür
-      debugPrint('Device info error: $e');
-    }
+    if (kIsWeb) return 'Web Browser';
+    if (Platform.isAndroid) return 'Android Device';
+    if (Platform.isIOS) return 'iOS Device';
     return 'unknown';
   }
 
@@ -98,7 +82,33 @@ class BackupService {
     }
 
     final goals = await _dataService.getGoals();
+
     final loans = await _dataService.getLoans();
+
+    // Kullanıcı verileri
+    final users = await _dataService.getAllUsers();
+    final currentUser = await _dataService.getCurrentUser();
+
+    final userImages = <String, String>{};
+    if (!kIsWeb) {
+      for (var user in users) {
+        if (user.avatar != null &&
+            user.avatar!.isNotEmpty &&
+            !user.avatar!.startsWith('http') &&
+            !user.avatar!.startsWith('assets')) {
+          try {
+            final file = File(user.avatar!);
+            if (await file.exists()) {
+              final bytes = await file.readAsBytes();
+              final base64Img = base64Encode(bytes);
+              userImages[user.id] = base64Img;
+            }
+          } catch (e) {
+            debugPrint('Avatar yedekleme hatası (${user.id}): $e');
+          }
+        }
+      }
+    }
 
     final platform = await _getPlatformInfo();
     final deviceModel = await _getDeviceModel();
@@ -128,6 +138,9 @@ class BackupService {
       'creditCardPayments': creditCardPayments,
       'goals': goals.map((g) => g.toJson()).toList(),
       'loans': loans.map((l) => l.toJson()).toList(),
+      'users': users.map((u) => u.toJson()).toList(),
+      'currentUser': currentUser?.toJson(),
+      'userImages': userImages,
     };
   }
 
@@ -279,95 +292,58 @@ class BackupService {
     // TODO: Implement automatic backup scheduling
   }
 
-  ValueNotifier<String?> lastError = ValueNotifier(null);
-
-  // Bulut yedekleme fonksiyonları
+  // Bulut yedekleme fonksiyonları - DRIVE Implementation
   Future<bool> uploadToCloud() async {
     lastError.value = null;
     try {
-      debugPrint('🔄 Bulut yedekleme başlatılıyor...');
+      debugPrint('🔄 Google Drive yedekleme başlatılıyor...');
 
-      // Unified auth kontrolü
-      if (!_unifiedAuth.currentState.canUseBackup ||
-          _unifiedAuth.currentState.requiresLocalAuth) {
-        lastError.value = 'Kullanıcı Firebase\'e giriş yapmamış veya yetkisiz';
-        debugPrint('❌ Bulut yedekleme hatası: ${lastError.value}');
-        debugPrint('   Auth durumu: ${_unifiedAuth.currentState.status}');
-        debugPrint(
-          '   Firebase kullanıcı: ${_unifiedAuth.currentFirebaseUser?.email}',
-        );
-        cloudBackupStatus.value = CloudBackupStatus.error;
-        return false;
+      // Auth Check
+      if (!await _driveService.isAuthenticated()) {
+        await _driveService.signIn();
       }
 
-      debugPrint(
-        '✅ Firebase Auth OK: ${_unifiedAuth.currentFirebaseUser!.email}',
-      );
       cloudBackupStatus.value = CloudBackupStatus.uploading;
 
-      // Yedek oluştur
-      debugPrint('📦 Yedek verisi hazırlanıyor...');
-      final backupData = await createBackupRaw();
-
-      debugPrint('📊 Yedek dosyası boyutu: ${backupData.length} bytes');
-
-      debugPrint('🔄 Base64 encoding yapılıyor...');
-      final base64Data = base64Encode(backupData);
-      debugPrint('📊 Base64 boyutu: ${base64Data.length} characters');
-
-      // Firestore 1MB limiti kontrolü
-      if (base64Data.length > 1048000) {
-        lastError.value =
-            'Yedek dosyası çok büyük (${(base64Data.length / 1024 / 1024).toStringAsFixed(2)} MB). Firestore limiti 1 MB.';
-        debugPrint('❌ Bulut yedekleme hatası: ${lastError.value}');
-        cloudBackupStatus.value = CloudBackupStatus.error;
-        return false;
+      // 1. Dosyayı Oluştur (Create Local File)
+      debugPrint('📦 Yedek verisi ve dosyası hazırlanıyor...');
+      File? backupFile;
+      if (kIsWeb) {
+        throw UnsupportedError(
+          'Web upload not fully implemented for direct file IO in this method yet.',
+        );
+      } else {
+        backupFile = await createBackup();
       }
 
-      // Metadata hazırla
-      debugPrint('📋 Metadata hazırlanıyor...');
-      final backupMap = await _gatherBackupData();
-      final metadataJson = backupMap['metadata'];
-      debugPrint('📋 Metadata: $metadataJson');
+      // 2. Drive'a Yükle
+      final timestamp = DateFormat('yyyyMMdd_HHmmss').format(DateTime.now());
+      final fileName = 'money_backup_$timestamp.mbk';
 
-      // Firestore'a yükle
-      debugPrint('☁️ Firestore\'a yükleniyor...');
-      final docRef = await _firestoreService.addData(
-        collectionName: 'backups',
-        data: {
-          'data': base64Data,
-          'metadata': metadataJson,
-          'deviceInfo': {
-            'platform': await _getPlatformInfo(),
-            'deviceModel': await _getDeviceModel(),
-          },
-          'size': backupData.length,
-          'uploadedAt': DateTime.now().toIso8601String(),
-        },
+      debugPrint('☁️ Google Drive\'a yükleniyor...');
+
+      final result = await _driveService.uploadBackup(
+        backupFile,
+        fileName,
+        description: 'Parion Backup Version 2.0 via Google Drive',
       );
 
-      if (docRef == null) {
-        lastError.value = 'Veritabanına yazma işlemi başarısız oldu.';
-        debugPrint('❌ Firestore\'a yedek yüklenemedi');
-        throw Exception('Firestore\'a yedek yüklenemedi');
+      if (result == null) {
+        throw Exception('Google Drive upload failed');
       }
 
-      debugPrint('✅ Firestore\'a yükleme başarılı: ${docRef.id}');
-
-      debugPrint('✅ Firestore\'a yükleme başarılı: ${docRef.id}');
+      debugPrint('✅ Google Drive yükleme başarılı: ${result.id}');
 
       final now = DateTime.now();
       lastCloudBackupDate.value = DateFormat('dd/MM/yyyy HH:mm').format(now);
       cloudBackupStatus.value = CloudBackupStatus.idle;
 
-      // SharedPreferences'a kaydet
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString(
         'last_cloud_backup_date',
         lastCloudBackupDate.value!,
       );
 
-      debugPrint('🎉 Bulut yedekleme başarılı: ${backupData.length} bytes');
       return true;
     } catch (e, stackTrace) {
       lastError.value = 'Hata: ${e.toString()}';
@@ -380,173 +356,96 @@ class BackupService {
 
   Future<bool> downloadFromCloud([String? backupId]) async {
     try {
-      // Unified auth kontrolü
-      if (!_unifiedAuth.currentState.canUseBackup ||
-          _unifiedAuth.currentState.requiresLocalAuth) {
-        debugPrint(
-          '❌ Bulut geri yükleme hatası: Kullanıcı Firebase\'e giriş yapmamış',
-        );
-        debugPrint('   Auth durumu: ${_unifiedAuth.currentState.status}');
-        cloudBackupStatus.value = CloudBackupStatus.error;
-        return false;
-      }
-
+      debugPrint('🔄 Google Drive geri yükleme başlatılıyor...');
       cloudBackupStatus.value = CloudBackupStatus.downloading;
-      debugPrint('🔄 Buluttan geri yükleme başlatılıyor...');
 
-      // En son yedeği veya belirli bir yedeği getir
-      QuerySnapshot<Map<String, dynamic>>? backupsQuery;
+      // Auth Check
+      if (!await _driveService.isAuthenticated()) {
+        await _driveService.signIn();
+      }
 
-      if (backupId != null) {
-        final doc = await _firestoreService.getDocument(
-          collectionName: 'backups',
-          documentId: backupId,
-        );
-        if (doc != null && doc.exists) {
-          // DocumentSnapshot'ı QuerySnapshot gibi taklit etmeye gerek yok,
-          // direkt veriyi alabiliriz. Ancak aşağıda .docs.first kullanıldığı için
-          // akışı bozmamak adına logic'i güncelleyelim.
-          final backupData = doc.data() as Map<String, dynamic>;
-          return await _processBackupData(backupData);
+      String? fileId = backupId;
+      String? fileName;
+
+      // Eğer ID verilmediyse en son yedeği bul
+      if (fileId == null) {
+        final backups = await _driveService.listBackups();
+        if (backups.isEmpty) {
+          debugPrint('❌ Hiç yedek bulunamadı.');
+          cloudBackupStatus.value = CloudBackupStatus.error;
+          return false;
         }
+        fileId = backups.first.id;
+        fileName = backups.first.name;
       }
 
-      backupsQuery =
-          await _firestoreService.getData(
-                collectionName: 'backups',
-                includeDefaultOrder: false,
-                queryBuilder: (query) =>
-                    query.orderBy('uploadedAt', descending: true).limit(1),
-              )
-              as QuerySnapshot<Map<String, dynamic>>?;
+      if (fileId == null) return false;
 
-      if (backupsQuery == null || backupsQuery.docs.isEmpty) {
-        debugPrint('Bulut geri yükleme hatası: Bulutta yedek bulunamadı');
-        cloudBackupStatus.value = CloudBackupStatus.error;
-        return false;
-      }
+      debugPrint('📥 İndiriliyor: $fileId');
 
-      final backupDoc = backupsQuery.docs.first;
-      final backupData = backupDoc.data();
-      return await _processBackupData(backupData);
-    } catch (e) {
-      debugPrint('Bulut geri yükleme hatası: $e');
-      cloudBackupStatus.value = CloudBackupStatus.error;
-      return false;
-    }
-  }
-
-  Future<bool> _processBackupData(Map<String, dynamic> backupData) async {
-    try {
-      if (!backupData.containsKey('data')) {
-        debugPrint('Bulut geri yükleme hatası: Yedek verisi bulunamadı');
-        return false;
-      }
-
-      final base64Data = backupData['data'] as String;
-      final backupBytes = base64Decode(base64Data);
-
-      // Metadata kontrol et
-      final metadata = await getBackupMetadataFromBytes(backupBytes);
-      if (metadata != null) {
-        debugPrint('Geri yüklenen yedek bilgisi:');
-        debugPrint('  - Platform: ${metadata.platform}');
-        debugPrint('  - Versiyon: ${metadata.version}');
-        debugPrint('  - İşlem sayısı: ${metadata.transactionCount}');
-        debugPrint('  - Cüzdan sayısı: ${metadata.walletCount}');
-        debugPrint('  - Tarih: ${metadata.createdAt}');
-
-        if (!metadata.isCrossPlatformCompatible) {
-          debugPrint(
-            'Bulut geri yükleme uyarısı: Yedek versionu uyumlu olmayabilir',
-          );
-        }
-      }
-
-      if (kIsWeb) {
-        final decompressed = GZipDecoder().decodeBytes(backupBytes);
-        final jsonString = utf8.decode(decompressed);
-        final backupMap = jsonDecode(jsonString) as Map<String, dynamic>;
-        await _dataService.restoreFromBackup(backupMap);
-      } else {
-        // Geçici dosya oluştur (Mobile)
-        final tempDir = await getTemporaryDirectory();
-        final tempFile = File(
-          path.join(
-            tempDir.path,
-            'cloud_backup_${DateTime.now().millisecondsSinceEpoch}.mbk',
-          ),
-        );
-        await tempFile.writeAsBytes(backupBytes);
-        await restoreFromBackup(tempFile);
-        await tempFile.delete();
-      }
-      return true;
-    } catch (e) {
-      debugPrint('Bulut geri yükleme hatası: $e');
-      cloudBackupStatus.value = CloudBackupStatus.error;
-      return false;
-    }
-  }
-
-  Future<List<Map<String, dynamic>>> getCloudBackups() async {
-    try {
-      // Unified auth kontrolü
-      if (!_unifiedAuth.currentState.canUseBackup ||
-          _unifiedAuth.currentState.requiresLocalAuth) {
-        debugPrint(
-          '❌ Bulut yedekleri getirme hatası: Kullanıcı Firebase\'e giriş yapmamış',
-        );
-        return [];
-      }
-
-      final backupsQuery = await _firestoreService.getData(
-        collectionName: 'backups',
-        includeDefaultOrder: false,
-        queryBuilder: (query) => query.orderBy('uploadedAt', descending: true),
+      final tempDir = await getTemporaryDirectory();
+      final tempPath = path.join(
+        tempDir.path,
+        fileName ?? 'restored_backup.mbk',
       );
 
-      if (backupsQuery == null) {
-        debugPrint('Bulut yedekleri getirme hatası: Sorgu başarısız');
+      final downloadedFile = await _driveService.downloadBackup(
+        fileId,
+        tempPath,
+      );
+
+      if (downloadedFile == null) {
+        throw Exception('Dosya indirilemedi');
+      }
+
+      await restoreFromBackup(downloadedFile);
+
+      await downloadedFile.delete(); // Cleanup
+
+      cloudBackupStatus.value = CloudBackupStatus.idle;
+      debugPrint('✅ Geri yükleme başarılı');
+      return true;
+    } catch (e) {
+      debugPrint('❌ Bulut geri yükleme hatası: $e');
+      cloudBackupStatus.value = CloudBackupStatus.error;
+      return false;
+    }
+  }
+
+  // Listeleme (Firestore yerine Drive'dan)
+  Future<List<Map<String, dynamic>>> getCloudBackups() async {
+    try {
+      if (!await _driveService.isAuthenticated()) {
         return [];
       }
 
-      final backups = backupsQuery.docs.map((doc) {
-        final data = doc.data() as Map<String, dynamic>;
-        return {
-          'id': doc.id,
-          'uploadedAt': data['uploadedAt'],
-          'size': data['size'] ?? 0,
-          'metadata': data['metadata'],
-          'deviceInfo': data['deviceInfo'],
-        };
-      }).toList();
+      final files = await _driveService.listBackups();
 
-      debugPrint('Bulut yedekleri başarıyla getirildi: ${backups.length} adet');
-      return backups;
+      return files
+          .map(
+            (f) => {
+              'id': f.id,
+              'uploadedAt':
+                  f.createdTime?.toIso8601String() ??
+                  DateTime.now().toIso8601String(),
+              'size': int.tryParse(f.size ?? '0') ?? 0,
+              'metadata': {
+                'deviceModel': 'Drive Backup',
+                'platform': 'Unknown',
+              },
+              'fileName': f.name,
+            },
+          )
+          .toList();
     } catch (e) {
-      debugPrint('Bulut yedekleri getirme hatası: $e');
+      debugPrint('Yedek listeleme hatası: $e');
       return [];
     }
   }
 
   Future<bool> deleteCloudBackup(String backupId) async {
     try {
-      // Unified auth kontrolü
-      if (!_unifiedAuth.currentState.canUseBackup ||
-          _unifiedAuth.currentState.requiresLocalAuth) {
-        debugPrint(
-          '❌ Bulut yedek silme hatası: Kullanıcı Firebase\'e giriş yapmamış',
-        );
-        return false;
-      }
-
-      await _firestoreService.deleteData(
-        collectionName: 'backups',
-        documentId: backupId,
-      );
-
-      debugPrint('Bulut yedeği başarıyla silindi: $backupId');
+      await _driveService.deleteBackup(backupId);
       return true;
     } catch (e) {
       debugPrint('Bulut yedek silme hatası: $e');
@@ -556,23 +455,13 @@ class BackupService {
 
   Future<bool> syncWithCloud() async {
     try {
-      // Unified auth kontrolü
-      if (!_unifiedAuth.currentState.canUseBackup ||
-          _unifiedAuth.currentState.requiresLocalAuth) {
-        debugPrint(
-          '❌ Bulut senkronizasyon hatası: Kullanıcı Firebase\'e giriş yapmamış',
-        );
-        return false;
-      }
+      // Unified auth kontrolü for Backup is less strict than FireStore,
+      // but we still want to ensure we have auth.
+      // For Drive Sync, we just upload if enabled.
 
-      cloudBackupStatus.value = CloudBackupStatus.syncing;
-
-      // Otomatik yedekleme etkinse yedek al
       if (autoCloudBackupEnabled.value) {
-        await uploadToCloud();
+        return await uploadToCloud();
       }
-
-      cloudBackupStatus.value = CloudBackupStatus.idle;
       return true;
     } catch (e) {
       debugPrint('Bulut senkronizasyon hatası: $e');

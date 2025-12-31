@@ -1,18 +1,33 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:money/widgets/statistics/cash_flow_tab.dart';
+import '../test_setup.dart';
 
 void main() {
+  setUpAll(() async {
+    await TestSetup.initializeTestEnvironment();
+  });
+
+  setUp(() async {
+    await TestSetup.setupTest();
+  });
+
+  tearDown(() async {
+    await TestSetup.tearDownTest();
+  });
+
+  tearDownAll(() async {
+    await TestSetup.cleanupTestEnvironment();
+  });
+
   group('CashFlowTab Widget Tests', () {
     testWidgets('should display loading indicator initially',
         (WidgetTester tester) async {
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: CashFlowTab(
-              startDate: DateTime(2024, 1, 1),
-              endDate: DateTime(2024, 12, 31),
-            ),
+        TestSetup.createTestWidget(
+          CashFlowTab(
+            startDate: DateTime(2024, 1, 1),
+            endDate: DateTime(2024, 12, 31),
           ),
         ),
       );
@@ -24,12 +39,10 @@ void main() {
     testWidgets('should display error message when data loading fails',
         (WidgetTester tester) async {
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: CashFlowTab(
-              startDate: DateTime(2024, 12, 31), // Invalid: end before start
-              endDate: DateTime(2024, 1, 1),
-            ),
+        TestSetup.createTestWidget(
+          CashFlowTab(
+            startDate: DateTime(2024, 12, 31), // Invalid: end before start
+            endDate: DateTime(2024, 1, 1),
           ),
         ),
       );
@@ -45,9 +58,8 @@ void main() {
     testWidgets('should display error or data after loading',
         (WidgetTester tester) async {
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: CashFlowTab(
+        TestSetup.createTestWidget(
+          CashFlowTab(
               startDate: DateTime(2024, 1, 1),
               endDate: DateTime(2024, 12, 31),
             ),
@@ -76,12 +88,10 @@ void main() {
       final endDate2 = DateTime(2024, 12, 31);
 
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: CashFlowTab(
-              startDate: startDate1,
-              endDate: endDate1,
-            ),
+        TestSetup.createTestWidget(
+          CashFlowTab(
+            startDate: startDate1,
+            endDate: endDate1,
           ),
         ),
       );
@@ -90,12 +100,10 @@ void main() {
 
       // Update with new dates
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: CashFlowTab(
-              startDate: startDate2,
-              endDate: endDate2,
-            ),
+        TestSetup.createTestWidget(
+          CashFlowTab(
+            startDate: startDate2,
+            endDate: endDate2,
           ),
         ),
       );

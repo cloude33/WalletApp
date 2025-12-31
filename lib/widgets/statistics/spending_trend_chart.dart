@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:intl/intl.dart';
+import 'package:intl/date_symbol_data_local.dart';
 import '../../models/spending_analysis.dart';
 import '../../models/cash_flow_data.dart';
 class SpendingTrendChart extends StatefulWidget {
@@ -27,6 +28,10 @@ class _SpendingTrendChartState extends State<SpendingTrendChart> {
   @override
   void initState() {
     super.initState();
+    
+    // Initialize locale data for date formatting
+    initializeDateFormatting('tr_TR', null);
+    
     final sortedTrends = List<CategoryTrend>.from(widget.categoryTrends)
       ..sort((a, b) {
         final aTotal = a.monthlySpending.fold<double>(0, (sum, m) => sum + m.amount);

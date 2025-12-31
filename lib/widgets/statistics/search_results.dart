@@ -69,20 +69,20 @@ class SearchResults extends StatelessWidget {
             height: 1,
             color: isDark ? Colors.grey[800] : Colors.grey[200],
           ),
-          ListView.separated(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: results.length > 10 ? 10 : results.length,
-            separatorBuilder: (context, index) => Divider(
-              height: 1,
-              indent: 16,
-              endIndent: 16,
-              color: isDark ? Colors.grey[800] : Colors.grey[200],
+          Expanded(
+            child: ListView.separated(
+              itemCount: results.length > 10 ? 10 : results.length,
+              separatorBuilder: (context, index) => Divider(
+                height: 1,
+                indent: 16,
+                endIndent: 16,
+                color: isDark ? Colors.grey[800] : Colors.grey[200],
+              ),
+              itemBuilder: (context, index) {
+                final transaction = results[index];
+                return _buildResultItem(context, transaction, isDark);
+              },
             ),
-            itemBuilder: (context, index) {
-              final transaction = results[index];
-              return _buildResultItem(context, transaction, isDark);
-            },
           ),
           if (results.length > 10)
             Padding(

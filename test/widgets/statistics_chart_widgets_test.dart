@@ -59,7 +59,9 @@ void main() {
         ),
       );
 
-      expect(find.byType(LineChart), findsOneWidget);
+      // When data is empty, the widget shows "Veri yok" message instead of LineChart
+      expect(find.text('Veri yok'), findsOneWidget);
+      expect(find.byIcon(Icons.show_chart), findsOneWidget);
     });
 
     testWidgets('calls onPointTap when point is tapped', (
@@ -144,9 +146,9 @@ void main() {
         ),
       );
 
-      expect(find.byType(PieChart), findsOneWidget);
-      // The "Veri Yok" text is rendered inside the PieChart widget
-      // We just verify the chart renders without error
+      // When data is empty, the widget shows "Veri yok" message instead of PieChart
+      expect(find.text('Veri yok'), findsOneWidget);
+      expect(find.byIcon(Icons.pie_chart), findsOneWidget);
     });
 
     testWidgets('shows percentages when enabled', (WidgetTester tester) async {
@@ -220,7 +222,9 @@ void main() {
         ),
       );
 
-      expect(find.byType(BarChart), findsOneWidget);
+      // When data is empty, the widget shows "Veri yok" message instead of BarChart
+      expect(find.text('Veri yok'), findsOneWidget);
+      expect(find.byIcon(Icons.bar_chart), findsOneWidget);
     });
 
     testWidgets('displays labels correctly', (WidgetTester tester) async {

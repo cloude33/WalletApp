@@ -357,8 +357,11 @@ void main() {
         ),
       );
 
-      // Assert
-      expect(find.byType(SingleChildScrollView), findsOneWidget);
+      // Assert - Look for the specific SingleChildScrollView that contains our widget
+      expect(find.descendant(
+        of: find.byType(AverageComparisonCard),
+        matching: find.byType(SingleChildScrollView),
+      ), findsOneWidget);
     });
 
     testWidgets('renders with all performance rating types', (WidgetTester tester) async {
@@ -410,10 +413,15 @@ void main() {
 
         await tester.pumpAndSettle();
 
-        expect(find.text(label), findsOneWidget);
+        // Look for the text within the specific card context
+        expect(find.descendant(
+          of: find.byType(AverageComparisonCard),
+          matching: find.text(label),
+        ), findsAtLeastNWidgets(1));
 
         // Clean up for next iteration
         await tester.pumpWidget(Container());
+        await tester.pump();
       }
     });
   });

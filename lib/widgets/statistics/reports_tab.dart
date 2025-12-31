@@ -361,28 +361,31 @@ class _ReportsTabState extends State<ReportsTab> {
 
     if (_currentReport == null) {
       return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.assessment_outlined,
-              size: 64,
-              color: Colors.grey.shade400,
-            ),
-            const SizedBox(height: 16),
-            Text(
-              'Rapor Oluşturun',
-              style: Theme.of(context).textTheme.titleLarge,
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Yukarıdaki seçenekleri kullanarak\nrapor oluşturabilirsiniz',
-              textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: Colors.grey.shade600,
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.assessment_outlined,
+                size: 64,
+                color: Colors.grey.shade400,
               ),
-            ),
-          ],
+              const SizedBox(height: 16),
+              Text(
+                'Rapor Oluşturun',
+                style: Theme.of(context).textTheme.titleLarge,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Yukarıdaki seçenekleri kullanarak\nrapor oluşturabilirsiniz',
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: Colors.grey.shade600,
+                ),
+              ),
+            ],
+          ),
         ),
       );
     }

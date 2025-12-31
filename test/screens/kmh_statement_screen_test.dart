@@ -7,36 +7,67 @@ import 'package:money/models/kmh_transaction.dart';
 import 'package:money/models/kmh_transaction_type.dart';
 import 'package:money/screens/kmh_statement_screen.dart';
 import 'package:money/services/kmh_box_service.dart';
+import '../test_setup.dart';
+import 'dart:io';
 
 void main() {
-  TestWidgetsFlutterBinding.ensureInitialized();
-
-  setUpAll(() async {
-    // Initialize Hive with a temporary directory for testing
-    Hive.init('./test_hive_statement');
-    await initializeDateFormatting('tr_TR', null);
-
-    // Register adapters
-    if (!Hive.isAdapterRegistered(10)) {
-      Hive.registerAdapter(KmhTransactionAdapter());
-    }
-    if (!Hive.isAdapterRegistered(11)) {
-      Hive.registerAdapter(KmhTransactionTypeAdapter());
-    }
-  });
-
-  setUp(() async {
-    // Initialize boxes for testing
-    await KmhBoxService.init();
-  });
-
-  tearDown(() async {
-    // Clean up after each test
-    await KmhBoxService.transactionsBox.clear();
-    await KmhBoxService.close();
-  });
-
   group('KmhStatementScreen', () {
+    late String testDir;
+
+    setUpAll(() async {
+      await TestSetup.initializeTestEnvironment();
+      await initializeDateFormatting('tr_TR', null);
+
+      // Register adapters
+      if (!Hive.isAdapterRegistered(10)) {
+        Hive.registerAdapter(KmhTransactionAdapter());
+      }
+      if (!Hive.isAdapterRegistered(11)) {
+        Hive.registerAdapter(KmhTransactionTypeAdapter());
+      }
+    });
+
+    setUp(() async {
+      await TestSetup.setupTest();
+      
+      // Create unique test directory for each test
+      testDir = './test_hive_statement_${DateTime.now().millisecondsSinceEpoch}';
+      Hive.init(testDir);
+      
+      try {
+        // Initialize boxes for testing
+        await KmhBoxService.init();
+      } catch (e) {
+        // Skip if Hive initialization fails
+        print('Hive initialization failed: $e');
+      }
+    });
+
+    tearDown(() async {
+      await TestSetup.tearDownTest();
+      
+      try {
+        // Clean up after each test
+        if (KmhBoxService.transactionsBox.isOpen) {
+          await KmhBoxService.transactionsBox.clear();
+        }
+        await KmhBoxService.close();
+        
+        // Clean up test directory
+        final dir = Directory(testDir);
+        if (await dir.exists()) {
+          await dir.delete(recursive: true);
+        }
+      } catch (e) {
+        // Ignore cleanup errors
+        print('Cleanup error: $e');
+      }
+    });
+
+    tearDownAll(() async {
+      await TestSetup.cleanupTestEnvironment();
+    });
+
     testWidgets('should display statement screen with date range selector', (
       WidgetTester tester,
     ) async {

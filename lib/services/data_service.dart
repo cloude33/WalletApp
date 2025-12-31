@@ -1,4 +1,7 @@
 import 'dart:convert';
+import 'dart:io';
+import 'package:path/path.dart' as path;
+import 'package:path_provider/path_provider.dart';
 import 'package:flutter/foundation.dart' hide Category;
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/user.dart';
@@ -575,6 +578,62 @@ class DataService {
             .map((l) => Loan.fromJson(l))
             .toList();
         await saveLoans(loans);
+      }
+
+      // Kullanıcıları ve profil resimlerini geri yükle
+      if (backupData.containsKey('users')) {
+        var usersList = (backupData['users'] as List)
+            .map((u) => User.fromJson(u))
+            .toList();
+
+        // Profil resimlerini geri yükle
+        if (backupData.containsKey('userImages') && !kIsWeb) {
+          try {
+            final userImages = backupData['userImages'] as Map<String, dynamic>;
+            final appDir = await getApplicationDocumentsDirectory();
+            final avatarsDir = Directory(path.join(appDir.path, 'avatars'));
+
+            if (!await avatarsDir.exists()) {
+              await avatarsDir.create(recursive: true);
+            }
+
+            for (var i = 0; i < usersList.length; i++) {
+              final user = usersList[i];
+              if (userImages.containsKey(user.id)) {
+                try {
+                  final base64Img = userImages[user.id] as String;
+                  final bytes = base64Decode(base64Img);
+                  final fileName =
+                      'avatar_${user.id}_${DateTime.now().millisecondsSinceEpoch}.jpg';
+                  final file = File(path.join(avatarsDir.path, fileName));
+                  await file.writeAsBytes(bytes);
+
+                  // Kullanıcı nesnesini yeni yerel yol ile güncelle
+                  usersList[i] = user.copyWith(avatar: file.path);
+                } catch (e) {
+                  debugPrint('Avatar geri yükleme hatası: $e');
+                }
+              }
+            }
+          } catch (e) {
+            debugPrint('User images işleme hatası: $e');
+          }
+        }
+
+        await saveAllUsers(usersList);
+
+        // Mevcut kullanıcıyı geri yükle
+        if (backupData.containsKey('currentUser')) {
+          var currentUser = User.fromJson(backupData['currentUser']);
+          // Kullanıcı listesindeki güncellenmiş (resim yolu değişmiş olabilir) kullanıcıyı bul
+          final updatedCurrentUser = usersList.firstWhere(
+            (u) => u.id == currentUser.id,
+            orElse: () => currentUser,
+          );
+          await saveUser(updatedCurrentUser);
+        } else if (usersList.isNotEmpty) {
+          await saveUser(usersList.first);
+        }
       }
 
       // Restore credit card data

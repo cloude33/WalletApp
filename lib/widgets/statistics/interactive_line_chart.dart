@@ -95,14 +95,34 @@ class _InteractiveLineChartState extends State<InteractiveLineChart> {
             ),
           ],
           Expanded(
-            child: Padding(
-              padding: const EdgeInsets.only(right: 16, top: 8, bottom: 8),
-              child: LineChart(
-                _createLineChartData(minY, maxY, isDark),
-                // Increased animation duration for smoother chart animations
-                duration: const Duration(milliseconds: 500),
-              ),
-            ),
+            child: widget.spots.isEmpty
+                ? Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.show_chart,
+                          size: 48,
+                          color: Colors.grey[400],
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          'Veri yok',
+                          style: theme.textTheme.bodyLarge?.copyWith(
+                            color: Colors.grey[600],
+                          ),
+                        ),
+                      ],
+                    ),
+                  )
+                : Padding(
+                    padding: const EdgeInsets.only(right: 16, top: 8, bottom: 8),
+                    child: LineChart(
+                      _createLineChartData(minY, maxY, isDark),
+                      // Increased animation duration for smoother chart animations
+                      duration: const Duration(milliseconds: 500),
+                    ),
+                  ),
           ),
         ],
       ),

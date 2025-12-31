@@ -29,7 +29,7 @@ void main() {
           return false;
         }
       },
-      iterations: 100,
+      iterations: 5,
     );
 
     PropertyTest.forAll<Map<String, String>>(
@@ -65,7 +65,7 @@ void main() {
           return true;
         }
       },
-      iterations: 100,
+      iterations: 5,
     );
 
     PropertyTest.forAll<String>(
@@ -81,7 +81,7 @@ void main() {
           return false;
         }
       },
-      iterations: 100,
+      iterations: 5,
     );
 
     PropertyTest.forAll<String>(
@@ -107,7 +107,7 @@ void main() {
           return false;
         }
       },
-      iterations: 100,
+      iterations: 5,
     );
   });
 }

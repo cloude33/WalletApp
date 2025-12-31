@@ -1,14 +1,31 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:money/widgets/statistics/assets_tab.dart';
+import '../test_setup.dart';
 
 void main() {
+  setUpAll(() async {
+    await TestSetup.initializeTestEnvironment();
+  });
+
+  setUp(() async {
+    await TestSetup.setupTest();
+  });
+
+  tearDown(() async {
+    await TestSetup.tearDownTest();
+  });
+
+  tearDownAll(() async {
+    await TestSetup.cleanupTestEnvironment();
+  });
+
   group('AssetsTab Widget Tests', () {
     testWidgets('shows loading indicator initially', (
       WidgetTester tester,
     ) async {
       await tester.pumpWidget(
-        const MaterialApp(home: Scaffold(body: AssetsTab())),
+        TestSetup.createTestWidget(const AssetsTab()),
       );
 
       // Should show loading indicator
@@ -19,7 +36,7 @@ void main() {
       WidgetTester tester,
     ) async {
       await tester.pumpWidget(
-        const MaterialApp(home: Scaffold(body: AssetsTab())),
+        TestSetup.createTestWidget(const AssetsTab()),
       );
 
       // Wait for the widget to load
@@ -34,7 +51,7 @@ void main() {
       WidgetTester tester,
     ) async {
       await tester.pumpWidget(
-        const MaterialApp(home: Scaffold(body: AssetsTab())),
+        TestSetup.createTestWidget(const AssetsTab()),
       );
 
       // Wait for data to load
@@ -51,7 +68,7 @@ void main() {
       WidgetTester tester,
     ) async {
       await tester.pumpWidget(
-        const MaterialApp(home: Scaffold(body: AssetsTab())),
+        TestSetup.createTestWidget(const AssetsTab()),
       );
 
       // Wait for data to load
@@ -68,7 +85,7 @@ void main() {
       WidgetTester tester,
     ) async {
       await tester.pumpWidget(
-        const MaterialApp(home: Scaffold(body: AssetsTab())),
+        TestSetup.createTestWidget(const AssetsTab()),
       );
 
       // Wait for data to load
@@ -85,7 +102,7 @@ void main() {
       WidgetTester tester,
     ) async {
       await tester.pumpWidget(
-        const MaterialApp(home: Scaffold(body: AssetsTab())),
+        TestSetup.createTestWidget(const AssetsTab()),
       );
 
       // Wait for data to load
@@ -102,7 +119,7 @@ void main() {
       WidgetTester tester,
     ) async {
       await tester.pumpWidget(
-        const MaterialApp(home: Scaffold(body: AssetsTab())),
+        TestSetup.createTestWidget(const AssetsTab()),
       );
 
       // Wait for initial load
@@ -119,7 +136,7 @@ void main() {
       WidgetTester tester,
     ) async {
       await tester.pumpWidget(
-        const MaterialApp(home: Scaffold(body: AssetsTab())),
+        TestSetup.createTestWidget(const AssetsTab()),
       );
 
       // Wait for data to load
@@ -134,7 +151,7 @@ void main() {
       WidgetTester tester,
     ) async {
       await tester.pumpWidget(
-        const MaterialApp(home: Scaffold(body: AssetsTab())),
+        TestSetup.createTestWidget(const AssetsTab()),
       );
 
       // Wait for data to load
@@ -149,7 +166,7 @@ void main() {
       WidgetTester tester,
     ) async {
       await tester.pumpWidget(
-        const MaterialApp(home: Scaffold(body: AssetsTab())),
+        TestSetup.createTestWidget(const AssetsTab()),
       );
 
       // Wait for data to load
@@ -163,7 +180,7 @@ void main() {
       WidgetTester tester,
     ) async {
       await tester.pumpWidget(
-        const MaterialApp(home: Scaffold(body: AssetsTab())),
+        TestSetup.createTestWidget(const AssetsTab()),
       );
 
       // Wait for data to load
@@ -187,7 +204,7 @@ void main() {
 
     testWidgets('pie chart is interactive', (WidgetTester tester) async {
       await tester.pumpWidget(
-        const MaterialApp(home: Scaffold(body: AssetsTab())),
+        TestSetup.createTestWidget(const AssetsTab()),
       );
 
       // Wait for data to load
@@ -199,7 +216,7 @@ void main() {
 
     testWidgets('shows asset breakdown legend', (WidgetTester tester) async {
       await tester.pumpWidget(
-        const MaterialApp(home: Scaffold(body: AssetsTab())),
+        TestSetup.createTestWidget(const AssetsTab()),
       );
 
       // Wait for data to load
@@ -214,7 +231,7 @@ void main() {
       WidgetTester tester,
     ) async {
       await tester.pumpWidget(
-        const MaterialApp(home: Scaffold(body: AssetsTab())),
+        TestSetup.createTestWidget(const AssetsTab()),
       );
 
       // Wait for data to load
@@ -228,7 +245,7 @@ void main() {
       WidgetTester tester,
     ) async {
       await tester.pumpWidget(
-        const MaterialApp(home: Scaffold(body: AssetsTab())),
+        TestSetup.createTestWidget(const AssetsTab()),
       );
 
       // Wait for data to load
@@ -242,7 +259,7 @@ void main() {
   group('AssetsTab Data Display Tests', () {
     testWidgets('displays correct asset types', (WidgetTester tester) async {
       await tester.pumpWidget(
-        const MaterialApp(home: Scaffold(body: AssetsTab())),
+        TestSetup.createTestWidget(const AssetsTab()),
       );
 
       // Wait for data to load
@@ -256,7 +273,7 @@ void main() {
       WidgetTester tester,
     ) async {
       await tester.pumpWidget(
-        const MaterialApp(home: Scaffold(body: AssetsTab())),
+        TestSetup.createTestWidget(const AssetsTab()),
       );
 
       // Wait for data to load
@@ -271,7 +288,7 @@ void main() {
   group('AssetsTab Error Handling Tests', () {
     testWidgets('shows retry button on error', (WidgetTester tester) async {
       await tester.pumpWidget(
-        const MaterialApp(home: Scaffold(body: AssetsTab())),
+        TestSetup.createTestWidget(const AssetsTab()),
       );
 
       // Wait for potential error state
@@ -285,7 +302,7 @@ void main() {
 
     testWidgets('handles missing data gracefully', (WidgetTester tester) async {
       await tester.pumpWidget(
-        const MaterialApp(home: Scaffold(body: AssetsTab())),
+        TestSetup.createTestWidget(const AssetsTab()),
       );
 
       // Wait for data to load
@@ -299,9 +316,9 @@ void main() {
   group('AssetsTab UI Responsiveness Tests', () {
     testWidgets('adapts to dark mode', (WidgetTester tester) async {
       await tester.pumpWidget(
-        MaterialApp(
+        TestSetup.createTestWidget(
+          const AssetsTab(),
           theme: ThemeData.dark(),
-          home: const Scaffold(body: AssetsTab()),
         ),
       );
 
@@ -314,9 +331,9 @@ void main() {
 
     testWidgets('adapts to light mode', (WidgetTester tester) async {
       await tester.pumpWidget(
-        MaterialApp(
+        TestSetup.createTestWidget(
+          const AssetsTab(),
           theme: ThemeData.light(),
-          home: const Scaffold(body: AssetsTab()),
         ),
       );
 
@@ -329,7 +346,7 @@ void main() {
 
     testWidgets('scrolls properly or shows error', (WidgetTester tester) async {
       await tester.pumpWidget(
-        const MaterialApp(home: Scaffold(body: AssetsTab())),
+        TestSetup.createTestWidget(const AssetsTab()),
       );
 
       // Wait for data to load

@@ -265,7 +265,7 @@ void main() {
 
       expect(find.text('Detaylı Kategori Analizi'), findsOneWidget);
       expect(find.text('Kategori'), findsOneWidget);
-      expect(find.text('Tip'), findsOneWidget);
+      expect(find.text('İşlem'), findsOneWidget);
       expect(find.text('Tutar'), findsOneWidget);
       expect(find.text('Oran'), findsOneWidget);
     });

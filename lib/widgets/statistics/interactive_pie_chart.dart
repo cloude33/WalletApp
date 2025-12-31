@@ -63,14 +63,34 @@ class _InteractivePieChartState extends State<InteractivePieChart> {
           ),
         ],
         Expanded(
-          child: Center(
-            child: PieChart(
-              _createPieChartData(isDark),
-              // Increased animation duration for smoother chart animations
-              duration: const Duration(milliseconds: 500),
-              curve: Curves.easeInOut,
-            ),
-          ),
+          child: widget.data.isEmpty || widget.data.values.every((v) => v == 0)
+              ? Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.pie_chart,
+                        size: 48,
+                        color: Colors.grey[400],
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        'Veri yok',
+                        style: theme.textTheme.bodyLarge?.copyWith(
+                          color: Colors.grey[600],
+                        ),
+                      ),
+                    ],
+                  ),
+                )
+              : Center(
+                  child: PieChart(
+                    _createPieChartData(isDark),
+                    // Increased animation duration for smoother chart animations
+                    duration: const Duration(milliseconds: 500),
+                    curve: Curves.easeInOut,
+                  ),
+                ),
         ),
       ],
     );

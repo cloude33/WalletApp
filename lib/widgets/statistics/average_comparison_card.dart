@@ -17,74 +17,77 @@ class AverageComparisonCard extends StatelessWidget {
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(
-                  Icons.analytics_outlined,
-                  color: theme.primaryColor,
-                  size: 24,
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Ortalama Karşılaştırması',
-                        style: theme.textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        'Geçmiş dönem ortalamalarıyla karşılaştırma',
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: Colors.grey[600],
-                        ),
-                      ),
-                    ],
+        child: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Row(
+                children: [
+                  Icon(
+                    Icons.analytics_outlined,
+                    color: theme.primaryColor,
+                    size: 24,
                   ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 20),
-            _buildCurrentPeriodSummary(context),
-            const SizedBox(height: 20),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Ortalama Karşılaştırması',
+                          style: theme.textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'Geçmiş dönem ortalamalarıyla karşılaştırma',
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: Colors.grey[600],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              _buildCurrentPeriodSummary(context),
+              const SizedBox(height: 16),
 
-            Divider(color: isDark ? Colors.white12 : Colors.black12),
-            const SizedBox(height: 20),
-            _buildBenchmarkSection(
-              context,
-              '3 Aylık Ortalama',
-              comparisonData.threeMonthBenchmark,
-              Colors.blue,
-            ),
-            const SizedBox(height: 16),
-
-            _buildBenchmarkSection(
-              context,
-              '6 Aylık Ortalama',
-              comparisonData.sixMonthBenchmark,
-              Colors.purple,
-            ),
-            const SizedBox(height: 16),
-
-            _buildBenchmarkSection(
-              context,
-              '12 Aylık Ortalama',
-              comparisonData.twelveMonthBenchmark,
-              Colors.orange,
-            ),
-            if (comparisonData.insights.isNotEmpty) ...[
-              const SizedBox(height: 20),
               Divider(color: isDark ? Colors.white12 : Colors.black12),
-              const SizedBox(height: 20),
-              _buildInsights(context),
+              const SizedBox(height: 16),
+              _buildBenchmarkSection(
+                context,
+                '3 Aylık Ortalama',
+                comparisonData.threeMonthBenchmark,
+                Colors.blue,
+              ),
+              const SizedBox(height: 12),
+
+              _buildBenchmarkSection(
+                context,
+                '6 Aylık Ortalama',
+                comparisonData.sixMonthBenchmark,
+                Colors.purple,
+              ),
+              const SizedBox(height: 12),
+
+              _buildBenchmarkSection(
+                context,
+                '12 Aylık Ortalama',
+                comparisonData.twelveMonthBenchmark,
+                Colors.orange,
+              ),
+              if (comparisonData.insights.isNotEmpty) ...[
+                const SizedBox(height: 16),
+                Divider(color: isDark ? Colors.white12 : Colors.black12),
+                const SizedBox(height: 16),
+                _buildInsights(context),
+              ],
             ],
-          ],
+          ),
         ),
       ),
     );
