@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:money/models/security/two_factor_models.dart';
+import 'package:parion/models/security/two_factor_models.dart';
 
 void main() {
   group('TwoFactorConfig', () {

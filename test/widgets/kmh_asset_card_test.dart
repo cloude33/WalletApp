@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:money/models/wallet.dart';
-import 'package:money/widgets/statistics/kmh_asset_card.dart';
+import 'package:parion/models/wallet.dart';
+import 'package:parion/widgets/statistics/kmh_asset_card.dart';
 
 void main() {
   group('KmhAssetCard Widget Tests', () {

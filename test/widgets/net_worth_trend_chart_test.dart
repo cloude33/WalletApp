@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:intl/date_symbol_data_local.dart';
-import 'package:money/models/asset_analysis.dart';
-import 'package:money/widgets/statistics/net_worth_trend_chart.dart';
+import 'package:parion/models/asset_analysis.dart';
+import 'package:parion/widgets/statistics/net_worth_trend_chart.dart';
 
 void main() {
   group('NetWorthTrendChart Widget Tests', () {

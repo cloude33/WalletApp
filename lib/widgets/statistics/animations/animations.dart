@@ -2,7 +2,7 @@
 /// 
 /// This file exports all animation widgets for easy import:
 /// ```dart
-/// import 'package:money/widgets/statistics/animations/animations.dart';
+/// import 'package:parion/widgets/statistics/animations/animations.dart';
 /// ```
 library;
 

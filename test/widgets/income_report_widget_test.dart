@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:intl/date_symbol_data_local.dart';
-import 'package:money/models/report_data.dart';
-import 'package:money/models/cash_flow_data.dart';
-import 'package:money/widgets/statistics/income_report_widget.dart';
+import 'package:parion/models/report_data.dart';
+import 'package:parion/models/cash_flow_data.dart';
+import 'package:parion/widgets/statistics/income_report_widget.dart';
 
 void main() {
   group('IncomeReportWidget', () {

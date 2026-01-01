@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:money/screens/security/security_dashboard_screen.dart';
+import 'package:parion/screens/security/security_dashboard_screen.dart';
 
 void main() {
   group('SecurityDashboardScreen', () {

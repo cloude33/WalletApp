@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:money/screens/security/security_settings_screen.dart';
-import 'package:money/services/auth/auth_service.dart';
-import 'package:money/services/auth/two_factor_service.dart';
+import 'package:parion/screens/security/security_settings_screen.dart';
+import 'package:parion/services/auth/auth_service.dart';
+import 'package:parion/services/auth/two_factor_service.dart';
 
 void main() {
   group('SecuritySettingsScreen Widget Tests', () {

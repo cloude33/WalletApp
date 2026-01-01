@@ -130,9 +130,8 @@ class SecurityConfig {
       return 'Oturum zaman aşımı 24 saatten fazla olamaz';
     }
 
-    if (!isBiometricEnabled) {
-      // return 'En az bir kimlik doğrulama yöntemi (Biyometrik) etkin olmalıdır';
-      // Allowing no auth method for now if user wants to rely on device lock or nothing
+    if (!isBiometricEnabled && !isTwoFactorEnabled) {
+      return 'En az bir kimlik doğrulama yöntemi etkin olmalıdır';
     }
 
     if (isBiometricEnabled && enabledBiometrics.isEmpty) {

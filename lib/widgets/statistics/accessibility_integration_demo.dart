@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:money/widgets/statistics/accessibility_helpers.dart';
-import 'package:money/widgets/statistics/summary_card.dart';
-import 'package:money/widgets/statistics/metric_card.dart';
-import 'package:money/models/cash_flow_data.dart';
+import 'package:parion/widgets/statistics/accessibility_helpers.dart';
+import 'package:parion/widgets/statistics/summary_card.dart';
+import 'package:parion/widgets/statistics/metric_card.dart';
+import 'package:parion/models/cash_flow_data.dart';
 
 /// Comprehensive demo showing all accessibility features integrated
 class AccessibilityIntegrationDemo extends StatefulWidget {

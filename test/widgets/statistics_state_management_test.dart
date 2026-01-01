@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:money/widgets/statistics/statistics_loading_state.dart';
-import 'package:money/widgets/statistics/statistics_skeleton_loader.dart';
-import 'package:money/widgets/statistics/statistics_error_state.dart';
-import 'package:money/widgets/statistics/statistics_empty_state.dart';
-import 'package:money/widgets/statistics/statistics_state_builder.dart';
+import 'package:parion/widgets/statistics/statistics_loading_state.dart';
+import 'package:parion/widgets/statistics/statistics_skeleton_loader.dart';
+import 'package:parion/widgets/statistics/statistics_error_state.dart';
+import 'package:parion/widgets/statistics/statistics_empty_state.dart';
+import 'package:parion/widgets/statistics/statistics_state_builder.dart';
 
 void main() {
   group('StatisticsLoadingState', () {

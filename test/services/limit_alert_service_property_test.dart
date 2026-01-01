@@ -1,14 +1,14 @@
 // ignore_for_file: deprecated_member_use
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive_flutter/hive_flutter.dart';
-import 'package:money/models/credit_card.dart';
-import 'package:money/models/credit_card_transaction.dart';
-import 'package:money/models/limit_alert.dart';
-import 'package:money/repositories/credit_card_repository.dart';
-import 'package:money/repositories/credit_card_transaction_repository.dart';
-import 'package:money/repositories/limit_alert_repository.dart';
-import 'package:money/services/credit_card_box_service.dart';
-import 'package:money/services/limit_alert_service.dart';
+import 'package:parion/models/credit_card.dart';
+import 'package:parion/models/credit_card_transaction.dart';
+import 'package:parion/models/limit_alert.dart';
+import 'package:parion/repositories/credit_card_repository.dart';
+import 'package:parion/repositories/credit_card_transaction_repository.dart';
+import 'package:parion/repositories/limit_alert_repository.dart';
+import 'package:parion/services/credit_card_box_service.dart';
+import 'package:parion/services/limit_alert_service.dart';
 import 'dart:math';
 import 'package:flutter/material.dart';
 

@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:money/services/kmh_interest_calculator.dart';
+import 'package:parion/services/kmh_interest_calculator.dart';
 import '../property_test_utils.dart';
 
 /// Property-based tests for KmhInterestCalculator

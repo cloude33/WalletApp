@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:money/models/transaction.dart';
-import 'package:money/models/credit_card_transaction.dart';
-import 'package:money/widgets/statistics/search_results.dart';
+import 'package:parion/models/transaction.dart';
+import 'package:parion/models/credit_card_transaction.dart';
+import 'package:parion/widgets/statistics/search_results.dart';
 import 'package:intl/date_symbol_data_local.dart';
 
 void main() {

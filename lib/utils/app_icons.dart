@@ -6,9 +6,8 @@ import 'package:lucide_icons/lucide_icons.dart';
 
 /// Uygulama genelinde kullanılan renkli ikonlar
 class AppIcons {
-  
   // ==================== FİNANSAL İKONLAR ====================
-  
+
   /// Para ve finans ikonları
   static const IconData money = FontAwesomeIcons.moneyBill;
   static const IconData wallet = FontAwesomeIcons.wallet;
@@ -19,21 +18,21 @@ class AppIcons {
   static const IconData handHoldingDollar = FontAwesomeIcons.handHoldingDollar;
   static const IconData receipt = FontAwesomeIcons.receipt;
   static const IconData invoice = FontAwesomeIcons.fileInvoiceDollar;
-  
+
   /// Gelir/Gider ikonları
   static const IconData income = FontAwesomeIcons.arrowTrendUp;
   static const IconData expense = FontAwesomeIcons.arrowTrendDown;
   static const IconData transfer = FontAwesomeIcons.rightLeft;
   static const IconData exchange = FontAwesomeIcons.arrowsRotate;
-  
+
   // ==================== KATEGORİ İKONLARI ====================
-  
+
   /// Yemek ve içecek
   static const IconData food = FontAwesomeIcons.utensils;
   static const IconData coffee = FontAwesomeIcons.mugHot;
   static const IconData pizza = FontAwesomeIcons.pizzaSlice;
   static const IconData burger = FontAwesomeIcons.burger;
-  
+
   /// Ulaşım
   static const IconData car = FontAwesomeIcons.car;
   static const IconData bus = FontAwesomeIcons.bus;
@@ -43,73 +42,73 @@ class AppIcons {
   static const IconData motorcycle = FontAwesomeIcons.motorcycle;
   static const IconData taxi = FontAwesomeIcons.taxi;
   static const IconData gasStation = FontAwesomeIcons.gasPump;
-  
+
   /// Alışveriş
   static const IconData shopping = FontAwesomeIcons.bagShopping;
   static const IconData shoppingCart = FontAwesomeIcons.cartShopping;
   static const IconData store = FontAwesomeIcons.store;
   static const IconData gift = FontAwesomeIcons.gift;
   static const IconData tshirt = FontAwesomeIcons.shirt;
-  
+
   /// Sağlık
   static const IconData health = FontAwesomeIcons.heartPulse;
   static const IconData hospital = FontAwesomeIcons.hospital;
   static const IconData pills = FontAwesomeIcons.pills;
   static const IconData stethoscope = FontAwesomeIcons.stethoscope;
-  
+
   /// Eğlence
   static const IconData entertainment = FontAwesomeIcons.masksTheater;
   static const IconData movie = FontAwesomeIcons.film;
   static const IconData music = FontAwesomeIcons.music;
   static const IconData gamepad = FontAwesomeIcons.gamepad;
   static const IconData camera = FontAwesomeIcons.camera;
-  
+
   /// Ev ve yaşam
   static const IconData home = FontAwesomeIcons.house;
   static const IconData bed = FontAwesomeIcons.bed;
   static const IconData couch = FontAwesomeIcons.couch;
   static const IconData hammer = FontAwesomeIcons.hammer;
   static const IconData paintBrush = FontAwesomeIcons.paintbrush;
-  
+
   // ==================== FATURA İKONLARI ====================
-  
+
   /// Elektrik
   static const IconData electricity = FontAwesomeIcons.bolt;
   static const IconData lightbulb = FontAwesomeIcons.lightbulb;
-  
+
   /// Su
   static const IconData water = FontAwesomeIcons.droplet;
   static const IconData faucet = FontAwesomeIcons.faucetDrip;
-  
+
   /// Doğalgaz
   static const IconData gas = FontAwesomeIcons.fire;
   static const IconData fireFlame = FontAwesomeIcons.fireFlameSimple;
-  
+
   /// İnternet ve telefon
   static const IconData internet = FontAwesomeIcons.wifi;
   static const IconData phone = FontAwesomeIcons.phone;
   static const IconData mobile = FontAwesomeIcons.mobileScreen;
   static const IconData router = FontAwesomeIcons.wifi;
-  
+
   /// Kira ve sigorta
   static const IconData rent = FontAwesomeIcons.houseChimney;
   static const IconData insurance = FontAwesomeIcons.shield;
   static const IconData umbrella = FontAwesomeIcons.umbrella;
-  
+
   /// Abonelik
   static const IconData subscription = FontAwesomeIcons.repeat;
   static const IconData netflix = FontAwesomeIcons.tv;
   static const IconData spotify = FontAwesomeIcons.spotify;
-  
+
   // ==================== UYGULAMA İKONLARI ====================
-  
+
   /// Navigasyon
   static const IconData dashboard = FontAwesomeIcons.chartLine;
   static const IconData statistics = FontAwesomeIcons.chartPie;
   static const IconData calendar = FontAwesomeIcons.calendar;
   static const IconData settings = FontAwesomeIcons.gear;
   static const IconData profile = FontAwesomeIcons.user;
-  
+
   /// Aksiyonlar
   static const IconData add = FontAwesomeIcons.plus;
   static const IconData edit = FontAwesomeIcons.penToSquare;
@@ -118,7 +117,7 @@ class AppIcons {
   static const IconData search = FontAwesomeIcons.magnifyingGlass;
   static const IconData filter = FontAwesomeIcons.filter;
   static const IconData sort = FontAwesomeIcons.sort;
-  
+
   /// Güvenlik
   static const IconData lock = FontAwesomeIcons.lock;
   static const IconData unlock = FontAwesomeIcons.lockOpen;
@@ -126,7 +125,7 @@ class AppIcons {
   static const IconData eye = FontAwesomeIcons.eye;
   static const IconData eyeSlash = FontAwesomeIcons.eyeSlash;
   static const IconData shield = FontAwesomeIcons.shieldHalved;
-  
+
   /// Bildirimler
   static const IconData notification = FontAwesomeIcons.bell;
   static const IconData notificationOff = FontAwesomeIcons.bellSlash;
@@ -134,7 +133,7 @@ class AppIcons {
   static const IconData info = FontAwesomeIcons.circleInfo;
   static const IconData success = FontAwesomeIcons.circleCheck;
   static const IconData error = FontAwesomeIcons.circleXmark;
-  
+
   /// Yedekleme ve senkronizasyon
   static const IconData backup = FontAwesomeIcons.cloudArrowUp;
   static const IconData restore = FontAwesomeIcons.cloudArrowDown;
@@ -142,15 +141,14 @@ class AppIcons {
   static const IconData cloud = FontAwesomeIcons.cloud;
   static const IconData download = FontAwesomeIcons.download;
   static const IconData upload = FontAwesomeIcons.upload;
-  
+
   /// Sosyal medya
   static const IconData google = FontAwesomeIcons.google;
   static const IconData apple = FontAwesomeIcons.apple;
-  static const IconData facebook = FontAwesomeIcons.facebook;
   static const IconData twitter = FontAwesomeIcons.twitter;
-  
+
   // ==================== PHOSPHOR İKONLARI ====================
-  
+
   /// Modern ve minimal ikonlar
   static final IconData walletPhosphor = PhosphorIcons.wallet();
   static final IconData chartPhosphor = PhosphorIcons.chartPie();
@@ -158,18 +156,18 @@ class AppIcons {
   static final IconData trendDownPhosphor = PhosphorIcons.trendDown();
   static final IconData coinPhosphor = PhosphorIcons.coin();
   static final IconData creditCardPhosphor = PhosphorIcons.creditCard();
-  
+
   // ==================== LINE İKONLARI ====================
-  
+
   /// İnce çizgili ikonlar
   static const IconData walletLine = LineIcons.wallet;
   static const IconData chartLine = LineIcons.lineChart;
   static const IconData moneyLine = LineIcons.moneyBill;
   static const IconData creditCardLine = LineIcons.creditCard;
   static const IconData bankLine = LineIcons.university;
-  
+
   // ==================== MODERN İKONLAR ====================
-  
+
   /// Minimal ve modern ikonlar (resimdeki gibi)
   static const IconData shoppingModern = LucideIcons.shoppingCart;
   static const IconData foodModern = LucideIcons.utensils;
@@ -199,23 +197,27 @@ class AppIcons {
   static const IconData vegetableModern = LucideIcons.carrot;
   static const IconData fruitModern = LucideIcons.apple;
   static const IconData otherModern = LucideIcons.moreHorizontal;
-  
+
   // ==================== LUCIDE İKONLARI ====================
-  
+
   /// Modern ve temiz ikonlar
   static const IconData walletLucide = LucideIcons.wallet;
   static const IconData trendingUpLucide = LucideIcons.trendingUp;
   static const IconData trendingDownLucide = LucideIcons.trendingDown;
   static const IconData pieChartLucide = LucideIcons.pieChart;
   static const IconData barChartLucide = LucideIcons.barChart;
-  
+
   // ==================== RENKLI İKON YARDIMCILARı ====================
-  
+
   /// Kategori renkli ikonları
-  static Widget getCategoryIcon(String category, {double size = 24, Color? color}) {
+  static Widget getCategoryIcon(
+    String category, {
+    double size = 24,
+    Color? color,
+  }) {
     IconData iconData;
     Color defaultColor;
-    
+
     switch (category.toLowerCase()) {
       case 'alışveriş':
       case 'alisveris':
@@ -412,12 +414,8 @@ class AppIcons {
         iconData = money;
         defaultColor = Colors.grey;
     }
-    
-    return Icon(
-      iconData,
-      size: size,
-      color: color ?? defaultColor,
-    );
+
+    return Icon(iconData, size: size, color: color ?? defaultColor);
   }
 
   /// Kategori rengini getirir
@@ -468,7 +466,7 @@ class AppIcons {
         return Colors.grey;
     }
   }
-  
+
   /// Finansal durum renkli ikonları
   static Widget getFinancialStatusIcon(String type, {double size = 24}) {
     switch (type.toLowerCase()) {
@@ -484,7 +482,7 @@ class AppIcons {
         return FaIcon(money, size: size, color: Colors.grey);
     }
   }
-  
+
   /// Yedekleme durumu renkli ikonları
   static Widget getBackupStatusIcon(String status, {double size = 24}) {
     switch (status.toLowerCase()) {
@@ -510,7 +508,7 @@ class AppIcons {
         return FaIcon(cloud, size: size, color: Colors.grey);
     }
   }
-  
+
   /// Güvenlik durumu renkli ikonları
   static Widget getSecurityIcon(String type, {double size = 24}) {
     switch (type.toLowerCase()) {
@@ -539,7 +537,7 @@ class AppIconTheme {
   static const Color error = Colors.red;
   static const Color warning = Colors.orange;
   static const Color info = Colors.blue;
-  
+
   /// Kategori renkleri
   static const Map<String, Color> categoryColors = {
     'yemek': Colors.orange,
@@ -557,18 +555,18 @@ class AppIconTheme {
     'sigorta': Colors.cyan,
     'abonelik': Colors.deepPurple,
   };
-  
+
   /// Gradient renkler
   static const List<Color> primaryGradient = [
     Color(0xFF2C6BED),
     Color(0xFF1E40AF),
   ];
-  
+
   static const List<Color> successGradient = [
     Color(0xFF10B981),
     Color(0xFF059669),
   ];
-  
+
   static const List<Color> errorGradient = [
     Color(0xFFEF4444),
     Color(0xFFDC2626),

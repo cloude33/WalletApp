@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:money/services/auth/biometric_service.dart';
-import 'package:money/models/security/security_models.dart';
+import 'package:parion/services/auth/biometric_service.dart';
+import 'package:parion/models/security/security_models.dart';
 
 /// Biyometrik kimlik doğrulama widget'ı
 ///

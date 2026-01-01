@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:money/models/credit_card.dart';
+import 'package:parion/models/credit_card.dart';
 import '../property_test_utils.dart';
 import 'package:uuid/uuid.dart';
 

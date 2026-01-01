@@ -1,10 +1,10 @@
 import 'package:flutter_test/flutter_test.dart';
 // Removed: local_auth/error_codes.dart import (package removed in v3)
 
-import 'package:money/services/auth/biometric_service.dart';
-import 'package:money/models/security/auth_result.dart';
-import 'package:money/models/security/biometric_type.dart' as app_biometric;
-import 'package:money/models/security/auth_state.dart';
+import 'package:parion/services/auth/biometric_service.dart';
+import 'package:parion/models/security/auth_result.dart';
+import 'package:parion/models/security/biometric_type.dart' as app_biometric;
+import 'package:parion/models/security/auth_state.dart';
 import '../../property_test_utils.dart';
 
 /// Mock BiometricService for testing fallback behavior

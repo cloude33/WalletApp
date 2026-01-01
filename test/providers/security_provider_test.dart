@@ -1,8 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:money/providers/security_provider.dart';
-import 'package:money/models/security/auth_state.dart';
-import 'package:money/models/security/security_event.dart';
-import 'package:money/models/security/security_models.dart';
+import 'package:parion/providers/security_provider.dart';
+import 'package:parion/models/security/auth_state.dart';
+import 'package:parion/models/security/security_event.dart';
+import 'package:parion/models/security/security_models.dart';
 
 void main() {
   // Initialize Flutter bindings for tests

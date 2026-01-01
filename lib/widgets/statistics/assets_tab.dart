@@ -32,14 +32,18 @@ class _AssetsTabState extends State<AssetsTab> {
   }
 
   Future<void> _loadAssetData() async {
+    print('DEBUG: _loadAssetData started');
     setState(() {
       _isLoading = true;
       _error = null;
     });
 
     try {
+      print('DEBUG: Calling analyzeAssets');
       final data = await _statisticsService.analyzeAssets();
+      print('DEBUG: analyzeAssets returned');
       final wallets = await _dataService.getWallets();
+      print('DEBUG: getWallets returned ${wallets.length} wallets');
       final kmhAccounts = wallets.where((w) => w.isKmhAccount).toList();
 
       if (mounted) {
@@ -48,8 +52,10 @@ class _AssetsTabState extends State<AssetsTab> {
           _kmhAccounts = kmhAccounts;
           _isLoading = false;
         });
+        print('DEBUG: State updated with data');
       }
     } catch (e) {
+      print('DEBUG: Error in _loadAssetData: $e');
       if (mounted) {
         setState(() {
           _error = e.toString();

@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:money/utils/security/encryption_helper.dart';
+import 'package:parion/utils/security/encryption_helper.dart';
 
 /// Performance optimization tests for authentication services
 /// 

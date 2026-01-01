@@ -1,8 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:money/services/auth/biometric_service.dart';
-import 'package:money/models/security/auth_result.dart';
-import 'package:money/models/security/auth_state.dart';
-import 'package:money/models/security/biometric_type.dart' as app_biometric;
+import 'package:parion/services/auth/biometric_service.dart';
+import 'package:parion/models/security/auth_result.dart';
+import 'package:parion/models/security/auth_state.dart';
+import 'package:parion/models/security/biometric_type.dart' as app_biometric;
 
 void main() {
   group('BiometricService', () {

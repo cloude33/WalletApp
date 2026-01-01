@@ -65,12 +65,16 @@ class _KmhStatementScreenState extends State<KmhStatementScreen> {
       return;
     }
 
+    final currentlyLoadedCount = _lazyLoadController!.loadedIndices.length;
+    final totalTransactions = _statement!.transactions.length;
+    if (currentlyLoadedCount >= totalTransactions) {
+      return;
+    }
+
     setState(() => _isLoadingMore = true);
 
     try {
       await Future.delayed(const Duration(milliseconds: 100));
-      final currentlyLoadedCount = _lazyLoadController!.loadedIndices.length;
-      final totalTransactions = _statement!.transactions.length;
       final remainingCount = totalTransactions - currentlyLoadedCount;
       final batchSize = _loadMoreCount.clamp(0, remainingCount);
 

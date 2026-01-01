@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:money/services/auth/secure_storage_service.dart';
-import 'package:money/models/security/security_config.dart';
+import 'package:parion/services/auth/secure_storage_service.dart';
+import 'package:parion/models/security/security_config.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();

@@ -1,8 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:money/services/auth/auth_service.dart';
-import 'package:money/services/auth/session_manager.dart';
-import 'package:money/services/auth/secure_storage_service.dart';
-import 'package:money/services/auth/biometric_service.dart';
+import 'package:parion/services/auth/auth_service.dart';
+import 'package:parion/services/auth/session_manager.dart';
+import 'package:parion/services/auth/secure_storage_service.dart';
+import 'package:parion/services/auth/biometric_service.dart';
 
 /// Memory Optimization Tests
 /// 

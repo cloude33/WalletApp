@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:money/widgets/statistics/paginated_list_view.dart';
+import 'package:parion/widgets/statistics/paginated_list_view.dart';
 
 void main() {
   group('PaginatedListView', () {

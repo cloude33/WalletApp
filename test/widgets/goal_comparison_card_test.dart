@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:money/models/goal_comparison.dart';
-import 'package:money/widgets/statistics/goal_comparison_card.dart';
+import 'package:parion/models/goal_comparison.dart';
+import 'package:parion/widgets/statistics/goal_comparison_card.dart';
 
 void main() {
   group('GoalComparisonCard Widget Tests', () {

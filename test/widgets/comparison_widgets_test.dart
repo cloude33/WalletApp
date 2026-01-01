@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:intl/date_symbol_data_local.dart';
-import 'package:money/models/comparison_data.dart';
-import 'package:money/models/cash_flow_data.dart';
-import 'package:money/widgets/statistics/comparison_card.dart';
-import 'package:money/widgets/statistics/period_selector.dart';
+import 'package:parion/models/comparison_data.dart';
+import 'package:parion/models/cash_flow_data.dart';
+import 'package:parion/widgets/statistics/comparison_card.dart';
+import 'package:parion/widgets/statistics/period_selector.dart';
 
 /// Tests for comparison widgets
 ///

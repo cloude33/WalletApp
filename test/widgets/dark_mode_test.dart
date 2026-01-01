@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:money/widgets/statistics/summary_card.dart';
-import 'package:money/widgets/statistics/metric_card.dart';
-import 'package:money/widgets/statistics/custom_tooltip.dart';
-import 'package:money/widgets/statistics/chart_legend.dart';
-import 'package:money/widgets/statistics/comparison_card.dart';
-import 'package:money/widgets/statistics/filter_bar.dart';
-import 'package:money/models/cash_flow_data.dart';
-import 'package:money/models/comparison_data.dart';
-import 'package:money/models/category.dart';
-import 'package:money/models/wallet.dart';
+import 'package:parion/widgets/statistics/summary_card.dart';
+import 'package:parion/widgets/statistics/metric_card.dart';
+import 'package:parion/widgets/statistics/custom_tooltip.dart';
+import 'package:parion/widgets/statistics/chart_legend.dart';
+import 'package:parion/widgets/statistics/comparison_card.dart';
+import 'package:parion/widgets/statistics/filter_bar.dart';
+import 'package:parion/models/cash_flow_data.dart';
+import 'package:parion/models/comparison_data.dart';
+import 'package:parion/models/category.dart';
+import 'package:parion/models/wallet.dart';
 
 // Helper to create ComparisonMetric
 ComparisonMetric createMetric(String label, double v1, double v2) {

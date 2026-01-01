@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:money/utils/debounce_throttle.dart';
+import 'package:parion/utils/debounce_throttle.dart';
 
 void main() {
   group('Debouncer Tests', () {

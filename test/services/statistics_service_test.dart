@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:money/services/statistics_service.dart';
-import 'package:money/models/cash_flow_data.dart';
-import 'package:money/models/spending_analysis.dart';
+import 'package:parion/services/statistics_service.dart';
+import 'package:parion/models/cash_flow_data.dart';
+import 'package:parion/models/spending_analysis.dart';
 
 /// Unit Tests for StatisticsService
 ///

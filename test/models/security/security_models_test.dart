@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:money/models/security/security_models.dart';
+import 'package:parion/models/security/security_models.dart';
 
 void main() {
   group('Security Models Tests', () {

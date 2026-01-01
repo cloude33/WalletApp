@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:money/models/credit_analysis.dart';
-import 'package:money/widgets/statistics/kmh_trend_charts.dart';
+import 'package:parion/models/credit_analysis.dart';
+import 'package:parion/widgets/statistics/kmh_trend_charts.dart';
 import 'package:intl/date_symbol_data_local.dart';
 
 void main() {

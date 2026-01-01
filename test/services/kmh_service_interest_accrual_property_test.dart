@@ -1,13 +1,13 @@
 import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive/hive.dart';
-import 'package:money/models/kmh_transaction.dart';
-import 'package:money/models/kmh_transaction_type.dart';
-import 'package:money/services/kmh_service.dart';
-import 'package:money/services/data_service.dart';
-import 'package:money/services/kmh_box_service.dart';
-import 'package:money/repositories/kmh_repository.dart';
-import 'package:money/services/kmh_interest_calculator.dart';
+import 'package:parion/models/kmh_transaction.dart';
+import 'package:parion/models/kmh_transaction_type.dart';
+import 'package:parion/services/kmh_service.dart';
+import 'package:parion/services/data_service.dart';
+import 'package:parion/services/kmh_box_service.dart';
+import 'package:parion/repositories/kmh_repository.dart';
+import 'package:parion/services/kmh_interest_calculator.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../property_test_utils.dart';
 

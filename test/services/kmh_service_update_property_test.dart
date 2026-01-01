@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:money/services/kmh_service.dart';
-import 'package:money/services/data_service.dart';
+import 'package:parion/services/kmh_service.dart';
+import 'package:parion/services/data_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../property_test_utils.dart';
 

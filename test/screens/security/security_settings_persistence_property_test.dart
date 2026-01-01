@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:money/models/security/security_models.dart';
-import 'package:money/services/auth/auth_service.dart';
-import 'package:money/services/auth/secure_storage_service.dart';
+import 'package:parion/models/security/security_models.dart';
+import 'package:parion/services/auth/auth_service.dart';
+import 'package:parion/services/auth/secure_storage_service.dart';
 import '../../property_test_utils.dart';
 
 void main() {

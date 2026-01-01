@@ -1,6 +1,6 @@
 import 'package:uuid/uuid.dart';
 
-enum AuthMethod { email, google, facebook, apple }
+enum AuthMethod { email, google, apple }
 
 class User {
   final String id;
@@ -38,12 +38,11 @@ class User {
   User lock() {
     return copyWith(
       isLocked: true,
-      lockUntil: DateTime.now().add(
-        const Duration(minutes: 30),
-      ),
+      lockUntil: DateTime.now().add(const Duration(minutes: 30)),
       updatedAt: DateTime.now(),
     );
   }
+
   User unlock() {
     return copyWith(
       isLocked: false,
@@ -52,6 +51,7 @@ class User {
       updatedAt: DateTime.now(),
     );
   }
+
   User addFailedLoginAttempt() {
     final newAttempts = loginAttempts + 1;
     return copyWith(
@@ -63,9 +63,11 @@ class User {
       updatedAt: DateTime.now(),
     );
   }
+
   User updateLastActive() {
     return copyWith(lastActive: DateTime.now());
   }
+
   User copyWith({
     String? id,
     String? name,
@@ -120,9 +122,7 @@ class User {
   factory User.fromJson(Map<String, dynamic> json) {
     try {
       return User(
-        id:
-            json['id']?.toString() ??
-            const Uuid().v4(),
+        id: json['id']?.toString() ?? const Uuid().v4(),
         name: json['name']?.toString() ?? 'Kullanıcı',
         email: json['email']?.toString(),
         passwordHash: json['passwordHash']?.toString(),

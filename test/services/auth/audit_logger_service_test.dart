@@ -3,8 +3,8 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path_provider_platform_interface/path_provider_platform_interface.dart';
 import 'package:plugin_platform_interface/plugin_platform_interface.dart';
-import 'package:money/services/auth/audit_logger_service.dart';
-import 'package:money/models/security/security_event.dart';
+import 'package:parion/services/auth/audit_logger_service.dart';
+import 'package:parion/models/security/security_event.dart';
 
 // Mock path provider for testing
 class MockPathProviderPlatform extends Fake

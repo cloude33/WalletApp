@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:money/widgets/statistics/filter_bar.dart';
-import 'package:money/widgets/statistics/statistics_widgets.dart';
+import 'package:parion/widgets/statistics/filter_bar.dart';
+import 'package:parion/widgets/statistics/statistics_widgets.dart';
 
 void main() {
   group('Filter Interaction Comprehensive Tests', () {

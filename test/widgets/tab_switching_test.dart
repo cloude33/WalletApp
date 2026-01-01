@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:money/models/transaction.dart';
-import 'package:money/models/wallet.dart';
-import 'package:money/screens/statistics_screen.dart';
+import 'package:parion/models/transaction.dart';
+import 'package:parion/models/wallet.dart';
+import 'package:parion/screens/statistics_screen.dart';
 
 void main() {
   group('Statistics Screen Tab Switching Tests', () {

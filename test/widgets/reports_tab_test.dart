@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:money/widgets/statistics/reports_tab.dart';
+import 'package:parion/widgets/statistics/reports_tab.dart';
 import '../test_setup.dart';
 
 /// Test suite for ReportsTab widget

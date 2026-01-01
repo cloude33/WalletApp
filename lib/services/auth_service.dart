@@ -1,5 +1,4 @@
 import 'package:flutter/services.dart';
-import 'package:flutter/foundation.dart';
 import 'package:local_auth/local_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
@@ -14,9 +13,7 @@ class AuthService {
   late final GoogleSignIn _googleSignIn;
 
   AuthService._internal() {
-    _googleSignIn = GoogleSignIn(
-      scopes: ['email', 'profile'],
-    );
+    _googleSignIn = GoogleSignIn(scopes: ['email', 'profile']);
   }
 
   SharedPreferences? _prefs;
@@ -24,6 +21,24 @@ class AuthService {
 
   Future<void> init() async {
     _prefs = await SharedPreferences.getInstance();
+  }
+
+  Future<void> savePinCode(String pin) async {
+    await _secureStorage.write(key: 'pin_code', value: pin);
+  }
+
+  Future<String?> getPinCode() async {
+    return await _secureStorage.read(key: 'pin_code');
+  }
+
+  Future<bool> verifyPinCode(String pin) async {
+    final savedPin = await getPinCode();
+    return savedPin == pin;
+  }
+
+  Future<bool> hasPinCode() async {
+    final pin = await getPinCode();
+    return pin != null && pin.isNotEmpty;
   }
 
   Future<bool> isBiometricAvailable() async {
@@ -66,8 +81,8 @@ class AuthService {
       );
       return didAuthenticate;
     } on PlatformException catch (e) {
-      if (e.code == 'NotAvailable' || 
-          e.code == 'NotEnrolled' || 
+      if (e.code == 'NotAvailable' ||
+          e.code == 'NotEnrolled' ||
           e.code == 'LockedOut' ||
           e.code == 'PermanentlyLockedOut') {
         rethrow;
@@ -77,25 +92,17 @@ class AuthService {
       return false;
     }
   }
+
   Future<GoogleSignInAccount?> signInWithGoogle() async {
     try {
-      if (kIsWeb) {
-        // Web'de signIn() deprecate edildi ve popup sorunlarına yol açıyor.
-        // Google Identity Services (GIS) kullanımı önerilir.
-        // Bu servis doğrudan GoogleSignInAccount döndürdüğü için 
-        // signInSilently veya renderButton kullanımı daha uygundur.
-        return await _googleSignIn.signInSilently();
-      } else {
-        final GoogleSignInAccount? account = await _googleSignIn.signIn();
-        if (account != null) {
-          await _prefs?.setString('google_email', account.email);
-          await _prefs?.setString('google_name', account.displayName ?? '');
-          await _prefs?.setString('google_photo', account.photoUrl ?? '');
-        }
-        return account;
+      final GoogleSignInAccount? account = await _googleSignIn.signIn();
+      if (account != null) {
+        await _prefs?.setString('google_email', account.email);
+        await _prefs?.setString('google_name', account.displayName ?? '');
+        await _prefs?.setString('google_photo', account.photoUrl ?? '');
       }
+      return account;
     } catch (e) {
-      debugPrint('Google Sign-In Error: $e');
       return null;
     }
   }
@@ -107,6 +114,7 @@ class AuthService {
     await _prefs?.remove('google_photo');
   }
 
+  // Apple Sign In
   Future<AuthorizationCredentialAppleID?> signInWithApple() async {
     try {
       final credential = await SignInWithApple.getAppleIDCredential(
@@ -120,7 +128,9 @@ class AuthService {
         await _prefs?.setString('apple_email', credential.email!);
       }
       if (credential.givenName != null || credential.familyName != null) {
-        final fullName = '${credential.givenName ?? ''} ${credential.familyName ?? ''}'.trim();
+        final fullName =
+            '${credential.givenName ?? ''} ${credential.familyName ?? ''}'
+                .trim();
         await _prefs?.setString('apple_name', fullName);
       }
       if (credential.userIdentifier != null) {
@@ -142,22 +152,28 @@ class AuthService {
   Future<bool> isAppleSignInAvailable() async {
     return await SignInWithApple.isAvailable();
   }
+
   Future<bool> isLoggedIn() async {
     final googleEmail = _prefs?.getString('google_email');
     final appleUserId = _prefs?.getString('apple_user_id');
+    final hasPin = await hasPinCode();
 
-    return googleEmail != null || appleUserId != null;
+    return googleEmail != null || appleUserId != null || hasPin;
   }
 
   Future<String?> getCurrentAuthMethod() async {
     if (_prefs?.getString('google_email') != null) return 'google';
     if (_prefs?.getString('apple_user_id') != null) return 'apple';
+    if (await hasPinCode()) return 'pin';
     return null;
   }
+
   Future<void> logoutAll() async {
     await signOutGoogle();
     await signOutApple();
+    await _secureStorage.delete(key: 'pin_code');
   }
+
   Future<void> setBiometricEnabled(bool enabled) async {
     await _secureStorage.write(
       key: 'biometric_enabled',

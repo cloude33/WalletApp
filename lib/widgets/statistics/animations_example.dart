@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
-import 'package:money/models/cash_flow_data.dart';
+import 'package:parion/models/cash_flow_data.dart';
 import 'animated_summary_card.dart';
 import 'animated_metric_card.dart';
 import 'animated_chart_card.dart';

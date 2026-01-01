@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:money/models/security/security_config.dart';
-import 'package:money/models/security/biometric_type.dart';
-import 'package:money/utils/security/security_validator.dart';
+import 'package:parion/models/security/security_config.dart';
+import 'package:parion/models/security/biometric_type.dart';
+import 'package:parion/utils/security/security_validator.dart';
 
 void main() {
   // PIN Strength Tests removed
@@ -10,7 +10,10 @@ void main() {
 
   group('SecurityValidator - Security Config Tests', () {
     test('should accept valid security config', () {
-      final config = SecurityConfig.defaultConfig();
+      final config = SecurityConfig.defaultConfig().copyWith(
+        isBiometricEnabled: true,
+        enabledBiometrics: [BiometricType.fingerprint],
+      );
       final error = SecurityValidator.validateSecurityConfig(config);
       
       expect(error, isNull);

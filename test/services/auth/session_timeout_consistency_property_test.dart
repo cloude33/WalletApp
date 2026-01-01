@@ -1,8 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:money/services/auth/session_manager.dart';
-import 'package:money/models/security/session_data.dart';
-import 'package:money/models/security/auth_state.dart';
-import 'package:money/models/security/security_models.dart';
+import 'package:parion/services/auth/session_manager.dart';
+import 'package:parion/models/security/session_data.dart';
+import 'package:parion/models/security/auth_state.dart';
+import 'package:parion/models/security/security_models.dart';
 import '../../property_test_utils.dart';
 
 void main() {

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:money/widgets/statistics/search_bar.dart';
+import 'package:parion/widgets/statistics/search_bar.dart';
 
 void main() {
   group('StatisticsSearchBar Widget Tests', () {

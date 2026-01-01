@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
-import 'package:money/services/chart_service.dart';
-import 'package:money/widgets/statistics/interactive_line_chart.dart';
-import 'package:money/widgets/statistics/interactive_pie_chart.dart';
-import 'package:money/widgets/statistics/interactive_bar_chart.dart';
-import 'package:money/widgets/statistics/summary_card.dart';
-import 'package:money/widgets/statistics/metric_card.dart';
-import 'package:money/widgets/statistics/chart_legend.dart';
-import 'package:money/widgets/statistics/custom_tooltip.dart';
-import 'package:money/models/cash_flow_data.dart';
+import 'package:parion/services/chart_service.dart';
+import 'package:parion/widgets/statistics/interactive_line_chart.dart';
+import 'package:parion/widgets/statistics/interactive_pie_chart.dart';
+import 'package:parion/widgets/statistics/interactive_bar_chart.dart';
+import 'package:parion/widgets/statistics/summary_card.dart';
+import 'package:parion/widgets/statistics/metric_card.dart';
+import 'package:parion/widgets/statistics/chart_legend.dart';
+import 'package:parion/widgets/statistics/custom_tooltip.dart';
+import 'package:parion/models/cash_flow_data.dart';
 
 /// Demo screen showcasing dark mode support in statistics widgets
 class DarkModeDemo extends StatefulWidget {

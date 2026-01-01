@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:money/widgets/statistics/export_options_widget.dart';
-import 'package:money/models/report_data.dart';
-import 'package:money/models/transaction.dart';
-import 'package:money/models/cash_flow_data.dart';
+import 'package:parion/widgets/statistics/export_options_widget.dart';
+import 'package:parion/models/report_data.dart';
+import 'package:parion/models/transaction.dart';
+import 'package:parion/models/cash_flow_data.dart';
 
 void main() {
   group('ExportOptionsWidget', () {

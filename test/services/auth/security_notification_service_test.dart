@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:money/services/auth/security_notification_service.dart';
-import 'package:money/models/security/security_event.dart';
+import 'package:parion/services/auth/security_notification_service.dart';
+import 'package:parion/models/security/security_event.dart';
 
 void main() {
   group('SecurityNotificationService', () {

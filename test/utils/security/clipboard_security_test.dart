@@ -1,7 +1,7 @@
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:money/utils/security/clipboard_security.dart';
+import 'package:parion/utils/security/clipboard_security.dart';
 
 void main() {
   group('ClipboardSecurity', () {

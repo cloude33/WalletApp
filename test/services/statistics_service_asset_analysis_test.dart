@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive_flutter/hive_flutter.dart';
-import 'package:money/services/statistics_service.dart';
-import 'package:money/models/asset_analysis.dart';
+import 'package:parion/services/statistics_service.dart';
+import 'package:parion/models/asset_analysis.dart';
 
 /// Tests for StatisticsService asset analysis and financial health score
 /// 

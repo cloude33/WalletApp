@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:money/models/report_data.dart';
-import 'package:money/models/cash_flow_data.dart';
-import 'package:money/widgets/statistics/expense_report_widget.dart';
+import 'package:parion/models/report_data.dart';
+import 'package:parion/models/cash_flow_data.dart';
+import 'package:parion/widgets/statistics/expense_report_widget.dart';
 
 void main() {
   group('ExpenseReportWidget Tests', () {

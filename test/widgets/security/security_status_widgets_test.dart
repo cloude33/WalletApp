@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:money/models/security/security_status.dart';
-import 'package:money/models/security/auth_state.dart';
-import 'package:money/widgets/security/security_status_widgets.dart';
+import 'package:parion/models/security/security_status.dart';
+import 'package:parion/models/security/auth_state.dart';
+import 'package:parion/widgets/security/security_status_widgets.dart';
 
 void main() {
   group('SecurityLevelIndicator', () {

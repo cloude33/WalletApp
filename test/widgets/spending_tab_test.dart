@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:money/widgets/statistics/spending_tab.dart';
+import 'package:parion/widgets/statistics/spending_tab.dart';
 
 void main() {
   group('SpendingTab Widget Tests', () {

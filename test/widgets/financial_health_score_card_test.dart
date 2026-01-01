@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:money/widgets/statistics/financial_health_score_card.dart';
-import 'package:money/models/asset_analysis.dart';
+import 'package:parion/widgets/statistics/financial_health_score_card.dart';
+import 'package:parion/models/asset_analysis.dart';
 
 /// Tests for FinancialHealthScoreCard widget
 /// 

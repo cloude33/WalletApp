@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fl_chart/fl_chart.dart';
-import 'package:money/services/chart_service.dart';
+import 'package:parion/services/chart_service.dart';
 
 void main() {
   late ChartService chartService;

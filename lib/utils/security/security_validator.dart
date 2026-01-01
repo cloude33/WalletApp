@@ -63,7 +63,9 @@ class SecurityValidator {
       case 'biometric_failed':
         return 'Biyometrik doğrulama başarısız';
       case 'biometric_not_available':
-        return 'Biyometrik sensör bulunamadı';
+        return 'Biyometrik doğrulama kullanılamıyor';
+      case 'session_expired':
+        return 'Oturumunuz sona erdi';
       default:
         return 'Bir hata oluştu';
     }
@@ -74,6 +76,10 @@ class SecurityValidator {
     switch (code) {
       case 'config_updated':
         return 'Ayarlar güncellendi';
+      case 'biometric_enrolled':
+        return 'Biyometrik doğrulama etkinleştirildi';
+      case 'auth_success':
+        return 'Giriş başarılı';
       default:
         return 'İşlem başarılı';
     }

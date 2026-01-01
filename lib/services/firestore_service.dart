@@ -7,8 +7,8 @@ class FirestoreService {
   factory FirestoreService() => _instance;
   FirestoreService._internal();
 
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  final FirebaseAuth _auth = FirebaseAuth.instance;
+  FirebaseFirestore get _firestore => FirebaseFirestore.instance;
+  FirebaseAuth get _auth => FirebaseAuth.instance;
 
   String? get currentUserId => _auth.currentUser?.uid;
 
@@ -61,7 +61,7 @@ class FirestoreService {
       debugPrint('🔄 Firestore addData başlatılıyor...');
       debugPrint('   Collection: $collectionName');
       debugPrint('   User ID: $currentUserId');
-      
+
       final collection = getUserCollection(collectionName);
       if (collection == null) {
         debugPrint('❌ Firestore addData hatası: Kullanıcı oturum açmamış');
@@ -69,7 +69,9 @@ class FirestoreService {
         throw Exception('User not authenticated');
       }
 
-      debugPrint('✅ Collection referansı alındı: users/$currentUserId/$collectionName');
+      debugPrint(
+        '✅ Collection referansı alındı: users/$currentUserId/$collectionName',
+      );
 
       final docData = {
         ...data,
@@ -100,10 +102,7 @@ class FirestoreService {
       final collection = getUserCollection(collectionName);
       if (collection == null) throw Exception('User not authenticated');
 
-      final docData = {
-        ...data,
-        'updatedAt': FieldValue.serverTimestamp(),
-      };
+      final docData = {...data, 'updatedAt': FieldValue.serverTimestamp()};
 
       await collection.doc(documentId).update(docData);
     } catch (e) {
@@ -137,11 +136,11 @@ class FirestoreService {
       if (collection == null) throw Exception('User not authenticated');
 
       Query query = collection;
-      
+
       if (includeDefaultOrder) {
         query = query.orderBy('createdAt', descending: true);
       }
-      
+
       if (queryBuilder != null) {
         query = queryBuilder(query);
       }
@@ -166,17 +165,19 @@ class FirestoreService {
       }
 
       Query query = collection;
-      
+
       if (includeDefaultOrder) {
         query = query.orderBy('createdAt', descending: true);
       }
-      
+
       if (queryBuilder != null) {
         query = queryBuilder(query);
       }
 
       final result = await query.get();
-      debugPrint('Firestore veri getirildi: $collectionName (${result.docs.length} adet)');
+      debugPrint(
+        'Firestore veri getirildi: $collectionName (${result.docs.length} adet)',
+      );
       return result;
     } catch (e) {
       debugPrint('Error getting data from $collectionName: $e');
@@ -215,7 +216,7 @@ class FirestoreService {
       if (currentUserId == null) throw Exception('User not authenticated');
 
       final batch = _firestore.batch();
-      
+
       final collections = [
         'transactions',
         'categories',

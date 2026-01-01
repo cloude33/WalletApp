@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
-import 'package:money/widgets/statistics/accessibility_helpers.dart';
+import 'package:parion/widgets/statistics/accessibility_helpers.dart';
 
 class InteractiveLineChart extends StatefulWidget {
   final List<FlSpot> spots;

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:money/models/cash_flow_data.dart';
+import 'package:parion/models/cash_flow_data.dart';
 import 'animations/fade_in_animation.dart';
 import 'animations/scale_animation.dart';
 

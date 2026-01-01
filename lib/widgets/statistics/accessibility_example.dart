@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:money/widgets/statistics/accessibility_helpers.dart';
+import 'package:parion/widgets/statistics/accessibility_helpers.dart';
 
 /// Example demonstrating accessibility features in statistics widgets
 class AccessibilityExample extends StatelessWidget {

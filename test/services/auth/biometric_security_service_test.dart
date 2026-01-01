@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:money/services/auth/biometric_security_service.dart';
+import 'package:parion/services/auth/biometric_security_service.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();

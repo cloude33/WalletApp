@@ -1,9 +1,9 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:money/services/notification_service.dart';
-import 'package:money/services/data_service.dart';
-import 'package:money/models/transaction.dart';
-import 'package:money/models/app_notification.dart';
+import 'package:parion/services/notification_service.dart';
+import 'package:parion/services/data_service.dart';
+import 'package:parion/models/transaction.dart';
+import 'package:parion/models/app_notification.dart';
 
 // Simple mock for DataService since we can inject it now
 class MockDataService extends DataService {

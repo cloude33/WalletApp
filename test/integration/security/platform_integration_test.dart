@@ -1,8 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:money/services/auth/platform_biometric_service.dart';
-import 'package:money/services/auth/security_service.dart';
-import 'package:money/models/security/biometric_type.dart';
-import 'package:money/models/security/security_status.dart';
+import 'package:parion/services/auth/platform_biometric_service.dart';
+import 'package:parion/services/auth/security_service.dart';
+import 'package:parion/models/security/biometric_type.dart';
+import 'package:parion/models/security/security_status.dart';
 import 'dart:io';
 import '../../test_setup.dart';
 

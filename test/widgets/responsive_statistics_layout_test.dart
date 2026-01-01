@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:money/widgets/statistics/responsive_statistics_layout.dart';
+import 'package:parion/widgets/statistics/responsive_statistics_layout.dart';
 
 void main() {
   group('ResponsiveStatisticsLayout', () {

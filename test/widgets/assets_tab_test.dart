@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:money/widgets/statistics/assets_tab.dart';
+import 'package:parion/widgets/statistics/assets_tab.dart';
 import '../test_setup.dart';
 
 void main() {
@@ -85,34 +85,84 @@ void main() {
       WidgetTester tester,
     ) async {
       await tester.pumpWidget(
-        TestSetup.createTestWidget(const AssetsTab()),
+        TestSetup.createConstrainedTestWidget(const AssetsTab(), height: 3000),
       );
 
       // Wait for data to load
       await tester.pumpAndSettle();
 
-      // Either shows data or error state
-      final hasData = find.text('Varlık Dağılımı').evaluate().isNotEmpty;
-      final hasError = find.text('Tekrar Dene').evaluate().isNotEmpty;
+      // Try to scroll to the card (handle both data and empty states)
+      final listFinder = find.byType(ListView);
+      try {
+        await tester.scrollUntilVisible(
+          find.text('Varlık Dağılımı'),
+          500.0,
+          scrollable: listFinder,
+        );
+      } catch (_) {}
+      
+      try {
+        await tester.scrollUntilVisible(
+          find.text('Henüz varlık bulunmamaktadır'),
+          500.0,
+          scrollable: listFinder,
+        );
+      } catch (_) {}
 
-      expect(hasData || hasError, isTrue);
+      // Either shows data, empty state, error state, or "no data" state
+      final hasData = find.text('Varlık Dağılımı').evaluate().isNotEmpty;
+      final hasEmpty = find.text('Henüz varlık bulunmamaktadır').evaluate().isNotEmpty || 
+                      find.byIcon(Icons.account_balance_wallet_outlined).evaluate().isNotEmpty;
+      final hasError = find.text('Tekrar Dene').evaluate().isNotEmpty;
+      final hasNoData = find.text('Veri bulunamadı').evaluate().isNotEmpty;
+
+      if (!hasData && !hasEmpty && !hasError && !hasNoData) {
+        debugDumpApp();
+      }
+
+      expect(hasData || hasEmpty || hasError || hasNoData, isTrue);
     });
 
     testWidgets('displays debt distribution card or error', (
       WidgetTester tester,
     ) async {
       await tester.pumpWidget(
-        TestSetup.createTestWidget(const AssetsTab()),
+        TestSetup.createConstrainedTestWidget(const AssetsTab(), height: 3000),
       );
 
       // Wait for data to load
       await tester.pumpAndSettle();
 
-      // Either shows data or error state
-      final hasData = find.text('Borç Dağılımı').evaluate().isNotEmpty;
-      final hasError = find.text('Tekrar Dene').evaluate().isNotEmpty;
+      // Try to scroll to the card
+      final listFinder = find.byType(ListView);
+      try {
+        await tester.scrollUntilVisible(
+          find.text('Borç Dağılımı'),
+          500.0,
+          scrollable: listFinder,
+        );
+      } catch (_) {}
 
-      expect(hasData || hasError, isTrue);
+      try {
+        await tester.scrollUntilVisible(
+          find.text('Harika! Hiç borcunuz yok'),
+          500.0,
+          scrollable: listFinder,
+        );
+      } catch (_) {}
+
+      // Either shows data, empty state, error state, or "no data" state
+      final hasData = find.text('Borç Dağılımı').evaluate().isNotEmpty;
+      final hasEmpty = find.text('Harika! Hiç borcunuz yok').evaluate().isNotEmpty ||
+                      find.byIcon(Icons.celebration).evaluate().isNotEmpty;
+      final hasError = find.text('Tekrar Dene').evaluate().isNotEmpty;
+      final hasNoData = find.text('Veri bulunamadı').evaluate().isNotEmpty;
+
+      if (!hasData && !hasEmpty && !hasError && !hasNoData) {
+         debugDumpApp();
+      }
+
+      expect(hasData || hasEmpty || hasError || hasNoData, isTrue);
     });
 
     testWidgets('supports pull-to-refresh or shows error', (

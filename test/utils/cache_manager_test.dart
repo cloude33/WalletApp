@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:money/utils/cache_manager.dart';
+import 'package:parion/utils/cache_manager.dart';
 
 void main() {
   late CacheManager cache;

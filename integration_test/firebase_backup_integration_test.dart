@@ -4,13 +4,13 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'package:money/services/backup_service.dart';
-import 'package:money/services/firebase_auth_service.dart';
-import 'package:money/services/data_service.dart';
-import 'package:money/services/auto_backup_service.dart';
-import 'package:money/models/transaction.dart';
-import 'package:money/models/wallet.dart';
-import 'package:money/firebase_options.dart';
+import 'package:parion/services/backup_service.dart';
+import 'package:parion/services/firebase_auth_service.dart';
+import 'package:parion/services/data_service.dart';
+import 'package:parion/services/auto_backup_service.dart';
+import 'package:parion/models/transaction.dart';
+import 'package:parion/models/wallet.dart';
+import 'package:parion/firebase_options.dart';
 
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();

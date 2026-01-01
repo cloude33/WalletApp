@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:money/services/auth/platform_biometric_service.dart';
+import 'package:parion/services/auth/platform_biometric_service.dart';
 
 void main() {
   group('PlatformBiometricService Tests', () {

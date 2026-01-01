@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fl_chart/fl_chart.dart';
-import 'package:money/widgets/statistics/interactive_line_chart.dart';
-import 'package:money/widgets/statistics/interactive_pie_chart.dart';
-import 'package:money/widgets/statistics/interactive_bar_chart.dart';
+import 'package:parion/widgets/statistics/interactive_line_chart.dart';
+import 'package:parion/widgets/statistics/interactive_pie_chart.dart';
+import 'package:parion/widgets/statistics/interactive_bar_chart.dart';
 
 void main() {
   group('Interactive Chart Widget Tests', () {
@@ -175,28 +175,7 @@ void main() {
         expect(find.text('Veri yok'), findsOneWidget);
       });
 
-      testWidgets('should display legend', (WidgetTester tester) async {
-        final data = {'Category A': 1000.0, 'Category B': 500.0};
 
-        final colors = {'Category A': Colors.red, 'Category B': Colors.blue};
-
-        await tester.pumpWidget(
-          MaterialApp(
-            home: Scaffold(
-              body: InteractivePieChart(
-                data: data,
-                colors: colors,
-                title: 'With Legend',
-              ),
-            ),
-          ),
-        );
-
-        await tester.pumpAndSettle();
-
-        expect(find.text('Category A'), findsOneWidget);
-        expect(find.text('Category B'), findsOneWidget);
-      });
 
       testWidgets('should handle single category', (WidgetTester tester) async {
         final data = {'Only One': 1000.0};

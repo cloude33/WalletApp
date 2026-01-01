@@ -1,14 +1,14 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:money/services/auth/auth_service.dart';
-import 'package:money/services/auth/session_manager.dart';
-import 'package:money/services/auth/secure_storage_service.dart';
-import 'package:money/services/auth/security_service.dart';
-import 'package:money/services/auth/sensitive_operation_service.dart';
-import 'package:money/services/auth/audit_logger_service.dart';
-import 'package:money/models/security/security_models.dart';
-import 'package:money/models/security/auth_state.dart';
-import 'package:money/models/security/session_data.dart';
-import 'package:money/models/security/security_event.dart';
+import 'package:parion/services/auth/auth_service.dart';
+import 'package:parion/services/auth/session_manager.dart';
+import 'package:parion/services/auth/secure_storage_service.dart';
+import 'package:parion/services/auth/security_service.dart';
+import 'package:parion/services/auth/sensitive_operation_service.dart';
+import 'package:parion/services/auth/audit_logger_service.dart';
+import 'package:parion/models/security/security_models.dart';
+import 'package:parion/models/security/auth_state.dart';
+import 'package:parion/models/security/session_data.dart';
+import 'package:parion/models/security/security_event.dart';
 import '../../test_setup.dart';
 
 /// End-to-end security integration tests

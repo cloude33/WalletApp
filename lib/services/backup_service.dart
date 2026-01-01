@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'dart:convert';
+import 'dart:async';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:archive/archive.dart';
 import 'package:flutter/material.dart';
@@ -289,7 +290,129 @@ class BackupService {
   }
 
   Future<void> scheduleAutomaticBackup(TimeOfDay time) async {
-    // TODO: Implement automatic backup scheduling
+    try {
+      final prefs = await SharedPreferences.getInstance();
+
+      // Store the scheduled time
+      await prefs.setInt('auto_backup_hour', time.hour);
+      await prefs.setInt('auto_backup_minute', time.minute);
+
+      // Enable automatic backup
+      await prefs.setBool('auto_backup_enabled', true);
+
+      debugPrint(
+        'Automatic backup scheduled for ${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}',
+      );
+
+      // Initialize background backup service if needed
+      _startBackgroundBackupService();
+    } catch (e) {
+      debugPrint('Error scheduling automatic backup: $e');
+      rethrow;
+    }
+  }
+
+  /// Starts the background backup service to check for scheduled backups
+  void _startBackgroundBackupService() {
+    // Cancel any existing periodic timer
+    _stopBackgroundBackupService();
+
+    // Start a new timer that checks every minute if backup should run
+    _backgroundBackupTimer = Timer.periodic(const Duration(minutes: 1), (
+      timer,
+    ) {
+      _checkAndRunScheduledBackup();
+    });
+  }
+
+  /// Stops the background backup service
+  void _stopBackgroundBackupService() {
+    if (_backgroundBackupTimer != null && _backgroundBackupTimer!.isActive) {
+      _backgroundBackupTimer!.cancel();
+    }
+  }
+
+  /// Checks if it's time to run the scheduled backup and runs it if needed
+  Future<void> _checkAndRunScheduledBackup() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+
+      // Check if auto backup is enabled
+      final isEnabled = prefs.getBool('auto_backup_enabled') ?? false;
+      if (!isEnabled) {
+        return;
+      }
+
+      // Get scheduled time
+      final scheduledHour = prefs.getInt('auto_backup_hour');
+      final scheduledMinute = prefs.getInt('auto_backup_minute');
+
+      if (scheduledHour == null || scheduledMinute == null) {
+        return;
+      }
+
+      // Get current time
+      final now = DateTime.now();
+
+      // Check if it's time to backup (same hour and minute)
+      if (now.hour == scheduledHour && now.minute == scheduledMinute) {
+        // Prevent multiple backups in the same minute
+        final lastRunDate = prefs.getString('last_scheduled_backup_date');
+        final today = DateFormat('yyyy-MM-dd').format(now);
+
+        if (lastRunDate != today) {
+          debugPrint('Running scheduled backup...');
+          await _runScheduledBackup();
+          await prefs.setString('last_scheduled_backup_date', today);
+        }
+      }
+    } catch (e) {
+      debugPrint('Error checking scheduled backup: $e');
+    }
+  }
+
+  /// Runs the actual backup process
+  Future<void> _runScheduledBackup() async {
+    try {
+      await createBackup();
+      debugPrint('Scheduled backup completed successfully');
+
+      // Optionally sync with cloud if auto cloud backup is enabled
+      if (autoCloudBackupEnabled.value) {
+        await uploadToCloud();
+      }
+    } catch (e) {
+      debugPrint('Error running scheduled backup: $e');
+    }
+  }
+
+  Timer? _backgroundBackupTimer;
+
+  /// Cancels the automatic backup schedule
+  Future<void> cancelAutomaticBackup() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('auto_backup_enabled', false);
+    _stopBackgroundBackupService();
+    debugPrint('Automatic backup scheduling cancelled');
+  }
+
+  /// Checks if automatic backup is currently scheduled
+  Future<bool> isAutomaticBackupScheduled() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool('auto_backup_enabled') ?? false;
+  }
+
+  /// Gets the scheduled backup time
+  Future<TimeOfDay?> getScheduledBackupTime() async {
+    final prefs = await SharedPreferences.getInstance();
+    final hour = prefs.getInt('auto_backup_hour');
+    final minute = prefs.getInt('auto_backup_minute');
+
+    if (hour != null && minute != null) {
+      return TimeOfDay(hour: hour, minute: minute);
+    }
+
+    return null;
   }
 
   // Bulut yedekleme fonksiyonları - DRIVE Implementation

@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:money/models/transaction.dart';
-import 'package:money/models/credit_card_transaction.dart';
-import 'package:money/services/transaction_filter_service.dart';
+import 'package:parion/models/transaction.dart';
+import 'package:parion/models/credit_card_transaction.dart';
+import 'package:parion/services/transaction_filter_service.dart';
 
 void main() {
   group('TransactionFilterService', () {

@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:money/utils/kmh_validator.dart';
+import 'package:parion/utils/kmh_validator.dart';
 import '../property_test_utils.dart';
 
 /// Property-based tests for KMH account number masking

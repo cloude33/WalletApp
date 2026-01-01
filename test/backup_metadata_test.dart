@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:money/models/backup_metadata.dart';
+import 'package:parion/models/backup_metadata.dart';
 
 void main() {
   group('Backup Metadata Tests', () {

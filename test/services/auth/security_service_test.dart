@@ -1,8 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:money/services/auth/security_service.dart';
-import 'package:money/models/security/security_models.dart';
+import 'package:parion/services/auth/security_service.dart';
+import 'package:parion/models/security/security_models.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();

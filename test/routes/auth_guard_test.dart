@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:money/routes/auth_guard.dart';
-import 'package:money/services/auth/auth_service.dart';
-import 'package:money/models/security/auth_state.dart';
+import 'package:parion/routes/auth_guard.dart';
+import 'package:parion/services/auth/auth_service.dart';
+import 'package:parion/models/security/auth_state.dart';
 
 void main() {
   group('AuthGuard', () {

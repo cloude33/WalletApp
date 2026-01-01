@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:money/models/goal.dart';
-import 'package:money/services/statistics_service.dart';
+import 'package:parion/models/goal.dart';
+import 'package:parion/services/statistics_service.dart';
 
 void main() {
   group('StatisticsService - Goal Comparison Tests', () {

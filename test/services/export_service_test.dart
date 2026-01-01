@@ -1,9 +1,9 @@
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:money/models/export_filter.dart';
-import 'package:money/models/transaction.dart';
-import 'package:money/services/export_service.dart';
+import 'package:parion/models/export_filter.dart';
+import 'package:parion/models/transaction.dart';
+import 'package:parion/services/export_service.dart';
 // These imports are needed for testing but not direct dependencies
 // ignore: depend_on_referenced_packages
 import 'package:path_provider_platform_interface/path_provider_platform_interface.dart';

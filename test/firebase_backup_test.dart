@@ -1,20 +1,17 @@
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:money/services/backup_service.dart';
-import 'package:money/services/firestore_service.dart';
-import 'package:money/services/firebase_auth_service.dart';
-import 'package:money/services/auto_backup_service.dart';
-import 'package:money/services/data_service.dart';
-import 'package:money/models/backup_metadata.dart';
-import 'package:money/models/transaction.dart' as app_models;
-import 'package:money/models/wallet.dart';
+import 'package:parion/services/backup_service.dart';
+import 'package:parion/services/firebase_auth_service.dart';
+import 'package:parion/services/auto_backup_service.dart';
+import 'package:parion/services/data_service.dart';
+import 'package:parion/models/backup_metadata.dart';
+import 'package:parion/models/transaction.dart' as app_models;
+import 'package:parion/models/wallet.dart';
 import 'test_setup.dart';
 
 void main() {
   group('Firebase Backup System Tests', () {
     BackupService? backupService;
-    FirestoreService? firestoreService;
-    FirebaseAuthService? authService;
     AutoBackupService? autoBackupService;
     DataService? dataService;
 
@@ -24,20 +21,16 @@ void main() {
 
     setUp(() async {
       await TestSetup.setupTest();
-      
+
       // Use mock services to avoid Firebase initialization issues
       try {
         backupService = BackupService();
-        firestoreService = FirestoreService();
-        authService = FirebaseAuthService();
         autoBackupService = AutoBackupService();
         dataService = DataService.forTesting();
       } catch (e) {
         // Skip Firebase-dependent tests if Firebase is not available
         print('Firebase services not available in test environment: $e');
         backupService = null;
-        firestoreService = null;
-        authService = null;
         autoBackupService = null;
         dataService = null;
       }
@@ -129,7 +122,7 @@ void main() {
           print('DataService not available, skipping test');
           return;
         }
-        
+
         await dataService!.init();
         final prefs = await dataService!.getPrefs();
         expect(prefs, isNotNull);
@@ -140,7 +133,7 @@ void main() {
           print('DataService not available, skipping test');
           return;
         }
-        
+
         await dataService!.init();
 
         // Test verileri oluştur
@@ -193,21 +186,28 @@ void main() {
     });
 
     group('Backup Service Tests', () {
-      test('BackupService should create backup file', () async {
-        // Bu test gerçek dosya sistemi gerektirir, unit test için skip
-      }, skip: 'Requires file system access');
+      test(
+        'BackupService should create backup file',
+        () async {
+          // Bu test gerçek dosya sistemi gerektirir, unit test için skip
+        },
+        skip: 'Requires file system access',
+      );
 
       test('BackupService should handle cloud backup status', () {
         if (backupService == null) {
           print('BackupService not available, skipping test');
           return;
         }
-        
+
         expect(backupService!.cloudBackupStatus.value, CloudBackupStatus.idle);
-        
+
         backupService!.cloudBackupStatus.value = CloudBackupStatus.uploading;
-        expect(backupService!.cloudBackupStatus.value, CloudBackupStatus.uploading);
-        
+        expect(
+          backupService!.cloudBackupStatus.value,
+          CloudBackupStatus.uploading,
+        );
+
         final statusText = backupService!.getCloudBackupStatusText();
         expect(statusText, 'Buluta yükleniyor...');
       });
@@ -217,12 +217,12 @@ void main() {
           print('BackupService not available, skipping test');
           return;
         }
-        
+
         await backupService!.loadSettings();
-        
+
         await backupService!.enableAutoCloudBackup(true);
         expect(backupService!.autoCloudBackupEnabled.value, true);
-        
+
         await backupService!.enableAutoCloudBackup(false);
         expect(backupService!.autoCloudBackupEnabled.value, false);
       });
@@ -234,7 +234,7 @@ void main() {
           print('AutoBackupService not available, skipping test');
           return;
         }
-        
+
         await autoBackupService!.enableAutoBackup(true);
         final isEnabled = await autoBackupService!.isAutoBackupEnabled();
         expect(isEnabled, true);
@@ -249,16 +249,20 @@ void main() {
           print('AutoBackupService not available, skipping test');
           return;
         }
-        
+
         final lastBackup = await autoBackupService!.getLastAutoBackupDate();
         expect(lastBackup, isNull); // İlk çalıştırmada null olmalı
       });
     });
 
     group('Integration Tests', () {
-      test('Complete backup and restore flow should work', () async {
-        // Bu test Firebase bağlantısı gerektirir, integration test için ayrı dosyada yapılmalı
-      }, skip: 'Requires Firebase connection');
+      test(
+        'Complete backup and restore flow should work',
+        () async {
+          // Bu test Firebase bağlantısı gerektirir, integration test için ayrı dosyada yapılmalı
+        },
+        skip: 'Requires Firebase connection',
+      );
     });
   });
 
@@ -278,7 +282,7 @@ void main() {
       try {
         // Network hata durumları için test
         final backupService = BackupService();
-        
+
         // Offline durumda backup işlemi
         backupService.cloudBackupStatus.value = CloudBackupStatus.error;
         expect(backupService.cloudBackupStatus.value, CloudBackupStatus.error);

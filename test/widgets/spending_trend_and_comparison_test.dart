@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:money/models/spending_analysis.dart';
-import 'package:money/models/cash_flow_data.dart';
-import 'package:money/widgets/statistics/spending_trend_chart.dart';
-import 'package:money/widgets/statistics/period_comparison_card.dart';
-import 'package:money/widgets/statistics/budget_tracker_card.dart';
-import 'package:money/widgets/statistics/spending_habits_card.dart';
+import 'package:parion/models/spending_analysis.dart';
+import 'package:parion/models/cash_flow_data.dart';
+import 'package:parion/widgets/statistics/spending_trend_chart.dart';
+import 'package:parion/widgets/statistics/period_comparison_card.dart';
+import 'package:parion/widgets/statistics/budget_tracker_card.dart';
+import 'package:parion/widgets/statistics/spending_habits_card.dart';
 
 void main() {
   group('Spending Trend and Comparison Widgets Tests', () {

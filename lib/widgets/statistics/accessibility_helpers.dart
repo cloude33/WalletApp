@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart';
-import 'package:money/models/cash_flow_data.dart';
+import 'package:parion/models/cash_flow_data.dart';
 
 /// Accessibility helpers for statistics widgets
 /// Provides semantic labels, announcements, and accessible components

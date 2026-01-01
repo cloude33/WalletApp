@@ -1,11 +1,11 @@
 import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive/hive.dart';
-import 'package:money/models/wallet.dart';
-import 'package:money/models/payment_plan.dart';
-import 'package:money/services/payment_planner_service.dart';
-import 'package:money/services/kmh_interest_calculator.dart';
-import 'package:money/repositories/payment_plan_repository.dart';
+import 'package:parion/models/wallet.dart';
+import 'package:parion/models/payment_plan.dart';
+import 'package:parion/services/payment_planner_service.dart';
+import 'package:parion/services/kmh_interest_calculator.dart';
+import 'package:parion/repositories/payment_plan_repository.dart';
 import '../property_test_utils.dart';
 
 /// Property-based tests for Payment Plan Round-Trip

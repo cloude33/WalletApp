@@ -2,18 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive/hive.dart';
 import 'package:intl/date_symbol_data_local.dart';
-import 'package:money/models/wallet.dart';
-import 'package:money/models/kmh_transaction.dart';
-import 'package:money/models/kmh_transaction_type.dart';
-import 'package:money/screens/kmh_statement_screen.dart';
-import 'package:money/services/kmh_box_service.dart';
+import 'package:parion/models/wallet.dart';
+import 'package:parion/models/kmh_transaction.dart';
+import 'package:parion/models/kmh_transaction_type.dart';
+import 'package:parion/screens/kmh_statement_screen.dart';
+import 'package:parion/services/kmh_box_service.dart';
+import 'package:parion/services/data_service.dart';
+import 'package:parion/utils/cache_manager.dart';
 import '../test_setup.dart';
-import 'dart:io';
 
 void main() {
   group('KmhStatementScreen', () {
-    late String testDir;
-
     setUpAll(() async {
       await TestSetup.initializeTestEnvironment();
       await initializeDateFormatting('tr_TR', null);
@@ -29,11 +28,8 @@ void main() {
 
     setUp(() async {
       await TestSetup.setupTest();
-      
-      // Create unique test directory for each test
-      testDir = './test_hive_statement_${DateTime.now().millisecondsSinceEpoch}';
-      Hive.init(testDir);
-      
+      CacheManager().clear();
+
       try {
         // Initialize boxes for testing
         await KmhBoxService.init();
@@ -45,19 +41,13 @@ void main() {
 
     tearDown(() async {
       await TestSetup.tearDownTest();
-      
+
       try {
         // Clean up after each test
         if (KmhBoxService.transactionsBox.isOpen) {
           await KmhBoxService.transactionsBox.clear();
         }
         await KmhBoxService.close();
-        
-        // Clean up test directory
-        final dir = Directory(testDir);
-        if (await dir.exists()) {
-          await dir.delete(recursive: true);
-        }
       } catch (e) {
         // Ignore cleanup errors
         print('Cleanup error: $e');
@@ -141,11 +131,25 @@ void main() {
 
       // Tap the show statement button
       await tester.tap(find.text('Ekstreyi Göster'));
+      
+      // Wait for loading to finish manually to avoid pumpAndSettle timeout with CircularProgressIndicator
+      await tester.pump(); // Start operation
+      
+      int retries = 0;
+      while (find.byType(CircularProgressIndicator).evaluate().isNotEmpty && retries < 100) {
+        await tester.pump(const Duration(milliseconds: 50));
+        retries++;
+      }
+      
+      if (retries >= 100) {
+        debugPrint('Warning: Loading timed out in test');
+      }
+
       await tester.pumpAndSettle();
 
       // Should show empty state or "no transactions" message
       // The exact message depends on whether there are transactions
-      expect(find.byType(Card), findsWidgets);
+      expect(find.text('Ekstre bulunamadı'), findsOneWidget);
     });
 
     testWidgets('should display statement with transactions', (
@@ -161,6 +165,9 @@ void main() {
         creditLimit: 10000.0,
         interestRate: 24.0,
       );
+
+      // Add wallet to DataService so KmhService can find it
+      await DataService().addWallet(testAccount);
 
       // Add some test transactions
       final transaction1 = KmhTransaction(
@@ -209,7 +216,15 @@ void main() {
 
       // Tap the show statement button
       await tester.tap(find.text('Ekstreyi Göster'));
-      await tester.pumpAndSettle();
+
+      // Wait for async operations manually instead of pumpAndSettle to avoid timeouts
+      // if there are ongoing animations
+      await tester.pump(); // Start animation
+      await tester.pump(const Duration(milliseconds: 100)); // Allow microtasks
+      await tester.pump(
+        const Duration(seconds: 1),
+      ); // Wait for loading simulation
+      await tester.pump(); // Final rebuild
 
       // Verify statement header
       expect(find.text('Özet'), findsOneWidget);
@@ -266,6 +281,13 @@ void main() {
 
       // Load the statement first
       await tester.tap(find.text('Ekstreyi Göster'));
+      
+      await tester.pump();
+      int retries = 0;
+      while (find.byType(CircularProgressIndicator).evaluate().isNotEmpty && retries < 100) {
+        await tester.pump(const Duration(milliseconds: 50));
+        retries++;
+      }
       await tester.pumpAndSettle();
 
       // Tap export button
@@ -364,6 +386,13 @@ void main() {
 
       // Load statement
       await tester.tap(find.text('Ekstreyi Göster'));
+      
+      await tester.pump();
+      int retries = 0;
+      while (find.byType(CircularProgressIndicator).evaluate().isNotEmpty && retries < 100) {
+        await tester.pump(const Duration(milliseconds: 50));
+        retries++;
+      }
       await tester.pumpAndSettle();
 
       // Verify interest calculations section

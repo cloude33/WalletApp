@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:money/widgets/statistics/cash_flow_tab.dart';
+import 'package:parion/widgets/statistics/cash_flow_tab.dart';
 import '../test_setup.dart';
 
 void main() {
@@ -60,9 +60,8 @@ void main() {
       await tester.pumpWidget(
         TestSetup.createTestWidget(
           CashFlowTab(
-              startDate: DateTime(2024, 1, 1),
-              endDate: DateTime(2024, 12, 31),
-            ),
+            startDate: DateTime(2024, 1, 1),
+            endDate: DateTime(2024, 12, 31),
           ),
         ),
       );

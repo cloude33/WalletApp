@@ -502,7 +502,9 @@ class DataService {
       // Clear other services
       try {
         await KmhBoxService.clearAll();
-        await RecurringTransactionRepository().clear();
+        final recurringRepo = RecurringTransactionRepository();
+        await recurringRepo.init();
+        await recurringRepo.clear();
         await BillTemplateService().clearAllTemplates();
         await BillPaymentService().clearAllPayments();
       } catch (e) {
@@ -623,7 +625,8 @@ class DataService {
         await saveAllUsers(usersList);
 
         // Mevcut kullanıcıyı geri yükle
-        if (backupData.containsKey('currentUser')) {
+        if (backupData.containsKey('currentUser') &&
+            backupData['currentUser'] != null) {
           var currentUser = User.fromJson(backupData['currentUser']);
           // Kullanıcı listesindeki güncellenmiş (resim yolu değişmiş olabilir) kullanıcıyı bul
           final updatedCurrentUser = usersList.firstWhere(

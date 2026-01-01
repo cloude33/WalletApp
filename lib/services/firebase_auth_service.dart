@@ -7,7 +7,7 @@ class FirebaseAuthService {
   factory FirebaseAuthService() => _instance;
   FirebaseAuthService._internal();
 
-  final FirebaseAuth _auth = FirebaseAuth.instance;
+  FirebaseAuth get _auth => FirebaseAuth.instance;
   final GoogleSignIn _googleSignIn = GoogleSignIn();
 
   User? get currentUser => _auth.currentUser;
@@ -24,10 +24,10 @@ class FirebaseAuthService {
         email: email,
         password: password,
       );
-      
+
       await credential.user?.updateDisplayName(displayName);
       await credential.user?.reload();
-      
+
       return credential;
     } on FirebaseAuthException catch (e) {
       debugPrint('Firebase Auth Error: ${e.code} - ${e.message}');
@@ -60,14 +60,18 @@ class FirebaseAuthService {
   Future<UserCredential?> signInWithGoogle() async {
     try {
       debugPrint('🔄 Google Sign-In başlatılıyor...');
-      
+
       if (kIsWeb) {
         // Web için Google Identity Services (GIS) veya signInWithPopup kullan
         final googleProvider = GoogleAuthProvider();
         googleProvider.addScope('email');
-        googleProvider.addScope('https://www.googleapis.com/auth/userinfo.profile');
-        
-        debugPrint('🌐 Web platformu algılandı, signInWithPopup kullanılıyor...');
+        googleProvider.addScope(
+          'https://www.googleapis.com/auth/userinfo.profile',
+        );
+
+        debugPrint(
+          '🌐 Web platformu algılandı, signInWithPopup kullanılıyor...',
+        );
         final userCredential = await _auth.signInWithPopup(googleProvider);
         debugPrint('✅ Google Sign-In başarılı: ${userCredential.user?.email}');
         return userCredential;
@@ -82,8 +86,9 @@ class FirebaseAuthService {
         debugPrint('✅ Google kullanıcısı seçildi: ${googleUser.email}');
 
         // Google kimlik doğrulama detaylarını al
-        final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
-        
+        final GoogleSignInAuthentication googleAuth =
+            await googleUser.authentication;
+
         if (googleAuth.accessToken == null || googleAuth.idToken == null) {
           debugPrint('❌ Google auth tokens alınamadı');
           throw Exception('Google authentication tokens not available');
@@ -99,7 +104,7 @@ class FirebaseAuthService {
 
         debugPrint('🔄 Firebase ile giriş yapılıyor...');
         final userCredential = await _auth.signInWithCredential(credential);
-        
+
         debugPrint('✅ Google Sign-In başarılı: ${userCredential.user?.email}');
         return userCredential;
       }
@@ -117,10 +122,7 @@ class FirebaseAuthService {
       if (kIsWeb) {
         await _auth.signOut();
       } else {
-        await Future.wait([
-          _auth.signOut(),
-          _googleSignIn.signOut(),
-        ]);
+        await Future.wait([_auth.signOut(), _googleSignIn.signOut()]);
       }
     } catch (e) {
       debugPrint('Sign out error: $e');
@@ -147,7 +149,7 @@ class FirebaseAuthService {
     try {
       final user = _auth.currentUser;
       if (user == null) throw Exception('Kullanıcı oturumu açık değil');
-      
+
       final email = user.email;
       if (email == null) throw Exception('E-posta adresi bulunamadı');
 
@@ -156,7 +158,7 @@ class FirebaseAuthService {
         email: email,
         password: currentPassword,
       );
-      
+
       await user.reauthenticateWithCredential(credential);
       await user.updatePassword(newPassword);
     } on FirebaseAuthException catch (e) {

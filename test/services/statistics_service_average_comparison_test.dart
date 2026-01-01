@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:money/services/statistics_service.dart';
+import 'package:parion/services/statistics_service.dart';
 
 /// Unit tests for Average Comparison functionality
 /// 

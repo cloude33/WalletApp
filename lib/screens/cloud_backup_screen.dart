@@ -5,6 +5,11 @@ import 'package:intl/intl.dart';
 import '../services/backup_service.dart';
 import '../services/firebase_auth_service.dart';
 import '../services/auto_backup_service.dart';
+import '../services/backup_optimization/enhanced_backup_manager.dart';
+import '../widgets/backup/backup_settings_widget.dart';
+import '../widgets/backup/backup_progress_widget.dart';
+import '../models/backup_optimization/backup_config.dart';
+
 import 'user_selection_screen.dart';
 
 class CloudBackupScreen extends StatefulWidget {
@@ -14,23 +19,47 @@ class CloudBackupScreen extends StatefulWidget {
   State<CloudBackupScreen> createState() => _CloudBackupScreenState();
 }
 
-class _CloudBackupScreenState extends State<CloudBackupScreen> {
+class _CloudBackupScreenState extends State<CloudBackupScreen>
+    with TickerProviderStateMixin {
   final BackupService _backupService = BackupService();
   final FirebaseAuthService _authService = FirebaseAuthService();
   final AutoBackupService _autoBackupService = AutoBackupService();
+  final EnhancedBackupManager _enhancedBackupManager = EnhancedBackupManager();
+
   List<Map<String, dynamic>> _backups = [];
   bool _isLoading = true;
+  int _selectedTabIndex = 0;
+  BackupConfig? _currentConfig;
+  late TabController _tabController;
 
   @override
   void initState() {
     super.initState();
+    _tabController = TabController(length: 3, vsync: this);
+    _initializeEnhancedBackup();
     _loadCloudBackups();
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _initializeEnhancedBackup() async {
+    try {
+      await _enhancedBackupManager.initialize();
+      _currentConfig = _enhancedBackupManager.currentConfiguration;
+    } catch (e) {
+      debugPrint('Error initializing enhanced backup: $e');
+    }
   }
 
   Future<void> _loadCloudBackups() async {
     setState(() => _isLoading = true);
     try {
       final backups = await _backupService.getCloudBackups();
+      if (!mounted) return;
       setState(() {
         _backups = backups;
         _isLoading = false;
@@ -52,25 +81,39 @@ class _CloudBackupScreenState extends State<CloudBackupScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Bulut Yedekleme'),
+        title: const Text('Gelişmiş Yedekleme'),
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
             onPressed: _loadCloudBackups,
           ),
         ],
+        bottom: TabBar(
+          controller: _tabController,
+          onTap: (index) => setState(() => _selectedTabIndex = index),
+          tabs: const [
+            Tab(icon: Icon(Icons.backup), text: 'Yedekler'),
+            Tab(icon: Icon(Icons.settings), text: 'Ayarlar'),
+            Tab(icon: Icon(Icons.analytics), text: 'İlerleme'),
+          ],
+        ),
       ),
-      body: _buildBody(),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: _handleCloudBackup,
-        label: const Text('Şimdi Yedekle'),
-        icon: const Icon(Icons.cloud_upload),
-        backgroundColor: const Color(0xFF00BFA5),
+      body: TabBarView(
+        controller: _tabController,
+        children: [
+          _buildBackupsTab(),
+          _buildSettingsTab(),
+          _buildProgressTab(),
+        ],
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: _isLoading ? null : _handleCloudBackup,
+        child: const Icon(Icons.cloud_upload),
       ),
     );
   }
 
-  Widget _buildBody() {
+  Widget _buildBackupsTab() {
     if (FirebaseAuth.instance.currentUser == null) {
       return const Center(
         child: Text('Bulut yedekleme için giriş yapmalısınız.'),
@@ -86,10 +129,72 @@ class _CloudBackupScreenState extends State<CloudBackupScreen> {
           child: _isLoading
               ? const Center(child: CircularProgressIndicator())
               : _backups.isEmpty
-                  ? _buildEmptyState()
-                  : _buildBackupList(),
+              ? _buildEmptyState()
+              : _buildBackupList(),
         ),
       ],
+    );
+  }
+
+  Widget _buildSettingsTab() {
+    return SingleChildScrollView(
+      child: BackupSettingsWidget(
+        initialConfig: _currentConfig,
+        onConfigChanged: (config) async {
+          try {
+            await _enhancedBackupManager.updateConfiguration(config);
+            if (!mounted) return;
+            setState(() => _currentConfig = config);
+
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('✅ Ayarlar kaydedildi'),
+                backgroundColor: Colors.green,
+              ),
+            );
+          } catch (e) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('❌ Ayarlar kaydedilemedi: $e'),
+                backgroundColor: Colors.red,
+              ),
+            );
+          }
+        },
+        showPerformanceMetrics: true,
+      ),
+    );
+  }
+
+  Widget _buildProgressTab() {
+    return SingleChildScrollView(
+      child: BackupProgressWidget(
+        onBackupComplete: (result) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                result.success
+                    ? '✅ Yedekleme başarılı (${_formatFileSize(result.compressedSize)})'
+                    : '❌ Yedekleme başarısız',
+              ),
+              backgroundColor: result.success ? Colors.green : Colors.red,
+            ),
+          );
+
+          if (result.success) {
+            _loadCloudBackups();
+          }
+        },
+        onError: (error) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('❌ Hata: $error'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        },
+        showDetailedMetrics: true,
+      ),
     );
   }
 
@@ -118,7 +223,7 @@ class _CloudBackupScreenState extends State<CloudBackupScreen> {
           ValueListenableBuilder<CloudBackupStatus>(
             valueListenable: _backupService.cloudBackupStatus,
             builder: (context, status, _) {
-              if (status == CloudBackupStatus.uploading || 
+              if (status == CloudBackupStatus.uploading ||
                   status == CloudBackupStatus.downloading) {
                 return const SizedBox(
                   width: 20,
@@ -157,7 +262,11 @@ class _CloudBackupScreenState extends State<CloudBackupScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.cloud_off, size: 64, color: Colors.grey.withValues(alpha: 0.5)),
+          Icon(
+            Icons.cloud_off,
+            size: 64,
+            color: Colors.grey.withValues(alpha: 0.5),
+          ),
           const SizedBox(height: 16),
           const Text(
             'Henüz bulut yedeğiniz yok',
@@ -181,25 +290,28 @@ class _CloudBackupScreenState extends State<CloudBackupScreen> {
 
   Widget _buildBackupItem(Map<String, dynamic> backup) {
     final metadata = backup['metadata'] as Map<String, dynamic>?;
-    final date = DateTime.tryParse(backup['uploadedAt'] ?? '') ?? DateTime.now();
+    final date =
+        DateTime.tryParse(backup['uploadedAt'] ?? '') ?? DateTime.now();
     final platform = metadata?['platform'] ?? 'Bilinmeyen';
     final device = metadata?['deviceModel'] ?? 'Bilinmeyen Cihaz';
     final version = metadata?['version'] ?? '1.0';
-    
+
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: ListTile(
         leading: CircleAvatar(
-          backgroundColor: (platform.toString().toLowerCase() == 'android' 
-              ? Colors.green 
-              : Colors.blue).withValues(alpha: 0.1),
+          backgroundColor:
+              (platform.toString().toLowerCase() == 'android'
+                      ? Colors.green
+                      : Colors.blue)
+                  .withValues(alpha: 0.1),
           child: Icon(
-            platform.toString().toLowerCase() == 'android' 
-                ? Icons.android 
+            platform.toString().toLowerCase() == 'android'
+                ? Icons.android
                 : Icons.apple,
-            color: platform.toString().toLowerCase() == 'android' 
-                ? Colors.green 
+            color: platform.toString().toLowerCase() == 'android'
+                ? Colors.green
                 : Colors.blue,
           ),
         ),
@@ -255,9 +367,9 @@ class _CloudBackupScreenState extends State<CloudBackupScreen> {
 
   Future<void> _handleCloudBackup() async {
     if (FirebaseAuth.instance.currentUser == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Lütfen önce giriş yapın')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Lütfen önce giriş yapın')));
       return;
     }
 
@@ -265,7 +377,9 @@ class _CloudBackupScreenState extends State<CloudBackupScreen> {
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(success ? '✅ Yedekleme başarılı' : '❌ Yedekleme başarısız'),
+          content: Text(
+            success ? '✅ Yedekleme başarılı' : '❌ Yedekleme başarısız',
+          ),
           backgroundColor: success ? Colors.green : Colors.red,
         ),
       );
@@ -288,7 +402,10 @@ class _CloudBackupScreenState extends State<CloudBackupScreen> {
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('Geri Yükle', style: TextStyle(color: Colors.red)),
+            child: const Text(
+              'Geri Yükle',
+              style: TextStyle(color: Colors.red),
+            ),
           ),
         ],
       ),
@@ -307,12 +424,14 @@ class _CloudBackupScreenState extends State<CloudBackupScreen> {
               backgroundColor: Colors.green,
             ),
           );
-          
+
           await Future.delayed(const Duration(seconds: 1));
           if (mounted) {
             Navigator.pushAndRemoveUntil(
               context,
-              MaterialPageRoute(builder: (context) => const UserSelectionScreen()),
+              MaterialPageRoute(
+                builder: (context) => const UserSelectionScreen(),
+              ),
               (route) => false,
             );
           }
@@ -328,10 +447,7 @@ class _CloudBackupScreenState extends State<CloudBackupScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Hata: $e'),
-            backgroundColor: Colors.red,
-          ),
+          SnackBar(content: Text('Hata: $e'), backgroundColor: Colors.red),
         );
       }
     }
@@ -342,7 +458,9 @@ class _CloudBackupScreenState extends State<CloudBackupScreen> {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Yedeği Sil'),
-        content: const Text('Bu yedek kalıcı olarak silinecek. Onaylıyor musunuz?'),
+        content: const Text(
+          'Bu yedek kalıcı olarak silinecek. Onaylıyor musunuz?',
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
@@ -376,5 +494,18 @@ class _CloudBackupScreenState extends State<CloudBackupScreen> {
         );
       }
     }
+  }
+
+  String _formatFileSize(int bytes) {
+    if (bytes < 1024) {
+      return '$bytes B';
+    }
+    if (bytes < 1024 * 1024) {
+      return '${(bytes / 1024).toStringAsFixed(1)} KB';
+    }
+    if (bytes < 1024 * 1024 * 1024) {
+      return '${(bytes / (1024 * 1024)).toStringAsFixed(1)} MB';
+    }
+    return '${(bytes / (1024 * 1024 * 1024)).toStringAsFixed(1)} GB';
   }
 }

@@ -1,16 +1,16 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive_flutter/hive_flutter.dart';
-import 'package:money/models/credit_card.dart';
-import 'package:money/models/credit_card_payment.dart';
-import 'package:money/models/credit_card_statement.dart';
-import 'package:money/models/credit_card_transaction.dart';
-import 'package:money/models/limit_alert.dart';
-import 'package:money/models/reward_points.dart';
-import 'package:money/models/reward_transaction.dart';
-import 'package:money/repositories/credit_card_payment_repository.dart';
-import 'package:money/repositories/credit_card_repository.dart';
-import 'package:money/repositories/credit_card_statement_repository.dart';
-import 'package:money/services/credit_card_box_service.dart';
+import 'package:parion/models/credit_card.dart';
+import 'package:parion/models/credit_card_payment.dart';
+import 'package:parion/models/credit_card_statement.dart';
+import 'package:parion/models/credit_card_transaction.dart';
+import 'package:parion/models/limit_alert.dart';
+import 'package:parion/models/reward_points.dart';
+import 'package:parion/models/reward_transaction.dart';
+import 'package:parion/repositories/credit_card_payment_repository.dart';
+import 'package:parion/repositories/credit_card_repository.dart';
+import 'package:parion/repositories/credit_card_statement_repository.dart';
+import 'package:parion/services/credit_card_box_service.dart';
 import 'dart:math';
 
 void main() {

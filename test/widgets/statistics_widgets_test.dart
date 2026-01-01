@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:money/models/cash_flow_data.dart';
-import 'package:money/widgets/statistics/statistics_widgets.dart';
+import 'package:parion/models/cash_flow_data.dart';
+import 'package:parion/widgets/statistics/statistics_widgets.dart';
 
 void main() {
   group('SummaryCard', () {

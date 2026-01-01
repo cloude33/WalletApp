@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:money/models/transaction.dart';
-import 'package:money/models/wallet.dart';
-import 'package:money/models/loan.dart';
-import 'package:money/models/credit_card_transaction.dart';
-import 'package:money/screens/statistics_screen.dart';
+import 'package:parion/models/transaction.dart';
+import 'package:parion/models/wallet.dart';
+import 'package:parion/models/loan.dart';
+import 'package:parion/models/credit_card_transaction.dart';
+import 'package:parion/screens/statistics_screen.dart';
 
 /// Integration tests for Statistics Screen
 /// Tests complete user flows including:

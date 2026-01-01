@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:money/middleware/security_middleware.dart';
-import 'package:money/models/security/security_models.dart';
-import 'package:money/models/security/sensitive_operation_models.dart';
-import 'package:money/services/auth/auth_service.dart';
-import 'package:money/services/auth/sensitive_operation_service.dart';
-import 'package:money/models/security/auth_state.dart';
+import 'package:parion/middleware/security_middleware.dart';
+import 'package:parion/models/security/security_models.dart';
+import 'package:parion/models/security/sensitive_operation_models.dart';
+import 'package:parion/services/auth/auth_service.dart';
+import 'package:parion/services/auth/sensitive_operation_service.dart';
+import 'package:parion/models/security/auth_state.dart';
 
 void main() {
   late SecurityMiddleware middleware;

@@ -11,43 +11,52 @@ class AutoBackupService {
   AutoBackupService._internal();
 
   final BackupService _backupService = BackupService();
-  final ValueNotifier<bool> isAutoBackupEnabledNotifier = ValueNotifier<bool>(false);
+  final ValueNotifier<bool> isAutoBackupEnabledNotifier = ValueNotifier<bool>(
+    false,
+  );
   Timer? _dailyBackupTimer;
-  
+
   static const String _lastAutoBackupKey = 'last_auto_backup_date';
   static const String _autoBackupEnabledKey = 'auto_backup_enabled';
 
   Future<void> initialize() async {
     final prefs = await SharedPreferences.getInstance();
-    isAutoBackupEnabledNotifier.value = prefs.getBool(_autoBackupEnabledKey) ?? false;
+    isAutoBackupEnabledNotifier.value =
+        prefs.getBool(_autoBackupEnabledKey) ?? false;
     await _scheduleAutoBackup();
   }
 
   Future<void> _scheduleAutoBackup() async {
     _dailyBackupTimer?.cancel();
-    
+
     final prefs = await SharedPreferences.getInstance();
     final isEnabled = prefs.getBool(_autoBackupEnabledKey) ?? false;
-    
+
     if (!isEnabled) {
       debugPrint('Otomatik yedekleme devre dışı');
       return;
     }
 
-    if (FirebaseAuth.instance.currentUser == null) {
-      debugPrint('Otomatik yedekleme: Kullanıcı oturum açmamış, planlanmadı');
+    try {
+      if (FirebaseAuth.instance.currentUser == null) {
+        debugPrint('Otomatik yedekleme: Kullanıcı oturum açmamış, planlanmadı');
+        return;
+      }
+    } catch (e) {
+      // Firebase not initialized (e.g. in tests)
+      debugPrint('Firebase Auth check failed: $e');
       return;
     }
 
     final now = DateTime.now();
     var nextBackup = DateTime(now.year, now.month, now.day, 2, 0);
-    
+
     if (nextBackup.isBefore(now)) {
       nextBackup = nextBackup.add(const Duration(days: 1));
     }
 
     final duration = nextBackup.difference(now);
-    
+
     _dailyBackupTimer = Timer(duration, () {
       _performAutoBackup();
       _scheduleAutoBackup();
@@ -61,7 +70,7 @@ class AutoBackupService {
       final prefs = await SharedPreferences.getInstance();
       final lastBackup = prefs.getString(_lastAutoBackupKey);
       final now = DateTime.now();
-      
+
       if (lastBackup != null) {
         final lastBackupDate = DateTime.parse(lastBackup);
         if (now.difference(lastBackupDate).inHours < 24) {
@@ -70,14 +79,19 @@ class AutoBackupService {
         }
       }
 
-      if (FirebaseAuth.instance.currentUser == null) {
-        debugPrint('Otomatik yedekleme: Kullanıcı oturum açmamış');
+      try {
+        if (FirebaseAuth.instance.currentUser == null) {
+          debugPrint('Otomatik yedekleme: Kullanıcı oturum açmamış');
+          return;
+        }
+      } catch (e) {
+        debugPrint('Firebase Auth check failed during backup: $e');
         return;
       }
 
       debugPrint('Otomatik yedekleme başlatılıyor...');
       final success = await _backupService.uploadToCloud();
-      
+
       if (success) {
         await prefs.setString(_lastAutoBackupKey, now.toIso8601String());
         debugPrint('Otomatik yedekleme başarılı');
@@ -93,7 +107,7 @@ class AutoBackupService {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(_autoBackupEnabledKey, enabled);
     isAutoBackupEnabledNotifier.value = enabled;
-    
+
     if (enabled) {
       await _scheduleAutoBackup();
     } else {
@@ -122,7 +136,14 @@ class AutoBackupService {
 
   Future<void> checkAndPerformBackupIfNeeded() async {
     final isEnabled = await isAutoBackupEnabled();
-    if (!isEnabled || FirebaseAuth.instance.currentUser == null) {
+    bool hasAuth = false;
+    try {
+      hasAuth = FirebaseAuth.instance.currentUser != null;
+    } catch (e) {
+      // Firebase not initialized
+    }
+
+    if (!isEnabled || !hasAuth) {
       return;
     }
 
@@ -134,7 +155,7 @@ class AutoBackupService {
 
     final now = DateTime.now();
     final hoursSinceLastBackup = now.difference(lastBackup).inHours;
-    
+
     if (hoursSinceLastBackup >= 24) {
       await _performAutoBackup();
     }

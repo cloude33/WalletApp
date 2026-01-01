@@ -1,8 +1,8 @@
 import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive/hive.dart';
-import 'package:money/models/wallet.dart';
-import 'package:money/services/data_service.dart';
+import 'package:parion/models/wallet.dart';
+import 'package:parion/services/data_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../property_test_utils.dart';
 import 'package:uuid/uuid.dart';

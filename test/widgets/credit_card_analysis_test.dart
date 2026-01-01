@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:money/widgets/statistics/credit_card_analysis.dart';
+import 'package:parion/widgets/statistics/credit_card_analysis.dart';
 import '../test_setup.dart';
 
 void main() {

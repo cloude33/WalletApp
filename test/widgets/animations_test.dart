@@ -1,16 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:money/widgets/statistics/animations/fade_in_animation.dart';
-import 'package:money/widgets/statistics/animations/slide_transition_animation.dart';
-import 'package:money/widgets/statistics/animations/scale_animation.dart';
-import 'package:money/widgets/statistics/animations/chart_animation.dart';
-import 'package:money/widgets/statistics/animations/staggered_animation.dart';
-import 'package:money/widgets/statistics/animated_summary_card.dart';
-import 'package:money/widgets/statistics/animated_metric_card.dart';
-import 'package:money/widgets/statistics/animated_chart_card.dart';
-import 'package:money/models/cash_flow_data.dart';
+import 'package:parion/widgets/statistics/animations/fade_in_animation.dart';
+import 'package:parion/widgets/statistics/animations/slide_transition_animation.dart';
+import 'package:parion/widgets/statistics/animations/scale_animation.dart';
+import 'package:parion/widgets/statistics/animations/chart_animation.dart';
+import 'package:parion/widgets/statistics/animations/staggered_animation.dart';
+import 'package:parion/widgets/statistics/animated_summary_card.dart';
+import 'package:parion/widgets/statistics/animated_metric_card.dart';
+import 'package:parion/widgets/statistics/animated_chart_card.dart';
+import 'package:parion/models/cash_flow_data.dart';
 import 'package:fl_chart/fl_chart.dart';
-import 'package:money/widgets/statistics/interactive_line_chart.dart';
+import 'package:parion/widgets/statistics/interactive_line_chart.dart';
 
 void main() {
   group('Animation Widgets Tests', () {
@@ -165,6 +165,7 @@ void main() {
       expect(find.text('Item 1'), findsOneWidget);
       expect(find.text('Item 2'), findsOneWidget);
       expect(find.text('Item 3'), findsOneWidget);
+      await tester.pumpAndSettle();
     });
   });
 

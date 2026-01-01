@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:money/services/auth/two_factor_service.dart';
-import 'package:money/models/security/two_factor_models.dart';
-import 'package:money/utils/security/totp_helper.dart';
+import 'package:parion/services/auth/two_factor_service.dart';
+import 'package:parion/models/security/two_factor_models.dart';
+import 'package:parion/utils/security/totp_helper.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();

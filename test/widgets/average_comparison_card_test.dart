@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:money/services/statistics_service.dart';
-import 'package:money/widgets/statistics/average_comparison_card.dart';
+import 'package:parion/services/statistics_service.dart';
+import 'package:parion/widgets/statistics/average_comparison_card.dart';
 
 /// Widget tests for Average Comparison Card
 /// 

@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:money/models/comparison_data.dart';
-import 'package:money/models/cash_flow_data.dart';
+import 'package:parion/models/comparison_data.dart';
+import 'package:parion/models/cash_flow_data.dart';
 
 /// Unit Tests for Comparison Service
 /// 
