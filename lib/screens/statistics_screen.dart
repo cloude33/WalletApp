@@ -43,6 +43,20 @@ class _StatisticsScreenState extends State<StatisticsScreen>
   final DataService _dataService = DataService();
   List<Category> _categories = [];
 
+  // Fatura kategorileri için renk haritası
+  final Map<String, Color> _billCategoryColors = {
+    'Elektrik': const Color(0xFFFFA726), // Turuncu
+    'Doğalgaz': const Color(0xFF42A5F5), // Mavi
+    'Su': const Color(0xFF26C6DA), // Açık Mavi
+    'İnternet': const Color(0xFF9C27B0), // Mor
+    'Telefon': const Color(0xFF66BB6A), // Yeşil
+    'Kira': const Color(0xFFEF5350), // Kırmızı
+    'Aidat': const Color(0xFFFF7043), // Koyu Turuncu
+    'Sigorta': const Color(0xFF5C6BC0), // İndigo
+    'Abonelik': const Color(0xFFEC407A), // Pembe
+    'Diğer': const Color(0xFF78909C), // Gri
+  };
+
   @override
   void initState() {
     super.initState();
@@ -497,16 +511,11 @@ class _StatisticsScreenState extends State<StatisticsScreen>
     );
   }
 
-
-
   Widget _buildCreditTab() {
     final creditWallets = widget.wallets
         .where((w) => w.type == 'credit_card')
         .toList();
-    final totalDebt = creditWallets.fold(
-      0.0,
-      (sum, w) => sum + w.balance,
-    );
+    final totalDebt = creditWallets.fold(0.0, (sum, w) => sum + w.balance);
     final installmentTransactions = widget.transactions
         .where((t) => t.installments != null)
         .toList();
@@ -705,9 +714,7 @@ class _StatisticsScreenState extends State<StatisticsScreen>
     final assetWallets = widget.wallets
         .where((w) => w.type != 'credit_card')
         .toList();
-    final kmhWallets = assetWallets
-        .where((w) => w.isKmhAccount)
-        .toList();
+    final kmhWallets = assetWallets.where((w) => w.isKmhAccount).toList();
     final totalPositiveAssets = assetWallets
         .where((w) => w.balance > 0)
         .fold(0.0, (sum, w) => sum + w.balance);
@@ -715,7 +722,10 @@ class _StatisticsScreenState extends State<StatisticsScreen>
         .where((w) => w.balance < 0)
         .fold(0.0, (sum, w) => sum + w.balance.abs());
     final totalAssets = totalPositiveAssets - totalKmhDebt;
-    final totalForChart = assetWallets.fold(0.0, (sum, w) => sum + w.balance.abs());
+    final totalForChart = assetWallets.fold(
+      0.0,
+      (sum, w) => sum + w.balance.abs(),
+    );
 
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
@@ -735,7 +745,8 @@ class _StatisticsScreenState extends State<StatisticsScreen>
               ? PieChart(
                   PieChartData(
                     sections: assetWallets.map((w) {
-                      final percentage = (w.balance.abs() / totalForChart) * 100;
+                      final percentage =
+                          (w.balance.abs() / totalForChart) * 100;
                       final color = Color(int.parse(w.color));
                       return PieChartSectionData(
                         color: color,
@@ -767,7 +778,9 @@ class _StatisticsScreenState extends State<StatisticsScreen>
                       leading: CircleAvatar(
                         backgroundColor: Color(int.parse(w.color)),
                         child: Icon(
-                          w.type == 'cash' ? Icons.money : Icons.account_balance,
+                          w.type == 'cash'
+                              ? Icons.money
+                              : Icons.account_balance,
                           color: Colors.white,
                           size: 20,
                         ),
@@ -776,7 +789,10 @@ class _StatisticsScreenState extends State<StatisticsScreen>
                       subtitle: w.isKmhAccount
                           ? Text(
                               'KMH - Limit: ₺${NumberFormat('#,##0', 'tr_TR').format(w.creditLimit)}',
-                              style: const TextStyle(fontSize: 12, color: Colors.grey),
+                              style: const TextStyle(
+                                fontSize: 12,
+                                color: Colors.grey,
+                              ),
                             )
                           : null,
                       trailing: Text(
@@ -815,7 +831,10 @@ class _StatisticsScreenState extends State<StatisticsScreen>
                         title: Text(w.name),
                         subtitle: Text(
                           'KMH Borcu - Limit: ₺${NumberFormat('#,##0', 'tr_TR').format(w.creditLimit)}',
-                          style: const TextStyle(fontSize: 12, color: Colors.grey),
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey,
+                          ),
                         ),
                         trailing: Text(
                           '-₺${NumberFormat('#,##0', 'tr_TR').format(w.balance.abs())}',
@@ -836,14 +855,11 @@ class _StatisticsScreenState extends State<StatisticsScreen>
 
   Widget _buildKmhUsageChart(List<Wallet> kmhWallets) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final totalUsed = kmhWallets
-        .fold(0.0, (sum, w) => sum + w.usedCredit);
-    final totalLimit = kmhWallets
-        .fold(0.0, (sum, w) => sum + w.creditLimit);
+    final totalUsed = kmhWallets.fold(0.0, (sum, w) => sum + w.usedCredit);
+    final totalLimit = kmhWallets.fold(0.0, (sum, w) => sum + w.creditLimit);
 
-    
-    final overallUtilization = totalLimit > 0 
-        ? (totalUsed / totalLimit) * 100 
+    final overallUtilization = totalLimit > 0
+        ? (totalUsed / totalLimit) * 100
         : 0.0;
 
     return Container(
@@ -867,19 +883,19 @@ class _StatisticsScreenState extends State<StatisticsScreen>
             children: [
               const Text(
                 'KMH Kullanım Durumu',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
                 decoration: BoxDecoration(
                   color: overallUtilization > 80
                       ? Colors.red.withValues(alpha: 0.1)
                       : (overallUtilization > 50
-                          ? Colors.orange.withValues(alpha: 0.1)
-                          : Colors.green.withValues(alpha: 0.1)),
+                            ? Colors.orange.withValues(alpha: 0.1)
+                            : Colors.green.withValues(alpha: 0.1)),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
@@ -888,7 +904,9 @@ class _StatisticsScreenState extends State<StatisticsScreen>
                     fontWeight: FontWeight.bold,
                     color: overallUtilization > 80
                         ? Colors.red
-                        : (overallUtilization > 50 ? Colors.orange : Colors.green),
+                        : (overallUtilization > 50
+                              ? Colors.orange
+                              : Colors.green),
                   ),
                 ),
               ),
@@ -934,7 +952,7 @@ class _StatisticsScreenState extends State<StatisticsScreen>
             final utilizationColor = w.utilizationRate > 80
                 ? Colors.red
                 : (w.utilizationRate > 50 ? Colors.orange : Colors.green);
-            
+
             return Padding(
               padding: const EdgeInsets.only(bottom: 12),
               child: Column(
@@ -986,7 +1004,9 @@ class _StatisticsScreenState extends State<StatisticsScreen>
                   const SizedBox(height: 4),
                   LinearProgressIndicator(
                     value: w.creditLimit > 0 ? w.usedCredit / w.creditLimit : 0,
-                    backgroundColor: isDark ? Colors.grey[800] : Colors.grey[200],
+                    backgroundColor: isDark
+                        ? Colors.grey[800]
+                        : Colors.grey[200],
                     color: utilizationColor,
                     minHeight: 6,
                     borderRadius: BorderRadius.circular(3),
@@ -1002,12 +1022,7 @@ class _StatisticsScreenState extends State<StatisticsScreen>
 
   Widget _buildReportsView() {
     return ListView(
-      padding: const EdgeInsets.fromLTRB(
-        16,
-        16,
-        16,
-        120,
-      ),
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 120),
       children: [
         _buildOverviewSummaryCards(),
         const SizedBox(height: 16),
@@ -1029,7 +1044,6 @@ class _StatisticsScreenState extends State<StatisticsScreen>
       ],
     );
   }
-
 
   Widget _buildDebtReceivablePanel() {
     final totalLoanDebt = widget.loans.fold(
@@ -1379,8 +1393,7 @@ class _StatisticsScreenState extends State<StatisticsScreen>
         } else if (item.type == 'expense') {
           expense += item.amount;
         }
-      }
-      else if (item is CreditCardTransaction) {
+      } else if (item is CreditCardTransaction) {
         expense += item.amount;
       }
     }
@@ -1391,8 +1404,7 @@ class _StatisticsScreenState extends State<StatisticsScreen>
       if (item is Transaction && item.type == 'expense') {
         expenseCategories[item.category] =
             (expenseCategories[item.category] ?? 0) + item.amount;
-      }
-      else if (item is CreditCardTransaction) {
+      } else if (item is CreditCardTransaction) {
         expenseCategories[item.category] =
             (expenseCategories[item.category] ?? 0) + item.amount;
       }
@@ -1517,7 +1529,9 @@ class _StatisticsScreenState extends State<StatisticsScreen>
         color: isDark ? const Color(0xFF1C1C1E) : color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(8),
         border: Border.all(
-          color: isDark ? color.withValues(alpha: 0.5) : color.withValues(alpha: 0.3),
+          color: isDark
+              ? color.withValues(alpha: 0.5)
+              : color.withValues(alpha: 0.3),
         ),
       ),
       child: Column(
@@ -1647,8 +1661,7 @@ class _StatisticsScreenState extends State<StatisticsScreen>
         } else if (item.type == 'expense') {
           expense += item.amount;
         }
-      }
-      else if (item is CreditCardTransaction) {
+      } else if (item is CreditCardTransaction) {
         expense += item.amount;
       }
     }
@@ -1789,8 +1802,7 @@ class _StatisticsScreenState extends State<StatisticsScreen>
         } else if (item.type == 'expense') {
           expense += item.amount;
         }
-      }
-      else if (item is CreditCardTransaction) {
+      } else if (item is CreditCardTransaction) {
         expense += item.amount;
       }
     }
@@ -1800,8 +1812,7 @@ class _StatisticsScreenState extends State<StatisticsScreen>
       if (item is Transaction && item.type == 'expense') {
         expenseCategories[item.category] =
             (expenseCategories[item.category] ?? 0) + item.amount;
-      }
-      else if (item is CreditCardTransaction) {
+      } else if (item is CreditCardTransaction) {
         expenseCategories[item.category] =
             (expenseCategories[item.category] ?? 0) + item.amount;
       }
@@ -2112,9 +2123,7 @@ class _StatisticsScreenState extends State<StatisticsScreen>
     final assetWallets = widget.wallets
         .where((w) => w.type != 'credit_card')
         .toList();
-    final kmhWallets = assetWallets
-        .where((w) => w.isKmhAccount)
-        .toList();
+    final kmhWallets = assetWallets.where((w) => w.isKmhAccount).toList();
     final positiveAssets = assetWallets
         .where((w) => w.balance > 0)
         .fold(0.0, (sum, w) => sum + w.balance);
@@ -2194,7 +2203,9 @@ class _StatisticsScreenState extends State<StatisticsScreen>
                         child: Text(
                           '₺${NumberFormat.compact().format(totalAssets)}',
                           style: TextStyle(
-                            color: totalAssets >= 0 ? Colors.black87 : Colors.red,
+                            color: totalAssets >= 0
+                                ? Colors.black87
+                                : Colors.red,
                             fontWeight: FontWeight.bold,
                             fontSize: 14,
                           ),
@@ -2461,8 +2472,7 @@ class _StatisticsScreenState extends State<StatisticsScreen>
         paymentMethodExpenses[walletType] =
             (paymentMethodExpenses[walletType] ?? 0) + item.amount;
         totalExpense += item.amount;
-      }
-      else if (item is CreditCardTransaction) {
+      } else if (item is CreditCardTransaction) {
         paymentMethodExpenses['Kredi Kartı'] =
             (paymentMethodExpenses['Kredi Kartı'] ?? 0) + item.amount;
         totalExpense += item.amount;
@@ -2603,10 +2613,6 @@ class _StatisticsScreenState extends State<StatisticsScreen>
     );
   }
 
-
-
-
-
   Widget _buildBillTrackingCard() {
     return FutureBuilder<Map<String, dynamic>>(
       future: _loadBillStatistics(),
@@ -2631,7 +2637,8 @@ class _StatisticsScreenState extends State<StatisticsScreen>
         final paidCount = data['paidCount'] as int;
         final pendingCount = data['pendingCount'] as int;
         final overdueCount = data['overdueCount'] as int;
-        final paymentsByCategory = data['paymentsByCategory'] as Map<String, double>;
+        final paymentsByCategory =
+            data['paymentsByCategory'] as Map<String, double>;
 
         final totalAmount = totalPaid + totalPending + totalOverdue;
 
@@ -2700,21 +2707,31 @@ class _StatisticsScreenState extends State<StatisticsScreen>
                         sectionsSpace: 2,
                         centerSpaceRadius: 50,
                         pieTouchData: PieTouchData(
-                          touchCallback: (FlTouchEvent event, pieTouchResponse) {
-                            if (event is FlTapUpEvent && pieTouchResponse != null) {
-                              final sectionIndex = pieTouchResponse.touchedSection?.touchedSectionIndex;
-                              if (sectionIndex != null && sectionIndex < paymentsByCategory.length) {
-                                final category = paymentsByCategory.keys.elementAt(sectionIndex);
-                                _showBillCategoryDetails(category, paymentsByCategory[category]!);
-                              }
-                            }
-                          },
+                          touchCallback:
+                              (FlTouchEvent event, pieTouchResponse) {
+                                if (event is FlTapUpEvent &&
+                                    pieTouchResponse != null) {
+                                  final sectionIndex = pieTouchResponse
+                                      .touchedSection
+                                      ?.touchedSectionIndex;
+                                  if (sectionIndex != null &&
+                                      sectionIndex <
+                                          paymentsByCategory.length) {
+                                    final category = paymentsByCategory.keys
+                                        .elementAt(sectionIndex);
+                                    _showBillCategoryDetails(
+                                      category,
+                                      paymentsByCategory[category]!,
+                                    );
+                                  }
+                                }
+                              },
                         ),
                         sections: paymentsByCategory.entries.map((entry) {
                           final percentage = totalAmount > 0
                               ? (entry.value / totalAmount) * 100
                               : 0.0;
-                          final color = Colors.primaries[entry.key.hashCode % Colors.primaries.length];
+                          final color = _getBillCategoryColor(entry.key);
                           return PieChartSectionData(
                             color: color,
                             value: percentage,
@@ -2739,9 +2756,10 @@ class _StatisticsScreenState extends State<StatisticsScreen>
                       final percentage = totalAmount > 0
                           ? (entry.value / totalAmount) * 100
                           : 0.0;
-                      final color = Colors.primaries[entry.key.hashCode % Colors.primaries.length];
+                      final color = _getBillCategoryColor(entry.key);
                       return InkWell(
-                        onTap: () => _showBillCategoryDetails(entry.key, entry.value),
+                        onTap: () =>
+                            _showBillCategoryDetails(entry.key, entry.value),
                         child: Padding(
                           padding: const EdgeInsets.symmetric(vertical: 8),
                           child: Row(
@@ -2767,9 +2785,13 @@ class _StatisticsScreenState extends State<StatisticsScreen>
                               FutureBuilder(
                                 future: _dataService.getCurrentUser(),
                                 builder: (context, snapshot) {
-                                  if (!snapshot.hasData) return const SizedBox();
+                                  if (!snapshot.hasData)
+                                    return const SizedBox();
                                   return Text(
-                                    CurrencyHelper.formatAmountCompact(entry.value, snapshot.data),
+                                    CurrencyHelper.formatAmountCompact(
+                                      entry.value,
+                                      snapshot.data,
+                                    ),
                                     style: const TextStyle(
                                       fontSize: 14,
                                       fontWeight: FontWeight.bold,
@@ -2847,10 +2869,7 @@ class _StatisticsScreenState extends State<StatisticsScreen>
           const SizedBox(height: 2),
           Text(
             '$count adet',
-            style: TextStyle(
-              fontSize: 10,
-              color: color.withValues(alpha: 0.7),
-            ),
+            style: TextStyle(fontSize: 10, color: color.withValues(alpha: 0.7)),
           ),
         ],
       ),
@@ -2895,10 +2914,14 @@ class _StatisticsScreenState extends State<StatisticsScreen>
       final filteredPayments = allPayments.where((payment) {
         final paymentDate = payment.paidDate ?? payment.dueDate;
         if (endDate != null) {
-          return paymentDate.isAfter(startDate.subtract(const Duration(seconds: 1))) &&
+          return paymentDate.isAfter(
+                startDate.subtract(const Duration(seconds: 1)),
+              ) &&
               paymentDate.isBefore(endDate.add(const Duration(seconds: 1)));
         }
-        return paymentDate.isAfter(startDate.subtract(const Duration(seconds: 1)));
+        return paymentDate.isAfter(
+          startDate.subtract(const Duration(seconds: 1)),
+        );
       }).toList();
       double totalPaid = 0;
       double totalPending = 0;
@@ -2970,13 +2993,14 @@ class _StatisticsScreenState extends State<StatisticsScreen>
                     Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: Colors.primaries[category.hashCode % Colors.primaries.length]
-                            .withValues(alpha: 0.1),
+                        color: _getBillCategoryColor(
+                          category,
+                        ).withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Icon(
                         Icons.receipt_long,
-                        color: Colors.primaries[category.hashCode % Colors.primaries.length],
+                        color: _getBillCategoryColor(category),
                         size: 28,
                       ),
                     ),
@@ -2997,10 +3021,13 @@ class _StatisticsScreenState extends State<StatisticsScreen>
                             builder: (context, snapshot) {
                               if (!snapshot.hasData) return const SizedBox();
                               return Text(
-                                CurrencyHelper.formatAmount(totalAmount, snapshot.data),
+                                CurrencyHelper.formatAmount(
+                                  totalAmount,
+                                  snapshot.data,
+                                ),
                                 style: TextStyle(
                                   fontSize: 16,
-                                  color: Colors.primaries[category.hashCode % Colors.primaries.length],
+                                  color: _getBillCategoryColor(category),
                                   fontWeight: FontWeight.w600,
                                 ),
                               );
@@ -3093,5 +3120,41 @@ class _StatisticsScreenState extends State<StatisticsScreen>
       },
     );
   }
-}
 
+  /// Fatura kategorisi için renk döndürür
+  Color _getBillCategoryColor(String category) {
+    // Önce tanımlı renk haritasından kontrol et
+    if (_billCategoryColors.containsKey(category)) {
+      return _billCategoryColors[category]!;
+    }
+
+    // Eğer tanımlı değilse, benzersiz bir renk üret
+    // Ancak her zaman aynı kategori için aynı rengi üretmek için
+    // hashCode kullanıyoruz ama daha geniş bir renk paleti ile
+    final colorIndex = category.hashCode.abs() % 20;
+    final colors = [
+      const Color(0xFFE91E63), // Pink
+      const Color(0xFF9C27B0), // Purple
+      const Color(0xFF673AB7), // Deep Purple
+      const Color(0xFF3F51B5), // Indigo
+      const Color(0xFF2196F3), // Blue
+      const Color(0xFF03A9F4), // Light Blue
+      const Color(0xFF00BCD4), // Cyan
+      const Color(0xFF009688), // Teal
+      const Color(0xFF4CAF50), // Green
+      const Color(0xFF8BC34A), // Light Green
+      const Color(0xFFCDDC39), // Lime
+      const Color(0xFFFFEB3B), // Yellow
+      const Color(0xFFFFC107), // Amber
+      const Color(0xFFFF9800), // Orange
+      const Color(0xFFFF5722), // Deep Orange
+      const Color(0xFF795548), // Brown
+      const Color(0xFF607D8B), // Blue Grey
+      const Color(0xFFE57373), // Light Red
+      const Color(0xFF81C784), // Light Green
+      const Color(0xFF64B5F6), // Light Blue
+    ];
+
+    return colors[colorIndex];
+  }
+}

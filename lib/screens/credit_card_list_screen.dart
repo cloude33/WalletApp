@@ -36,7 +36,7 @@ class _CreditCardListScreenState extends State<CreditCardListScreen> {
   double _totalDebt = 0;
   double _totalAvailableCredit = 0;
   double _totalDueThisMonth = 0;
-  
+
   double _totalKmhDebt = 0;
   double _totalKmhAvailableCredit = 0;
   double _totalKmhCreditLimit = 0;
@@ -59,15 +59,15 @@ class _CreditCardListScreenState extends State<CreditCardListScreen> {
       for (var card in cards) {
         details[card.id] = await _cardService.getCardWithDetails(card.id);
       }
-      
+
       // Load KMH accounts
       final wallets = await _dataService.getWallets();
       final kmhAccounts = wallets.where((w) => w.isKmhAccount).toList();
-      
+
       double totalKmhDebt = 0;
       double totalKmhAvailableCredit = 0;
       double totalKmhCreditLimit = 0;
-      
+
       for (var account in kmhAccounts) {
         totalKmhDebt += account.usedCredit;
         totalKmhAvailableCredit += account.availableCredit;
@@ -141,6 +141,7 @@ class _CreditCardListScreenState extends State<CreditCardListScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        automaticallyImplyLeading: false,
         title: Text(_selectedTab == 0 ? 'Kredi Kartlarım' : 'KMH Hesaplarım'),
         actions: [
           if (_selectedTab == 0)
@@ -177,18 +178,22 @@ class _CreditCardListScreenState extends State<CreditCardListScreen> {
           : Column(
               children: [
                 _buildTabSelector(),
-                _selectedTab == 0 ? _buildSummaryCard() : _buildKmhSummaryCard(),
+                _selectedTab == 0
+                    ? _buildSummaryCard()
+                    : _buildKmhSummaryCard(),
                 Expanded(
                   child: _selectedTab == 0
                       ? (_cards.isEmpty ? _buildEmptyState() : _buildCardList())
                       : (_kmhAccounts.isEmpty
-                          ? _buildKmhEmptyState()
-                          : _buildKmhAccountList()),
+                            ? _buildKmhEmptyState()
+                            : _buildKmhAccountList()),
                 ),
               ],
             ),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: _selectedTab == 0 ? _navigateToAddCard : _navigateToAddKmhAccount,
+        onPressed: _selectedTab == 0
+            ? _navigateToAddCard
+            : _navigateToAddKmhAccount,
         icon: Icon(_selectedTab == 0 ? Icons.add_card : Icons.add),
         label: Text(_selectedTab == 0 ? 'Kart Ekle' : 'KMH Hesabı Ekle'),
       ),
@@ -210,7 +215,9 @@ class _CreditCardListScreenState extends State<CreditCardListScreen> {
               child: Container(
                 padding: const EdgeInsets.symmetric(vertical: 12),
                 decoration: BoxDecoration(
-                  color: _selectedTab == 0 ? const Color(0xFF00BFA5) : Colors.transparent,
+                  color: _selectedTab == 0
+                      ? const Color(0xFF00BFA5)
+                      : Colors.transparent,
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Row(
@@ -218,15 +225,21 @@ class _CreditCardListScreenState extends State<CreditCardListScreen> {
                   children: [
                     Icon(
                       Icons.credit_card,
-                      color: _selectedTab == 0 ? Colors.white : Colors.grey[600],
+                      color: _selectedTab == 0
+                          ? Colors.white
+                          : Colors.grey[600],
                       size: 20,
                     ),
                     const SizedBox(width: 8),
                     Text(
                       'Kredi Kartları',
                       style: TextStyle(
-                        color: _selectedTab == 0 ? Colors.white : Colors.grey[600],
-                        fontWeight: _selectedTab == 0 ? FontWeight.bold : FontWeight.normal,
+                        color: _selectedTab == 0
+                            ? Colors.white
+                            : Colors.grey[600],
+                        fontWeight: _selectedTab == 0
+                            ? FontWeight.bold
+                            : FontWeight.normal,
                         fontSize: 14,
                       ),
                     ),
@@ -241,7 +254,9 @@ class _CreditCardListScreenState extends State<CreditCardListScreen> {
               child: Container(
                 padding: const EdgeInsets.symmetric(vertical: 12),
                 decoration: BoxDecoration(
-                  color: _selectedTab == 1 ? const Color(0xFF00BFA5) : Colors.transparent,
+                  color: _selectedTab == 1
+                      ? const Color(0xFF00BFA5)
+                      : Colors.transparent,
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Row(
@@ -249,15 +264,21 @@ class _CreditCardListScreenState extends State<CreditCardListScreen> {
                   children: [
                     Icon(
                       Icons.account_balance,
-                      color: _selectedTab == 1 ? Colors.white : Colors.grey[600],
+                      color: _selectedTab == 1
+                          ? Colors.white
+                          : Colors.grey[600],
                       size: 20,
                     ),
                     const SizedBox(width: 8),
                     Text(
                       'KMH Hesapları',
                       style: TextStyle(
-                        color: _selectedTab == 1 ? Colors.white : Colors.grey[600],
-                        fontWeight: _selectedTab == 1 ? FontWeight.bold : FontWeight.normal,
+                        color: _selectedTab == 1
+                            ? Colors.white
+                            : Colors.grey[600],
+                        fontWeight: _selectedTab == 1
+                            ? FontWeight.bold
+                            : FontWeight.normal,
                         fontSize: 14,
                       ),
                     ),
@@ -435,6 +456,8 @@ class _CreditCardListScreenState extends State<CreditCardListScreen> {
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
                           ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
                         Text(
                           '${card.cardName} •••• ${card.last4Digits}',
@@ -442,61 +465,67 @@ class _CreditCardListScreenState extends State<CreditCardListScreen> {
                             fontSize: 14,
                             color: Colors.grey[600],
                           ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ],
                     ),
                   ),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 4,
-                        ),
-                        decoration: BoxDecoration(
-                          color: statusColor.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Text(
-                          '${utilization.toStringAsFixed(0)}%',
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
-                            color: statusColor,
+                  const SizedBox(width: 8),
+                  Flexible(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: statusColor.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Text(
+                            '${utilization.toStringAsFixed(0)}%',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                              color: statusColor,
+                            ),
                           ),
                         ),
-                      ),
-                      PopupMenuButton<String>(
-                        icon: const Icon(Icons.more_vert),
-                        onSelected: (value) {
-                          if (value == 'delete') {
-                            _deleteCard(card);
-                          }
-                        },
-                        itemBuilder: (BuildContext context) {
-                          return [
-                            const PopupMenuItem(
-                              value: 'delete',
-                              child: Row(
-                                children: [
-                                  Icon(
-                                    Icons.delete,
-                                    color: Colors.red,
-                                    size: 20,
-                                  ),
-                                  SizedBox(width: 8),
-                                  Text(
-                                    'Sil',
-                                    style: TextStyle(color: Colors.red),
-                                  ),
-                                ],
+                        PopupMenuButton<String>(
+                          icon: const Icon(Icons.more_vert),
+                          onSelected: (value) {
+                            if (value == 'delete') {
+                              _deleteCard(card);
+                            }
+                          },
+                          itemBuilder: (BuildContext context) {
+                            return [
+                              const PopupMenuItem(
+                                value: 'delete',
+                                child: Row(
+                                  children: [
+                                    Icon(
+                                      Icons.delete,
+                                      color: Colors.red,
+                                      size: 20,
+                                    ),
+                                    SizedBox(width: 8),
+                                    Text(
+                                      'Sil',
+                                      style: TextStyle(color: Colors.red),
+                                    ),
+                                  ],
+                                ),
                               ),
-                            ),
-                          ];
-                        },
-                      ),
-                    ],
+                            ];
+                          },
+                        ),
+                      ],
+                    ),
                   ),
                 ],
               ),
@@ -533,33 +562,51 @@ class _CreditCardListScreenState extends State<CreditCardListScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.calendar_today,
-                        size: 16,
-                        color: Colors.grey[600],
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        'Son Ödeme: ${DateFormat('dd MMM', 'tr_TR').format(nextDueDate)}',
-                        style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-                      ),
-                    ],
-                  ),
-                  if (activeInstallmentCount > 0)
-                    Row(
+                  Flexible(
+                    child: Row(
                       children: [
-                        Icon(Icons.schedule, size: 16, color: Colors.grey[600]),
+                        Icon(
+                          Icons.calendar_today,
+                          size: 16,
+                          color: Colors.grey[600],
+                        ),
                         const SizedBox(width: 4),
-                        Text(
-                          '$activeInstallmentCount Taksit',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.grey[600],
+                        Flexible(
+                          child: Text(
+                            'Son Ödeme: ${DateFormat('dd MMM', 'tr_TR').format(nextDueDate)}',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.grey[600],
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
                         ),
                       ],
+                    ),
+                  ),
+                  if (activeInstallmentCount > 0)
+                    Flexible(
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.schedule,
+                            size: 16,
+                            color: Colors.grey[600],
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            '$activeInstallmentCount Taksit',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.grey[600],
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
+                      ),
                     ),
                 ],
               ),
@@ -742,8 +789,9 @@ class _CreditCardListScreenState extends State<CreditCardListScreen> {
                     width: 48,
                     height: 48,
                     decoration: BoxDecoration(
-                      color: Color(int.parse(account.color))
-                          .withValues(alpha: 0.2),
+                      color: Color(
+                        int.parse(account.color),
+                      ).withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Icon(
@@ -763,6 +811,8 @@ class _CreditCardListScreenState extends State<CreditCardListScreen> {
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
                           ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
                         if (account.accountNumber != null)
                           Text(
@@ -771,10 +821,13 @@ class _CreditCardListScreenState extends State<CreditCardListScreen> {
                               fontSize: 14,
                               color: Colors.grey[600],
                             ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
                       ],
                     ),
                   ),
+                  const SizedBox(width: 8),
                   Container(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 8,
@@ -828,36 +881,51 @@ class _CreditCardListScreenState extends State<CreditCardListScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.account_balance_wallet,
-                        size: 16,
-                        color: Colors.grey[600],
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        'Kullanılabilir: ${_currencyFormat.format(account.availableCredit)}',
-                        style: TextStyle(
-                          fontSize: 12,
+                  Flexible(
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.account_balance_wallet,
+                          size: 16,
                           color: Colors.grey[600],
                         ),
-                      ),
-                    ],
-                  ),
-                  if (account.interestRate != null)
-                    Row(
-                      children: [
-                        Icon(Icons.percent, size: 16, color: Colors.grey[600]),
                         const SizedBox(width: 4),
-                        Text(
-                          'Faiz: %${account.interestRate!.toStringAsFixed(0)}',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.grey[600],
+                        Flexible(
+                          child: Text(
+                            'Kullanılabilir: ${_currencyFormat.format(account.availableCredit)}',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.grey[600],
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
                         ),
                       ],
+                    ),
+                  ),
+                  if (account.interestRate != null)
+                    Flexible(
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.percent,
+                            size: 16,
+                            color: Colors.grey[600],
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            'Faiz: %${account.interestRate!.toStringAsFixed(0)}',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.grey[600],
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
+                      ),
                     ),
                 ],
               ),

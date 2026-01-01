@@ -449,6 +449,11 @@ class BackupService {
         backupFile,
         fileName,
         description: 'Parion Backup Version 2.0 via Google Drive',
+        properties: {
+          'platform': await _getPlatformInfo(),
+          'deviceModel': await _getDeviceModel(),
+          'version': '2.0',
+        },
       );
 
       if (result == null) {
@@ -553,8 +558,17 @@ class BackupService {
                   DateTime.now().toIso8601String(),
               'size': int.tryParse(f.size ?? '0') ?? 0,
               'metadata': {
-                'deviceModel': 'Drive Backup',
-                'platform': 'Unknown',
+                'deviceModel':
+                    f.properties?['deviceModel'] ??
+                    (f.description?.contains('Android') ?? false
+                        ? 'Android Device'
+                        : 'Unknown Device'),
+                'platform':
+                    f.properties?['platform'] ??
+                    (f.description?.contains('Android') ?? false
+                        ? 'android'
+                        : 'ios'),
+                'version': f.properties?['version'] ?? '2.0',
               },
               'fileName': f.name,
             },

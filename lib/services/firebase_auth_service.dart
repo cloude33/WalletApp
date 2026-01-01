@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 
 class FirebaseAuthService {
   static final FirebaseAuthService _instance = FirebaseAuthService._internal();
@@ -8,7 +9,11 @@ class FirebaseAuthService {
   FirebaseAuthService._internal();
 
   FirebaseAuth get _auth => FirebaseAuth.instance;
-  final GoogleSignIn _googleSignIn = GoogleSignIn();
+  final GoogleSignIn _googleSignIn = GoogleSignIn(
+    scopes: ['email', 'profile'],
+    // Web client ID'yi manuel olarak belirt
+    serverClientId: '195092382674-ca5q05m7idrstrqpfb5bc6e00thqiu20.apps.googleusercontent.com',
+  );
 
   User? get currentUser => _auth.currentUser;
 
@@ -77,7 +82,23 @@ class FirebaseAuthService {
         return userCredential;
       } else {
         // Mobil için mevcut GoogleSignIn akışını kullan
+        
+        // Önce mevcut oturumu temizle
+        try {
+          await _googleSignIn.signOut();
+          await _auth.signOut();
+        } catch (e) {
+          debugPrint('⚠️ Sign out error (ignorable): $e');
+        }
+        
+        debugPrint('🔄 Google Sign-In başlatılıyor...');
+        
+        // Google Play Services kontrolü
+        final isAvailable = await _googleSignIn.isSignedIn();
+        debugPrint('📱 Google Play Services durumu: $isAvailable');
+        
         final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
+        
         if (googleUser == null) {
           debugPrint('❌ Google Sign-In iptal edildi');
           return null;
@@ -91,7 +112,12 @@ class FirebaseAuthService {
 
         if (googleAuth.accessToken == null || googleAuth.idToken == null) {
           debugPrint('❌ Google auth tokens alınamadı');
-          throw Exception('Google authentication tokens not available');
+          debugPrint('Access Token: ${googleAuth.accessToken != null ? 'OK' : 'NULL'}');
+          debugPrint('ID Token: ${googleAuth.idToken != null ? 'OK' : 'NULL'}');
+          
+          // Token alınamadıysa tekrar dene
+          await _googleSignIn.signOut();
+          throw Exception('Google authentication tokens not available. Please try again.');
         }
 
         debugPrint('✅ Google auth tokens alındı');
@@ -111,9 +137,24 @@ class FirebaseAuthService {
     } on FirebaseAuthException catch (e) {
       debugPrint('❌ Firebase Auth Error: ${e.code} - ${e.message}');
       throw _handleAuthException(e);
+    } on PlatformException catch (e) {
+      debugPrint('❌ Platform Exception: ${e.code} - ${e.message}');
+      debugPrint('❌ Platform Exception Details: ${e.details}');
+      
+      if (e.code == 'sign_in_failed') {
+        if (e.message?.contains('10') == true) {
+          throw 'Google Sign-In yapılandırma hatası. Lütfen:\n'
+              '• Uygulamayı tamamen kapatıp açın\n'
+              '• Google Play Services\'i güncelleyin\n'
+              '• Cihazınızı yeniden başlatın\n'
+              '• İnternet bağlantınızı kontrol edin';
+        }
+        throw 'Google Sign-In başarısız. Lütfen internet bağlantınızı kontrol edin ve tekrar deneyin.';
+      }
+      throw 'Google Sign-In hatası: ${e.message ?? e.code}';
     } catch (e) {
       debugPrint('❌ Google sign in error: $e');
-      rethrow;
+      throw 'Google Sign-In sırasında beklenmeyen bir hata oluştu. Lütfen tekrar deneyin.';
     }
   }
 

@@ -66,7 +66,12 @@ class TestSetup {
           (MethodCall methodCall) async {
             switch (methodCall.method) {
               case 'read':
-                return null; // Return null for all reads
+        // Return a constant key for encryption to ensure consistent Hive box access across tests
+        if (methodCall.arguments['key'] == 'kmh_encryption_key' || 
+            methodCall.arguments['key'] == 'wallet_encryption_key') {
+          return '[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32]';
+        }
+        return null; // Return null for other reads
               case 'write':
                 return null; // Success for writes
               case 'delete':
@@ -235,8 +240,9 @@ class TestSetup {
       await DataService().init();
 
       // Initialize KMH and Recurring Transaction services
-      // Initialize KMH and Recurring Transaction services
+      print('TestSetup: Initializing KMH Box Service');
       await KmhBoxService.init();
+      print('TestSetup: KMH Box Service initialized');
 
       final recurringRepo = RecurringTransactionRepository();
       await recurringRepo.init();
@@ -258,6 +264,16 @@ class TestSetup {
       }
       if (CreditCardBoxService.statementsBox.isOpen) {
         await CreditCardBoxService.statementsBox.clear();
+      }
+
+      // Clear KMH boxes
+      try {
+        if (KmhBoxService.transactionsBox.isOpen) {
+          await KmhBoxService.transactionsBox.clear();
+          await KmhBoxService.transactionsBox.close();
+        }
+      } catch (_) {
+        // Box might not be initialized
       }
     } catch (e) {
       // Ignore cleanup errors

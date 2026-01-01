@@ -296,6 +296,12 @@ class KmhService {
     DateTime startDate,
     DateTime endDate,
   ) async {
+    final dateRange = '${startDate.millisecondsSinceEpoch}_${endDate.millisecondsSinceEpoch}';
+    final cacheKey = CacheKeys.kmhStatement(walletId, dateRange);
+    final cached = _cache.get<KmhStatement>(cacheKey);
+    if (cached != null) {
+      return cached;
+    }
     final wallets = await _dataService.getWallets();
     final wallet = wallets.firstWhere(
       (w) => w.id == walletId,
@@ -346,6 +352,7 @@ class KmhService {
       openingBalance: openingBalance,
       closingBalance: wallet.balance,
     );
+    _cache.set(cacheKey, statement, duration: _statementCacheDuration);
 
     return statement;
   }

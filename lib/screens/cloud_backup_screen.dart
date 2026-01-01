@@ -115,8 +115,88 @@ class _CloudBackupScreenState extends State<CloudBackupScreen>
 
   Widget _buildBackupsTab() {
     if (FirebaseAuth.instance.currentUser == null) {
-      return const Center(
-        child: Text('Bulut yedekleme için giriş yapmalısınız.'),
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(
+              Icons.account_circle_outlined,
+              size: 64,
+              color: Colors.grey,
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              'Bulut yedekleme için Google ile giriş yapın',
+              style: TextStyle(fontSize: 16, color: Colors.grey),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 24),
+            ElevatedButton.icon(
+              onPressed: () async {
+                try {
+                  showDialog(
+                    context: context,
+                    barrierDismissible: false,
+                    builder: (context) => const AlertDialog(
+                      content: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          CircularProgressIndicator(),
+                          SizedBox(height: 16),
+                          Text('Google ile giriş yapılıyor...'),
+                        ],
+                      ),
+                    ),
+                  );
+
+                  final result = await _authService.signInWithGoogle();
+
+                  if (mounted) {
+                    Navigator.pop(context);
+
+                    if (result != null) {
+                      setState(() {});
+                      _loadCloudBackups();
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('✅ Google ile giriş başarılı'),
+                          backgroundColor: Colors.green,
+                        ),
+                      );
+                    }
+                  }
+                } catch (e) {
+                  if (mounted) {
+                    Navigator.pop(context);
+
+                    String errorMessage = 'Google Sign-In başarısız';
+                    if (e.toString().contains('sign_in_failed')) {
+                      errorMessage =
+                          'Google Sign-In hatası. Lütfen:\n'
+                          '• İnternet bağlantınızı kontrol edin\n'
+                          '• Google Play Services güncel olduğundan emin olun\n'
+                          '• Uygulamayı yeniden başlatmayı deneyin';
+                    }
+
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(errorMessage),
+                        backgroundColor: Colors.red,
+                        duration: const Duration(seconds: 5),
+                      ),
+                    );
+                  }
+                }
+              },
+              icon: const Icon(Icons.login),
+              label: const Text('Google ile Giriş Yap'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF00BFA5),
+                foregroundColor: Colors.white,
+              ),
+            ),
+          ],
+        ),
       );
     }
 
@@ -304,25 +384,32 @@ class _CloudBackupScreenState extends State<CloudBackupScreen>
           backgroundColor:
               (platform.toString().toLowerCase() == 'android'
                       ? Colors.green
-                      : Colors.blue)
+                      : (platform.toString().toLowerCase() == 'ios'
+                            ? Colors.blue
+                            : Colors.grey))
                   .withValues(alpha: 0.1),
           child: Icon(
             platform.toString().toLowerCase() == 'android'
                 ? Icons.android
-                : Icons.apple,
+                : (platform.toString().toLowerCase() == 'ios'
+                      ? Icons.apple
+                      : Icons.cloud),
             color: platform.toString().toLowerCase() == 'android'
                 ? Colors.green
-                : Colors.blue,
+                : (platform.toString().toLowerCase() == 'ios'
+                      ? Colors.blue
+                      : Colors.grey),
           ),
         ),
         title: Text(
-          DateFormat('dd MMMM yyyy HH:mm', 'tr_TR').format(date),
+          DateFormat('dd MMMM yyyy HH:mm', 'tr_TR').format(date.toLocal()),
           style: const TextStyle(fontWeight: FontWeight.bold),
         ),
         subtitle: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Cihaz: $device ($platform)'),
+            Text('Cihaz: $device'),
+            Text('Boyut: ${_formatFileSize(backup['size'] ?? 0)}'),
             Text('Versiyon: $version'),
           ],
         ),
@@ -367,18 +454,75 @@ class _CloudBackupScreenState extends State<CloudBackupScreen>
 
   Future<void> _handleCloudBackup() async {
     if (FirebaseAuth.instance.currentUser == null) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Lütfen önce giriş yapın')));
-      return;
+      // Firebase Auth ile giriş yapmaya çalış
+      try {
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (context) => const AlertDialog(
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                CircularProgressIndicator(),
+                SizedBox(height: 16),
+                Text('Google ile giriş yapılıyor...'),
+              ],
+            ),
+          ),
+        );
+
+        final result = await _authService.signInWithGoogle();
+
+        if (mounted) {
+          Navigator.pop(context); // Dialog'u kapat
+
+          if (result == null) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Google Sign-In iptal edildi'),
+                backgroundColor: Colors.orange,
+              ),
+            );
+            return;
+          }
+        }
+      } catch (e) {
+        if (mounted) {
+          Navigator.pop(context); // Dialog'u kapat
+
+          String errorMessage = 'Google Sign-In başarısız';
+          if (e.toString().contains('sign_in_failed')) {
+            errorMessage =
+                'Google Sign-In hatası. Lütfen:\n'
+                '• İnternet bağlantınızı kontrol edin\n'
+                '• Google Play Services güncel olduğundan emin olun\n'
+                '• Uygulamayı yeniden başlatmayı deneyin';
+          } else if (e.toString().contains('network_error')) {
+            errorMessage =
+                'İnternet bağlantısı sorunu. Lütfen bağlantınızı kontrol edin.';
+          }
+
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(errorMessage),
+              backgroundColor: Colors.red,
+              duration: const Duration(seconds: 5),
+            ),
+          );
+          return;
+        }
+      }
     }
 
     final success = await _backupService.uploadToCloud();
     if (mounted) {
+      final errorMessage = _backupService.lastError.value;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            success ? '✅ Yedekleme başarılı' : '❌ Yedekleme başarısız',
+            success
+                ? '✅ Yedekleme başarılı'
+                : '❌ Yedekleme başarısız${errorMessage != null ? ': $errorMessage' : ''}',
           ),
           backgroundColor: success ? Colors.green : Colors.red,
         ),

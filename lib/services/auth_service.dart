@@ -13,7 +13,10 @@ class AuthService {
   late final GoogleSignIn _googleSignIn;
 
   AuthService._internal() {
-    _googleSignIn = GoogleSignIn(scopes: ['email', 'profile']);
+    _googleSignIn = GoogleSignIn(
+      scopes: ['email', 'profile'],
+      serverClientId: '195092382674-ca5q05m7idrstrqpfb5bc6e00thqiu20.apps.googleusercontent.com',
+    );
   }
 
   SharedPreferences? _prefs;

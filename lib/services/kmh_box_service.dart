@@ -6,7 +6,11 @@ class KmhBoxService {
 
   static Box<KmhTransaction>? _transactionsBox;
   static final SecureStorageService _secureStorage = SecureStorageService();
-  static Future<void> init() async {
+  static Future<void> init({bool isTest = false}) async {
+    if (isTest) {
+      _transactionsBox = await Hive.openBox<KmhTransaction>(kmhTransactionsBoxName);
+      return;
+    }
     final encryptionKey = await _secureStorage.getKmhEncryptionKey();
     final encryptionCipher = HiveAesCipher(encryptionKey);
     _transactionsBox = await Hive.openBox<KmhTransaction>(

@@ -583,44 +583,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
         ]),
         const SizedBox(height: 20),
-        _buildSection('Güvenlik', [
-          _buildSettingItem(
-            icon: Icons.lock_clock,
-            title: 'Otomatik Kilit',
-            subtitle:
-                'Uygulama ${AppLockService().getLockTimeout()} dakika sonra kilitlenir',
-            iconColor: Colors.red,
-            trailing: const Icon(
-              Icons.arrow_forward_ios,
-              size: 16,
-              color: Color(0xFF8E8E93),
-            ),
-            onTap: () async {
-              await _showLockTimeoutDialog();
-            },
-          ),
-          if (_isBiometricAvailable)
-            _buildSettingItem(
-              icon: Icons.fingerprint,
-              title: 'Biyometrik Kimlik Doğrulama',
-              subtitle: 'Parmak izi ile kilidi aç',
-              iconColor: Colors.blue,
-              trailing: FutureBuilder<bool>(
-                future: AuthService().isBiometricEnabled(),
-                builder: (context, snapshot) {
-                  final isEnabled = snapshot.data ?? false;
-                  return Switch(
-                    value: isEnabled,
-                    onChanged: (value) async {
-                      await AuthService().setBiometricEnabled(value);
-                      setState(() {});
-                    },
-                  );
-                },
-              ),
-            ),
-        ]),
-        const SizedBox(height: 20),
         _buildSection('Veri Yönetimi', [
           _buildSettingItem(
             icon: Icons.file_download_outlined,
@@ -701,6 +663,44 @@ class _SettingsScreenState extends State<SettingsScreen> {
               );
             },
           ),
+        ]),
+        const SizedBox(height: 20),
+        _buildSection('Güvenlik', [
+          _buildSettingItem(
+            icon: Icons.lock_clock,
+            title: 'Otomatik Kilit',
+            subtitle:
+                'Uygulama ${AppLockService().getLockTimeout()} dakika sonra kilitlenir',
+            iconColor: Colors.red,
+            trailing: const Icon(
+              Icons.arrow_forward_ios,
+              size: 16,
+              color: Color(0xFF8E8E93),
+            ),
+            onTap: () async {
+              await _showLockTimeoutDialog();
+            },
+          ),
+          if (_isBiometricAvailable)
+            _buildSettingItem(
+              icon: Icons.fingerprint,
+              title: 'Biyometrik Kimlik Doğrulama',
+              subtitle: 'Parmak izi ile kilidi aç',
+              iconColor: Colors.blue,
+              trailing: FutureBuilder<bool>(
+                future: AuthService().isBiometricEnabled(),
+                builder: (context, snapshot) {
+                  final isEnabled = snapshot.data ?? false;
+                  return Switch(
+                    value: isEnabled,
+                    onChanged: (value) async {
+                      await AuthService().setBiometricEnabled(value);
+                      setState(() {});
+                    },
+                  );
+                },
+              ),
+            ),
         ]),
         const SizedBox(height: 20),
         _buildSection('Diğer', [

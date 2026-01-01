@@ -21,32 +21,37 @@ class GoogleDriveService {
 
   Future<void> signIn() async {
     try {
-      // First try silent sign-in
-      if (await _googleSignIn.isSignedIn()) {
+      _driveApi = null;
+
+      // 1. Try silent sign-in first
+      try {
+        await _googleSignIn.signInSilently();
+      } catch (e) {
+        debugPrint('Silent sign-in failed: $e');
+      }
+
+      // 2. Check if we have a user and can get a client
+      if (_googleSignIn.currentUser != null) {
         try {
           final httpClient = await _googleSignIn.authenticatedClient();
           if (httpClient != null) {
             _driveApi = drive.DriveApi(httpClient);
             debugPrint('✅ Google Drive silent sign-in successful');
             return;
-          } else {
-            debugPrint('⚠️ Silent sign-in successful but http client is null.');
           }
         } catch (e) {
           debugPrint('⚠️ Silent sign-in client error: $e');
         }
       }
 
-      // If silent failed or client null, Force explicit sign out to clear state
+      // 3. Force explicit sign out to clear state if silent failed
       try {
         await _googleSignIn.signOut();
-        await _googleSignIn
-            .disconnect(); // Force full disconnect to re-prompt permissions
       } catch (e) {
         debugPrint('Sign out error (ignorable): $e');
       }
 
-      // Explicit sign-in
+      // 4. Explicit sign-in
       final account = await _googleSignIn.signIn();
       if (account != null) {
         final httpClient = await _googleSignIn.authenticatedClient();
@@ -65,6 +70,7 @@ class GoogleDriveService {
       }
     } catch (e) {
       debugPrint('❌ Google Drive Sign In Error: $e');
+      _driveApi = null;
       rethrow;
     }
   }
@@ -78,6 +84,7 @@ class GoogleDriveService {
     File file,
     String fileName, {
     String? description,
+    Map<String, String>? properties,
   }) async {
     if (_driveApi == null) await signIn();
     if (_driveApi == null) throw Exception('Google Drive API not initialized');
@@ -89,6 +96,10 @@ class GoogleDriveService {
         ..name = fileName
         ..description = description
         ..parents = ['appDataFolder'];
+
+      if (properties != null) {
+        driveFile.properties = properties;
+      }
 
       final result = await _driveApi!.files.create(
         driveFile,
@@ -112,6 +123,7 @@ class GoogleDriveService {
         q: "name contains 'money_backup_' and 'appDataFolder' in parents and trashed = false",
         $fields: "files(id, name, createdTime, size, description, properties)",
         orderBy: "createdTime desc",
+        spaces: 'appDataFolder',
       );
 
       return fileList.files ?? [];

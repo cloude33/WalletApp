@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:hive/hive.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:parion/models/wallet.dart';
 import 'package:parion/models/kmh_transaction.dart';
@@ -8,7 +7,6 @@ import 'package:parion/models/kmh_transaction_type.dart';
 import 'package:parion/screens/kmh_statement_screen.dart';
 import 'package:parion/services/kmh_box_service.dart';
 import 'package:parion/services/data_service.dart';
-import 'package:parion/utils/cache_manager.dart';
 import '../test_setup.dart';
 
 void main() {
@@ -16,42 +14,14 @@ void main() {
     setUpAll(() async {
       await TestSetup.initializeTestEnvironment();
       await initializeDateFormatting('tr_TR', null);
-
-      // Register adapters
-      if (!Hive.isAdapterRegistered(10)) {
-        Hive.registerAdapter(KmhTransactionAdapter());
-      }
-      if (!Hive.isAdapterRegistered(11)) {
-        Hive.registerAdapter(KmhTransactionTypeAdapter());
-      }
     });
 
     setUp(() async {
       await TestSetup.setupTest();
-      CacheManager().clear();
-
-      try {
-        // Initialize boxes for testing
-        await KmhBoxService.init();
-      } catch (e) {
-        // Skip if Hive initialization fails
-        print('Hive initialization failed: $e');
-      }
     });
 
     tearDown(() async {
       await TestSetup.tearDownTest();
-
-      try {
-        // Clean up after each test
-        if (KmhBoxService.transactionsBox.isOpen) {
-          await KmhBoxService.transactionsBox.clear();
-        }
-        await KmhBoxService.close();
-      } catch (e) {
-        // Ignore cleanup errors
-        print('Cleanup error: $e');
-      }
     });
 
     tearDownAll(() async {
@@ -131,20 +101,6 @@ void main() {
 
       // Tap the show statement button
       await tester.tap(find.text('Ekstreyi Göster'));
-      
-      // Wait for loading to finish manually to avoid pumpAndSettle timeout with CircularProgressIndicator
-      await tester.pump(); // Start operation
-      
-      int retries = 0;
-      while (find.byType(CircularProgressIndicator).evaluate().isNotEmpty && retries < 100) {
-        await tester.pump(const Duration(milliseconds: 50));
-        retries++;
-      }
-      
-      if (retries >= 100) {
-        debugPrint('Warning: Loading timed out in test');
-      }
-
       await tester.pumpAndSettle();
 
       // Should show empty state or "no transactions" message
@@ -166,7 +122,7 @@ void main() {
         interestRate: 24.0,
       );
 
-      // Add wallet to DataService so KmhService can find it
+      print('Test: Adding wallet');
       await DataService().addWallet(testAccount);
 
       // Add some test transactions
@@ -201,10 +157,12 @@ void main() {
         interestAmount: 50.0,
       );
 
+      print('Test: Adding transactions');
       await KmhBoxService.transactionsBox.put(transaction1.id, transaction1);
       await KmhBoxService.transactionsBox.put(transaction2.id, transaction2);
       await KmhBoxService.transactionsBox.put(transaction3.id, transaction3);
 
+      print('Test: Pumping widget');
       await tester.pumpWidget(
         MaterialApp(
           home: KmhStatementScreen(account: testAccount),
@@ -212,19 +170,23 @@ void main() {
         ),
       );
 
+      print('Test: Pump and settle');
       await tester.pumpAndSettle();
 
       // Tap the show statement button
+      print('Test: Tapping button');
       await tester.tap(find.text('Ekstreyi Göster'));
 
       // Wait for async operations manually instead of pumpAndSettle to avoid timeouts
       // if there are ongoing animations
+      print('Test: Manual pumps');
       await tester.pump(); // Start animation
       await tester.pump(const Duration(milliseconds: 100)); // Allow microtasks
       await tester.pump(
         const Duration(seconds: 1),
       ); // Wait for loading simulation
       await tester.pump(); // Final rebuild
+      print('Test: Verification');
 
       // Verify statement header
       expect(find.text('Özet'), findsOneWidget);
@@ -281,13 +243,6 @@ void main() {
 
       // Load the statement first
       await tester.tap(find.text('Ekstreyi Göster'));
-      
-      await tester.pump();
-      int retries = 0;
-      while (find.byType(CircularProgressIndicator).evaluate().isNotEmpty && retries < 100) {
-        await tester.pump(const Duration(milliseconds: 50));
-        retries++;
-      }
       await tester.pumpAndSettle();
 
       // Tap export button
@@ -386,13 +341,6 @@ void main() {
 
       // Load statement
       await tester.tap(find.text('Ekstreyi Göster'));
-      
-      await tester.pump();
-      int retries = 0;
-      while (find.byType(CircularProgressIndicator).evaluate().isNotEmpty && retries < 100) {
-        await tester.pump(const Duration(milliseconds: 50));
-        retries++;
-      }
       await tester.pumpAndSettle();
 
       // Verify interest calculations section

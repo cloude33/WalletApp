@@ -388,6 +388,7 @@ class MockGoogleDriveService implements GoogleDriveService {
     File file,
     String fileName, {
     String? description,
+    Map<String, String>? properties,
   }) async {
     // Simulate successful upload
     await Future.delayed(const Duration(milliseconds: 10));

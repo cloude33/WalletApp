@@ -179,7 +179,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       } catch (e) {
         debugPrint('WARN _loadData: cards $e');
       }
-      debugPrint('DEBUG _loadData: Found ${cards.length} credit cards');
+      debugPrint('Found ${cards.length} credit cards');
 
       final Map<String, CreditCard> cardMap = {};
       final List<CreditCardTransaction> allCCTransactions = [];
@@ -191,16 +191,14 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
             card.id,
           );
           debugPrint(
-            'DEBUG _loadData: Card ${card.bankName} has ${ccTransactions.length} transactions',
+            'Card ${card.bankName} has ${ccTransactions.length} transactions',
           );
           allCCTransactions.addAll(ccTransactions);
         } catch (e) {
           debugPrint('WARN _loadData: card tx for ${card.id} $e');
         }
       }
-      debugPrint(
-        'DEBUG _loadData: Total CC transactions: ${allCCTransactions.length}',
-      );
+      debugPrint('Total CC transactions: ${allCCTransactions.length}');
 
       double totalCCDebt = 0.0;
       for (var card in cards) {
@@ -208,10 +206,9 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           final debt = await _creditCardService.getCurrentDebt(card.id);
           totalCCDebt += debt;
         } catch (e) {
-          debugPrint('WARN _loadData: card debt for ${card.id} $e');
+          // Silently handle error
         }
       }
-      debugPrint('DEBUG _loadData: Total CC debt: $totalCCDebt');
 
       if (mounted) {
         setState(() {
@@ -259,6 +256,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         child: Scaffold(
           appBar: _selectedIndex == 0
               ? AppBar(
+                  automaticallyImplyLeading: false,
                   title: _buildHomeToggle(),
                   centerTitle: true,
                   actions: [
@@ -808,11 +806,14 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                   const SizedBox(height: 4),
                   Row(
                     children: [
-                      Text(
-                        wallet.name,
-                        style: const TextStyle(
-                          fontSize: 13,
-                          color: Color(0xFF8E8E93),
+                      Flexible(
+                        child: Text(
+                          wallet.name,
+                          style: const TextStyle(
+                            fontSize: 13,
+                            color: Color(0xFF8E8E93),
+                          ),
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
                       if (transaction.installments != null) ...[
@@ -967,11 +968,16 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                   Row(
                     children: [
                       if (card != null) ...[
-                        Text(
-                          '${card.bankName} •••• ${card.last4Digits}',
-                          style: TextStyle(
-                            fontSize: 13,
-                            color: Theme.of(context).textTheme.bodySmall?.color,
+                        Flexible(
+                          child: Text(
+                            '${card.bankName} •••• ${card.last4Digits}',
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: Theme.of(
+                                context,
+                              ).textTheme.bodySmall?.color,
+                            ),
+                            overflow: TextOverflow.ellipsis,
                           ),
                         ),
                         if (isInstallment) ...[
@@ -994,11 +1000,16 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                           ),
                         ],
                       ] else ...[
-                        Text(
-                          transaction.category,
-                          style: TextStyle(
-                            fontSize: 13,
-                            color: Theme.of(context).textTheme.bodySmall?.color,
+                        Flexible(
+                          child: Text(
+                            transaction.category,
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: Theme.of(
+                                context,
+                              ).textTheme.bodySmall?.color,
+                            ),
+                            overflow: TextOverflow.ellipsis,
                           ),
                         ),
                       ],
@@ -1106,14 +1117,6 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       (sum, loan) => sum + loan.remainingAmount,
     );
     final totalDebts = creditCardDebts + kmhDebts + loanDebts;
-
-    debugPrint('=== DEBT DEBUG (Summary Card) ===');
-    debugPrint('Total credit cards: ${_creditCards.length}');
-    debugPrint('Credit card debts: $creditCardDebts');
-    debugPrint('KMH debts: $kmhDebts');
-    debugPrint('Loan debts: $loanDebts');
-    debugPrint('Total debts: $totalDebts');
-    debugPrint('==================');
     final monthNames = [
       'Ocak',
       'Şubat',
