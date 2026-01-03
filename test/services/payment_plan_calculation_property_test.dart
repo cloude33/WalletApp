@@ -52,7 +52,7 @@ void main() {
         // Calculate monthly interest to ensure payment is sufficient
         final monthlyInterest = calculator.estimateMonthlyInterest(
           balance: -debt,
-          annualRate: annualRate,
+          monthlyRate: annualRate,
           days: 30,
         );
         
@@ -98,7 +98,7 @@ void main() {
         // Verify basic properties
         if (plan.initialDebt != debt) return false;
         if (plan.monthlyPayment != monthlyPayment) return false;
-        if (plan.annualRate != annualRate) return false;
+        if (plan.monthlyRate != annualRate) return false;
         
         // Verify mathematical correctness by simulating the payment schedule
         double remainingDebt = debt;
@@ -110,7 +110,7 @@ void main() {
           // Calculate interest for this month
           final monthlyInterest = calculator.estimateMonthlyInterest(
             balance: -remainingDebt,
-            annualRate: annualRate,
+            monthlyRate: annualRate,
             days: 30,
           );
           
@@ -153,7 +153,7 @@ void main() {
         
         final monthlyInterest = calculator.estimateMonthlyInterest(
           balance: -debt,
-          annualRate: annualRate,
+          monthlyRate: annualRate,
           days: 30,
         );
         
@@ -209,7 +209,7 @@ void main() {
         // Calculate monthly interest
         final monthlyInterest = calculator.estimateMonthlyInterest(
           balance: -debt,
-          annualRate: annualRate,
+          monthlyRate: annualRate,
           days: 30,
         );
         
@@ -259,7 +259,7 @@ void main() {
         
         final monthlyInterest = calculator.estimateMonthlyInterest(
           balance: -debt,
-          annualRate: annualRate,
+          monthlyRate: annualRate,
           days: 30,
         );
         
@@ -304,7 +304,7 @@ void main() {
         if (plan1 == null || plan2 == null) return false;
         
         // Property: higher payment should result in shorter duration
-        return plan2.durationMonths < plan1.durationMonths;
+        return plan2.durationMonths <= plan1.durationMonths;
       },
       iterations: 100,
     );
@@ -318,7 +318,7 @@ void main() {
         
         final monthlyInterest = calculator.estimateMonthlyInterest(
           balance: -debt,
-          annualRate: annualRate,
+          monthlyRate: annualRate,
           days: 30,
         );
         

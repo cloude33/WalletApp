@@ -58,7 +58,7 @@ class _KmhComparisonScreenState extends State<KmhComparisonScreen> {
         if (account.interestRate != null) {
           final monthlyInterest = _calculator.estimateMonthlyInterest(
             balance: account.balance,
-            annualRate: account.interestRate!,
+            monthlyRate: account.interestRate!,
           );
           totalInterest += monthlyInterest;
         }
@@ -385,7 +385,7 @@ class _KmhComparisonScreenState extends State<KmhComparisonScreen> {
                   final monthlyInterest = account.interestRate != null
                       ? _calculator.estimateMonthlyInterest(
                           balance: account.balance,
-                          annualRate: account.interestRate!,
+                          monthlyRate: account.interestRate!,
                         )
                       : 0.0;
 
@@ -509,12 +509,12 @@ class _KmhComparisonScreenState extends State<KmhComparisonScreen> {
 
     final currentMonthlyInterest = _calculator.estimateMonthlyInterest(
       balance: -transferAmount,
-      annualRate: highestRateAccount.interestRate!,
+      monthlyRate: highestRateAccount.interestRate!,
     );
 
     final newMonthlyInterest = _calculator.estimateMonthlyInterest(
       balance: -transferAmount,
-      annualRate: lowestRateAccount.interestRate!,
+      monthlyRate: lowestRateAccount.interestRate!,
     );
 
     final monthlySavings = currentMonthlyInterest - newMonthlyInterest;

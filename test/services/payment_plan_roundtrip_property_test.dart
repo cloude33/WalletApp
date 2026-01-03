@@ -63,13 +63,13 @@ void main() {
       generator: () {
         // Generate random debt and payment parameters
         final debt = PropertyTest.randomPositiveDouble(min: 5000.0, max: 40000.0);
-        final annualRate = PropertyTest.randomPositiveDouble(min: 15.0, max: 40.0);
+        final monthlyRate = PropertyTest.randomPositiveDouble(min: 1.0, max: 5.0);
         
         // Calculate monthly interest to ensure payment is sufficient
         final calculator = KmhInterestCalculator();
         final monthlyInterest = calculator.estimateMonthlyInterest(
           balance: -debt,
-          annualRate: annualRate,
+          monthlyRate: monthlyRate,
           days: 30,
         );
         
@@ -84,14 +84,14 @@ void main() {
         return {
           'debt': debt,
           'monthlyPayment': monthlyPayment,
-          'annualRate': annualRate,
+          'monthlyRate': monthlyRate,
           'reminderSchedule': reminderSchedule,
         };
       },
       property: (data) async {
         final debt = data['debt'] as double;
         final monthlyPayment = data['monthlyPayment'] as double;
-        final annualRate = data['annualRate'] as double;
+        final monthlyRate = data['monthlyRate'] as double;
         final reminderSchedule = data['reminderSchedule'] as String;
         
         // Create a test KMH account
@@ -102,7 +102,7 @@ void main() {
           type: 'bank',
           balance: -debt,
           creditLimit: debt * 2,
-          interestRate: annualRate,
+          interestRate: monthlyRate,
           color: '#FF0000',
           icon: 'bank',
         );
@@ -149,8 +149,8 @@ void main() {
           return false;
         }
         
-        // Check annual rate
-        if ((retrievedPlan.annualRate - originalPlan.annualRate).abs() > tolerance) {
+        // Check monthly rate
+        if ((retrievedPlan.monthlyRate - originalPlan.monthlyRate).abs() > tolerance) {
           return false;
         }
         
@@ -200,12 +200,12 @@ void main() {
         
         for (int i = 0; i < numPlans; i++) {
           final debt = PropertyTest.randomPositiveDouble(min: 5000.0, max: 30000.0);
-          final annualRate = PropertyTest.randomPositiveDouble(min: 18.0, max: 35.0);
+          final monthlyRate = PropertyTest.randomPositiveDouble(min: 1.0, max: 5.0);
           
           final calculator = KmhInterestCalculator();
           final monthlyInterest = calculator.estimateMonthlyInterest(
             balance: -debt,
-            annualRate: annualRate,
+            monthlyRate: monthlyRate,
             days: 30,
           );
           
@@ -215,7 +215,7 @@ void main() {
           plans.add({
             'debt': debt,
             'monthlyPayment': monthlyPayment,
-            'annualRate': annualRate,
+            'monthlyRate': monthlyRate,
             'walletId': 'wallet-$i',
           });
         }
@@ -229,7 +229,7 @@ void main() {
         for (final planData in planDataList) {
           final debt = planData['debt'] as double;
           final monthlyPayment = planData['monthlyPayment'] as double;
-          final annualRate = planData['annualRate'] as double;
+          final monthlyRate = planData['monthlyRate'] as double;
           final walletId = planData['walletId'] as String;
           
           final account = Wallet(
@@ -238,7 +238,7 @@ void main() {
             type: 'bank',
             balance: -debt,
             creditLimit: debt * 2,
-            interestRate: annualRate,
+            interestRate: monthlyRate,
             color: '#FF0000',
             icon: 'bank',
           );
@@ -284,12 +284,12 @@ void main() {
       description: 'property: updated payment plan persists changes',
       generator: () {
         final debt = PropertyTest.randomPositiveDouble(min: 8000.0, max: 35000.0);
-        final annualRate = PropertyTest.randomPositiveDouble(min: 16.0, max: 38.0);
+        final monthlyRate = PropertyTest.randomPositiveDouble(min: 1.0, max: 5.0);
         
         final calculator = KmhInterestCalculator();
         final monthlyInterest = calculator.estimateMonthlyInterest(
           balance: -debt,
-          annualRate: annualRate,
+          monthlyRate: monthlyRate,
           days: 30,
         );
         
@@ -299,13 +299,13 @@ void main() {
         return {
           'debt': debt,
           'monthlyPayment': monthlyPayment,
-          'annualRate': annualRate,
+          'monthlyRate': monthlyRate,
         };
       },
       property: (data) async {
         final debt = data['debt'] as double;
         final monthlyPayment = data['monthlyPayment'] as double;
-        final annualRate = data['annualRate'] as double;
+        final monthlyRate = data['monthlyRate'] as double;
         
         final walletId = 'test-wallet-${PropertyTest.randomString(minLength: 5, maxLength: 10)}';
         final account = Wallet(
@@ -314,7 +314,7 @@ void main() {
           type: 'bank',
           balance: -debt,
           creditLimit: debt * 2,
-          interestRate: annualRate,
+          interestRate: monthlyRate,
           color: '#FF0000',
           icon: 'bank',
         );
@@ -366,12 +366,12 @@ void main() {
       description: 'property: deleted payment plan is not retrievable',
       generator: () {
         final debt = PropertyTest.randomPositiveDouble(min: 7000.0, max: 30000.0);
-        final annualRate = PropertyTest.randomPositiveDouble(min: 17.0, max: 36.0);
+        final monthlyRate = PropertyTest.randomPositiveDouble(min: 1.0, max: 5.0);
         
         final calculator = KmhInterestCalculator();
         final monthlyInterest = calculator.estimateMonthlyInterest(
           balance: -debt,
-          annualRate: annualRate,
+          monthlyRate: monthlyRate,
           days: 30,
         );
         
@@ -381,13 +381,13 @@ void main() {
         return {
           'debt': debt,
           'monthlyPayment': monthlyPayment,
-          'annualRate': annualRate,
+          'monthlyRate': monthlyRate,
         };
       },
       property: (data) async {
         final debt = data['debt'] as double;
         final monthlyPayment = data['monthlyPayment'] as double;
-        final annualRate = data['annualRate'] as double;
+        final monthlyRate = data['monthlyRate'] as double;
         
         final walletId = 'test-wallet-${PropertyTest.randomString(minLength: 5, maxLength: 10)}';
         final account = Wallet(
@@ -396,7 +396,7 @@ void main() {
           type: 'bank',
           balance: -debt,
           creditLimit: debt * 2,
-          interestRate: annualRate,
+          interestRate: monthlyRate,
           color: '#FF0000',
           icon: 'bank',
         );
@@ -433,7 +433,7 @@ void main() {
         type: 'bank',
         balance: -10000.0,
         creditLimit: 20000.0,
-        interestRate: 24.0,
+        interestRate: 4.25,
         color: '#FF0000',
         icon: 'bank',
       );
@@ -464,7 +464,7 @@ void main() {
         type: 'bank',
         balance: -100.0,
         creditLimit: 10000.0,
-        interestRate: 24.0,
+        interestRate: 4.25,
         color: '#FF0000',
         icon: 'bank',
       );
@@ -493,14 +493,14 @@ void main() {
         type: 'bank',
         balance: -15000.0,
         creditLimit: 30000.0,
-        interestRate: 50.0, // Very high rate
+        interestRate: 10.0, // High but still possible
         color: '#FF0000',
         icon: 'bank',
       );
       
       final plan = service.createPaymentPlanWithReminder(
         account: account,
-        monthlyPayment: 3000.0,
+        monthlyPayment: 5000.0,
       );
       
       expect(plan, isNotNull);
@@ -510,7 +510,7 @@ void main() {
       final retrieved = await service.getActivePlan('test-wallet-high');
       
       expect(retrieved, isNotNull);
-      expect(retrieved!.annualRate, closeTo(50.0, 0.01));
+      expect(retrieved!.monthlyRate, closeTo(10.0, 0.01));
       expect(retrieved.totalInterest, greaterThan(0));
     });
 
@@ -522,7 +522,7 @@ void main() {
         type: 'bank',
         balance: -12000.0,
         creditLimit: 25000.0,
-        interestRate: 24.0,
+        interestRate: 4.25,
         color: '#FF0000',
         icon: 'bank',
       );

@@ -27,12 +27,12 @@ void main() {
         }
       },
       property: (balance) {
-        final annualRate = 24.0; // Use a fixed rate for this test
+        final monthlyRate = 4.25; // Use a fixed monthly rate for this test
         
         // Calculate daily interest using the service
         final interest = calculator.calculateDailyInterest(
           balance: balance,
-          annualRate: annualRate,
+          monthlyRate: monthlyRate,
         );
         
         // Property: interest should be calculated (> 0) only when balance is negative
@@ -68,11 +68,13 @@ void main() {
         // Calculate daily interest using the service
         final actualInterest = calculator.calculateDailyInterest(
           balance: balance,
-          annualRate: annualRate,
+          monthlyRate: annualRate, // Treating generated 'annualRate' as monthlyRate for property test genericness
         );
         
-        // Calculate expected interest using the formula: |balance| × annualRate / 365 / 100
-        final expectedInterest = balance.abs() * annualRate / 365 / 100;
+        // Calculate expected interest using the formula: (|balance| * monthlyRate / 3000) * 1.30
+        final gross = balance.abs() * annualRate / 3000;
+        final tax = gross * 0.30; // 0.15 + 0.15
+        final expectedInterest = gross + tax;
         
         // Verify the formula is correct (with small tolerance for floating point)
         final tolerance = 0.0001;
@@ -104,7 +106,7 @@ void main() {
         // Calculate daily interest using the service
         final actualInterest = calculator.calculateDailyInterest(
           balance: balance,
-          annualRate: annualRate,
+          monthlyRate: annualRate,
         );
         
         // For positive balances, interest should always be 0
@@ -115,11 +117,11 @@ void main() {
 
     // Edge case test: verify zero interest for zero balance
     test('property: zero interest for zero balance', () {
-      final annualRate = 24.0;
+      final monthlyRate = 4.25;
       
       final interest = calculator.calculateDailyInterest(
         balance: 0.0,
-        annualRate: annualRate,
+        monthlyRate: monthlyRate,
       );
       
       expect(interest, equals(0.0));
@@ -146,14 +148,14 @@ void main() {
         // Calculate monthly interest estimate using the service
         final monthlyInterest = calculator.estimateMonthlyInterest(
           balance: balance,
-          annualRate: annualRate,
+          monthlyRate: annualRate,
           days: 30,
         );
         
         // Calculate expected monthly interest: daily interest × 30
         final dailyInterest = calculator.calculateDailyInterest(
           balance: balance,
-          annualRate: annualRate,
+          monthlyRate: annualRate,
         );
         final expectedMonthlyInterest = dailyInterest * 30;
         
@@ -187,11 +189,16 @@ void main() {
         // Calculate annual interest estimate using the service
         final annualInterest = calculator.estimateAnnualInterest(
           balance: balance,
-          annualRate: annualRate,
+          monthlyRate: annualRate,
         );
         
-        // Calculate expected annual interest: |balance| × annualRate / 100
-        final expectedAnnualInterest = balance.abs() * (annualRate / 100);
+        // Calculate expected annual interest: estimateMonthlyInterest(days: 365)
+        // Note: The logic in estimateAnnualInterest now calls estimateMonthlyInterest with 365 days
+        final expectedAnnualInterest = calculator.estimateMonthlyInterest(
+          balance: balance, 
+          monthlyRate: annualRate, 
+          days: 365
+        );
         
         // Verify the formula is correct (with small tolerance for floating point)
         final tolerance = 0.0001;
@@ -222,11 +229,11 @@ void main() {
         // Calculate interest estimates using the service
         final monthlyInterest = calculator.estimateMonthlyInterest(
           balance: balance,
-          annualRate: annualRate,
+          monthlyRate: annualRate,
         );
         final annualInterest = calculator.estimateAnnualInterest(
           balance: balance,
-          annualRate: annualRate,
+          monthlyRate: annualRate,
         );
         
         // For positive balances, all estimates should be 0

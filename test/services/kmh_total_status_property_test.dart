@@ -191,7 +191,7 @@ void main() {
         for (var accountData in accountsData) {
           final monthlyInterest = calculator.estimateMonthlyInterest(
             balance: accountData['balance'],
-            annualRate: accountData['interestRate'],
+            monthlyRate: accountData['interestRate'],
           );
           expectedTotalInterest += monthlyInterest;
         }
@@ -201,7 +201,7 @@ void main() {
         for (var account in kmhAccounts) {
           final monthlyInterest = calculator.estimateMonthlyInterest(
             balance: account.balance,
-            annualRate: account.interestRate!,
+            monthlyRate: account.interestRate!,
           );
           actualTotalInterest += monthlyInterest;
         }
@@ -285,7 +285,7 @@ void main() {
           
           final monthlyInterest = calculator.estimateMonthlyInterest(
             balance: accountData['balance'],
-            annualRate: accountData['interestRate'],
+            monthlyRate: accountData['interestRate'],
           );
           expectedTotalInterest += monthlyInterest;
           
@@ -306,7 +306,7 @@ void main() {
           
           final monthlyInterest = calculator.estimateMonthlyInterest(
             balance: account.balance,
-            annualRate: account.interestRate!,
+            monthlyRate: account.interestRate!,
           );
           actualTotalInterest += monthlyInterest;
           
@@ -409,7 +409,7 @@ void main() {
           
           final monthlyInterest = calculator.estimateMonthlyInterest(
             balance: account.balance,
-            annualRate: account.interestRate!,
+            monthlyRate: account.interestRate!,
           );
           totalInterest += monthlyInterest;
         }
@@ -505,7 +505,7 @@ void main() {
           
           final monthlyInterest = calculator.estimateMonthlyInterest(
             balance: account.balance,
-            annualRate: account.interestRate!,
+            monthlyRate: account.interestRate!,
           );
           totalInterest1 += monthlyInterest;
         }
@@ -546,7 +546,7 @@ void main() {
           
           final monthlyInterest = calculator.estimateMonthlyInterest(
             balance: account.balance,
-            annualRate: account.interestRate!,
+            monthlyRate: account.interestRate!,
           );
           totalInterest2 += monthlyInterest;
         }
@@ -622,7 +622,7 @@ void main() {
           
           final monthlyInterest = calculator.estimateMonthlyInterest(
             balance: acc.balance,
-            annualRate: acc.interestRate!,
+            monthlyRate: acc.interestRate!,
           );
           totalInterest += monthlyInterest;
         }
@@ -633,7 +633,7 @@ void main() {
         
         final accountInterest = calculator.estimateMonthlyInterest(
           balance: account.balance,
-          annualRate: account.interestRate!,
+          monthlyRate: account.interestRate!,
         );
         expect(totalInterest, closeTo(accountInterest, 0.01),
           reason: 'Total interest should equal single account\'s interest');
@@ -672,7 +672,7 @@ void main() {
           
           final monthlyInterest = calculator.estimateMonthlyInterest(
             balance: account.balance,
-            annualRate: account.interestRate!,
+            monthlyRate: account.interestRate!,
           );
           totalInterest += monthlyInterest;
         }

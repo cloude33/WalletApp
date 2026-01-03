@@ -71,6 +71,7 @@ class ThemeService extends ChangeNotifier {
       floatingActionButtonTheme: const FloatingActionButtonThemeData(
         backgroundColor: Color(0xFF2C6BED),
         foregroundColor: Colors.white,
+        shape: CircleBorder(),
       ),
       textTheme: const TextTheme(
         displayLarge: TextStyle(
@@ -158,6 +159,7 @@ class ThemeService extends ChangeNotifier {
       floatingActionButtonTheme: const FloatingActionButtonThemeData(
         backgroundColor: Color(0xFF0A84FF),
         foregroundColor: Colors.white,
+        shape: CircleBorder(),
       ),
       textTheme: const TextTheme(
         displayLarge: TextStyle(

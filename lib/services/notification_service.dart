@@ -5,6 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
 import '../models/app_notification.dart';
 import 'data_service.dart';
+import 'notification_scheduler_service.dart' as scheduler;
 
 class NotificationService {
   static final NotificationService _instance = NotificationService._internal();
@@ -224,7 +225,21 @@ class NotificationService {
       data: {'test': true},
     );
     
+    // Uygulama içi bildirim kaydet
     await addNotification(notification);
+    
+    // Telefona push notification gönder
+    try {
+      final schedulerService = scheduler.NotificationSchedulerService();
+      await schedulerService.showNotification(
+        id: DateTime.now().millisecondsSinceEpoch ~/ 1000,
+        title: notification.title,
+        body: notification.message,
+        priority: scheduler.NotificationPriority.high,
+      );
+    } catch (e) {
+      debugPrint('Push notification error: $e');
+    }
   }
 
   String _formatDate(DateTime date) {

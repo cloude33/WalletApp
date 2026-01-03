@@ -8,6 +8,7 @@ import '../models/kmh_summary.dart';
 import '../services/kmh_service.dart';
 import '../services/sensitive_data_handler.dart';
 import 'kmh_statement_screen.dart';
+import 'edit_kmh_account_screen.dart';
 
 class KmhAccountDetailScreen extends StatefulWidget {
   final Wallet account;
@@ -216,7 +217,7 @@ class _KmhAccountDetailScreenState extends State<KmhAccountDetailScreen> {
                 Expanded(
                   child: _buildSummaryItem(
                     'Faiz Oranı',
-                    '%${_summary!.interestRate.toStringAsFixed(1)}',
+                    '%${_summary!.interestRate.toStringAsFixed(2)}',
                     Colors.purple,
                   ),
                 ),
@@ -833,10 +834,17 @@ class _KmhAccountDetailScreenState extends State<KmhAccountDetailScreen> {
     return SensitiveDataHandler.formatMaskedNumber(masked!);
   }
 
-  void _navigateToEdit() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Hesap düzenleme ekranı yakında eklenecek')),
+  Future<void> _navigateToEdit() async {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => EditKmhAccountScreen(account: widget.account),
+      ),
     );
+
+    if (result == true) {
+      _loadAccountDetails();
+    }
   }
 
   void _navigateToWithdraw() {

@@ -190,12 +190,12 @@ class _CreditCardListScreenState extends State<CreditCardListScreen> {
                 ),
               ],
             ),
-      floatingActionButton: FloatingActionButton.extended(
+      floatingActionButton: FloatingActionButton(
         onPressed: _selectedTab == 0
             ? _navigateToAddCard
             : _navigateToAddKmhAccount,
-        icon: Icon(_selectedTab == 0 ? Icons.add_card : Icons.add),
-        label: Text(_selectedTab == 0 ? 'Kart Ekle' : 'KMH Hesabı Ekle'),
+        tooltip: _selectedTab == 0 ? 'Kart Ekle' : 'KMH Hesabı Ekle',
+        child: Icon(_selectedTab == 0 ? Icons.add_card : Icons.add),
       ),
     );
   }
@@ -663,7 +663,9 @@ class _CreditCardListScreenState extends State<CreditCardListScreen> {
   Future<void> _navigateToAddKmhAccount() async {
     final result = await Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => const AddWalletScreen()),
+      MaterialPageRoute(
+        builder: (context) => const AddWalletScreen(initialType: 'overdraft'),
+      ),
     );
 
     if (result == true) {
@@ -916,7 +918,7 @@ class _CreditCardListScreenState extends State<CreditCardListScreen> {
                           ),
                           const SizedBox(width: 4),
                           Text(
-                            'Faiz: %${account.interestRate!.toStringAsFixed(0)}',
+                            'Faiz: %${account.interestRate!.toStringAsFixed(2)}',
                             style: TextStyle(
                               fontSize: 12,
                               color: Colors.grey[600],

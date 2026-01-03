@@ -8,6 +8,7 @@ import 'package:parion/services/data_service.dart';
 import 'package:parion/services/kmh_box_service.dart';
 import 'package:parion/repositories/kmh_repository.dart';
 import 'package:parion/services/kmh_interest_calculator.dart';
+import 'package:parion/services/kmh_interest_settings_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../property_test_utils.dart';
 
@@ -21,7 +22,9 @@ void main() {
     late KmhService service;
     late DataService dataService;
     late KmhRepository repository;
+
     late KmhInterestCalculator calculator;
+    late KmhInterestSettingsService settingsService;
     late Directory testDir;
 
     setUpAll(() async {
@@ -55,10 +58,12 @@ void main() {
       await dataService.init();
       repository = KmhRepository();
       calculator = KmhInterestCalculator();
+      settingsService = KmhInterestSettingsService();
       service = KmhService(
         repository: repository,
         dataService: dataService,
         calculator: calculator,
+        settingsService: settingsService,
       );
     });
 
@@ -102,9 +107,13 @@ void main() {
         );
 
         // Calculate expected interest
+        // Note: applyDailyInterest inside service now uses values from settingsService (defaults)
+        // Default tax is 0.15 + 0.15 = 0.30
         final expectedInterest = calculator.calculateDailyInterest(
           balance: initialBalance,
-          annualRate: interestRate,
+          monthlyRate: interestRate, // Passing as monthlyRate
+          kkdfRate: 0.15,
+          bsmvRate: 0.15,
         );
 
         // Get transactions before interest accrual
@@ -262,7 +271,9 @@ void main() {
           // Calculate expected interest for current balance
           final dayInterest = calculator.calculateDailyInterest(
             balance: currentBalance,
-            annualRate: interestRate,
+            monthlyRate: interestRate,
+            kkdfRate: 0.15,
+            bsmvRate: 0.15,
           );
           expectedTotalInterest += dayInterest;
           currentBalance -= dayInterest;

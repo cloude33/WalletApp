@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import '../models/kmh_alert_settings.dart';
+import '../models/kmh_interest_settings.dart';
 import '../services/kmh_alert_service.dart';
+import '../services/kmh_interest_settings_service.dart';
+
 class KmhAlertSettingsScreen extends StatefulWidget {
   const KmhAlertSettingsScreen({super.key});
 
@@ -8,44 +11,69 @@ class KmhAlertSettingsScreen extends StatefulWidget {
   State<KmhAlertSettingsScreen> createState() => _KmhAlertSettingsScreenState();
 }
 
-class _KmhAlertSettingsScreenState extends State<KmhAlertSettingsScreen> {
+class _KmhAlertSettingsScreenState extends State<KmhAlertSettingsScreen> with SingleTickerProviderStateMixin {
   final KmhAlertService _alertService = KmhAlertService();
+  final KmhInterestSettingsService _interestSettingsService = KmhInterestSettingsService();
   
-  KmhAlertSettings? _settings;
+  KmhAlertSettings? _alertSettings;
+  KmhInterestSettings? _interestSettings;
   bool _isLoading = true;
   bool _hasChanges = false;
+
+  late TabController _tabController;
 
   @override
   void initState() {
     super.initState();
+    _tabController = TabController(length: 2, vsync: this);
     _loadSettings();
   }
 
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
+  }
+
   Future<void> _loadSettings() async {
-    final settings = await _alertService.getAlertSettings();
+    final alertSettings = await _alertService.getAlertSettings();
+    final interestSettings = await _interestSettingsService.getSettings();
     setState(() {
-      _settings = settings;
+      _alertSettings = alertSettings;
+      _interestSettings = interestSettings;
       _isLoading = false;
     });
   }
 
   Future<void> _saveSettings() async {
-    if (_settings != null) {
-      await _alertService.updateAlertSettings(_settings!);
+    if (_alertSettings != null && _interestSettings != null) {
+      await _alertService.updateAlertSettings(_alertSettings!);
+      await _interestSettingsService.updateSettings(_interestSettings!);
+      
       setState(() {
         _hasChanges = false;
       });
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Ayarlar kaydedildi')),
+          const SnackBar(
+            content: Text('Ayarlar başarıyla kaydedildi'),
+            backgroundColor: Colors.green,
+          ),
         );
       }
     }
   }
 
-  void _updateSettings(KmhAlertSettings newSettings) {
+  void _updateAlertSettings(KmhAlertSettings newSettings) {
     setState(() {
-      _settings = newSettings;
+      _alertSettings = newSettings;
+      _hasChanges = true;
+    });
+  }
+
+  void _updateInterestSettings(KmhInterestSettings newSettings) {
+    setState(() {
+      _interestSettings = newSettings;
       _hasChanges = true;
     });
   }
@@ -94,7 +122,14 @@ class _KmhAlertSettingsScreenState extends State<KmhAlertSettingsScreen> {
       },
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('KMH Bildirim Ayarları'),
+          title: const Text('KMH Ayarları'),
+          bottom: TabBar(
+            controller: _tabController,
+            tabs: const [
+              Tab(text: 'Faiz & Vergi'),
+              Tab(text: 'Bildirimler'),
+            ],
+          ),
           actions: [
             if (_hasChanges)
               IconButton(
@@ -104,19 +139,163 @@ class _KmhAlertSettingsScreenState extends State<KmhAlertSettingsScreen> {
               ),
           ],
         ),
-        body: ListView(
-          padding: const EdgeInsets.all(16),
+        body: TabBarView(
+          controller: _tabController,
           children: [
-            _buildLimitAlertsSection(),
-            const SizedBox(height: 24),
-            _buildInterestNotificationsSection(),
-            const SizedBox(height: 24),
-            _buildThresholdsSection(),
-            const SizedBox(height: 24),
-            _buildInfoCard(),
+            _buildInterestSettingsTab(),
+            _buildAlertSettingsTab(),
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildInterestSettingsTab() {
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: [
+        Card(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Icon(Icons.percent, color: Colors.blue[700]),
+                    const SizedBox(width: 8),
+                    const Text(
+                      'Faiz Oranları (Aylık)',
+                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                _buildNumberInput(
+                  label: 'Standart KMH Faizi',
+                  value: _interestSettings!.standardInterestRate,
+                  suffix: '%',
+                  onChanged: (val) {
+                    _updateInterestSettings(_interestSettings!.copyWith(
+                      standardInterestRate: val,
+                    ));
+                  },
+                ),
+                const SizedBox(height: 16),
+                _buildNumberInput(
+                  label: 'Gecikme Faizi',
+                  value: _interestSettings!.overdueInterestRate,
+                  suffix: '%',
+                  onChanged: (val) {
+                    _updateInterestSettings(_interestSettings!.copyWith(
+                      overdueInterestRate: val,
+                    ));
+                  },
+                ),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: 16),
+        Card(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Icon(Icons.account_balance_outlined, color: Colors.red[700]),
+                    const SizedBox(width: 8),
+                    const Text(
+                      'Vergi Oranları',
+                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                _buildNumberInput(
+                  label: 'KKDF Oranı',
+                  value: _interestSettings!.kkdfRate,
+                  suffix: '%',
+                  onChanged: (val) {
+                    _updateInterestSettings(_interestSettings!.copyWith(
+                      kkdfRate: val,
+                    ));
+                  },
+                ),
+                const SizedBox(height: 16),
+                _buildNumberInput(
+                  label: 'BSMV Oranı',
+                  value: _interestSettings!.bsmvRate,
+                  suffix: '%',
+                  onChanged: (val) {
+                    _updateInterestSettings(_interestSettings!.copyWith(
+                      bsmvRate: val,
+                    ));
+                  },
+                ),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: 16),
+        const Card(
+          color: Color(0xFFE3F2FD),
+          child: Padding(
+            padding: EdgeInsets.all(12.0),
+            child: Row(
+              children: [
+                Icon(Icons.info_outline, color: Colors.blue),
+                SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    'Faiz hesaplaması: (Bakiye * Faiz * Gün) / 3000\nBu tutara vergiler (KKDF + BSMV) eklenir.',
+                    style: TextStyle(fontSize: 12),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildNumberInput({
+    required String label,
+    required double value,
+    required String suffix,
+    required Function(double) onChanged,
+  }) {
+    return TextFormField(
+      initialValue: value.toString(),
+      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+      decoration: InputDecoration(
+        labelText: label,
+        suffixText: suffix,
+        border: const OutlineInputBorder(),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      ),
+      onChanged: (text) {
+        final val = double.tryParse(text);
+        if (val != null) {
+          onChanged(val);
+        }
+      },
+    );
+  }
+
+  Widget _buildAlertSettingsTab() {
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: [
+        _buildLimitAlertsSection(),
+        const SizedBox(height: 24),
+        _buildInterestNotificationsSection(),
+        const SizedBox(height: 24),
+        _buildThresholdsSection(),
+      ],
     );
   }
 
@@ -146,9 +325,9 @@ class _KmhAlertSettingsScreenState extends State<KmhAlertSettingsScreen> {
             SwitchListTile(
               title: const Text('Limit uyarılarını etkinleştir'),
               subtitle: const Text('Limit kullanımı eşiklere ulaştığında bildirim al'),
-              value: _settings!.limitAlertsEnabled,
+              value: _alertSettings!.limitAlertsEnabled,
               onChanged: (value) {
-                _updateSettings(_settings!.copyWith(limitAlertsEnabled: value));
+                _updateAlertSettings(_alertSettings!.copyWith(limitAlertsEnabled: value));
               },
             ),
           ],
@@ -183,19 +362,19 @@ class _KmhAlertSettingsScreenState extends State<KmhAlertSettingsScreen> {
             SwitchListTile(
               title: const Text('Faiz bildirimlerini etkinleştir'),
               subtitle: const Text('Günlük faiz tahakkuk ettiğinde bildirim al'),
-              value: _settings!.interestNotificationsEnabled,
+              value: _alertSettings!.interestNotificationsEnabled,
               onChanged: (value) {
-                _updateSettings(_settings!.copyWith(
+                _updateAlertSettings(_alertSettings!.copyWith(
                   interestNotificationsEnabled: value,
                 ));
               },
             ),
-            if (_settings!.interestNotificationsEnabled) ...[
+            if (_alertSettings!.interestNotificationsEnabled) ...[
               const Divider(),
               ListTile(
                 title: const Text('Minimum faiz tutarı'),
                 subtitle: Text(
-                  'Sadece ₺${_settings!.minimumInterestAmount.toStringAsFixed(2)} '
+                  'Sadece ₺${_alertSettings!.minimumInterestAmount.toStringAsFixed(2)} '
                   've üzeri faiz için bildirim al',
                 ),
                 trailing: IconButton(
@@ -236,7 +415,7 @@ class _KmhAlertSettingsScreenState extends State<KmhAlertSettingsScreen> {
             ListTile(
               leading: Icon(Icons.warning_amber, color: Colors.orange[400]),
               title: const Text('Uyarı eşiği'),
-              subtitle: Text('%${_settings!.warningThreshold.toStringAsFixed(0)} kullanımda uyar'),
+              subtitle: Text('%${_alertSettings!.warningThreshold.toStringAsFixed(0)} kullanımda uyar'),
               trailing: IconButton(
                 icon: const Icon(Icons.edit),
                 onPressed: () => _showThresholdDialog(isWarning: true),
@@ -246,7 +425,7 @@ class _KmhAlertSettingsScreenState extends State<KmhAlertSettingsScreen> {
             ListTile(
               leading: Icon(Icons.error, color: Colors.red[700]),
               title: const Text('Kritik eşik'),
-              subtitle: Text('%${_settings!.criticalThreshold.toStringAsFixed(0)} kullanımda kritik uyarı'),
+              subtitle: Text('%${_alertSettings!.criticalThreshold.toStringAsFixed(0)} kullanımda kritik uyarı'),
               trailing: IconButton(
                 icon: const Icon(Icons.edit),
                 onPressed: () => _showThresholdDialog(isWarning: false),
@@ -258,43 +437,10 @@ class _KmhAlertSettingsScreenState extends State<KmhAlertSettingsScreen> {
     );
   }
 
-  Widget _buildInfoCard() {
-    return Card(
-      color: Colors.blue[50],
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(Icons.info_outline, color: Colors.blue[700]),
-                const SizedBox(width: 8),
-                const Text(
-                  'Bilgi',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            const Text(
-              '• Limit uyarıları, KMH limitinizin ne kadarını kullandığınızı takip eder\n'
-              '• Uyarı eşiği (varsayılan %80): Normal uyarı bildirimi\n'
-              '• Kritik eşik (varsayılan %95): Acil uyarı bildirimi\n'
-              '• Faiz bildirimleri her gün saat 00:00\'da kontrol edilir\n'
-              '• Minimum faiz tutarı altındaki faizler için bildirim gönderilmez',
-              style: TextStyle(fontSize: 12),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
   Future<void> _showThresholdDialog({required bool isWarning}) async {
     final currentValue = isWarning 
-        ? _settings!.warningThreshold 
-        : _settings!.criticalThreshold;
+        ? _alertSettings!.warningThreshold 
+        : _alertSettings!.criticalThreshold;
     
     final controller = TextEditingController(
       text: currentValue.toStringAsFixed(0),
@@ -349,16 +495,16 @@ class _KmhAlertSettingsScreenState extends State<KmhAlertSettingsScreen> {
 
     if (result != null) {
       if (isWarning) {
-        _updateSettings(_settings!.copyWith(warningThreshold: result));
+        _updateAlertSettings(_alertSettings!.copyWith(warningThreshold: result));
       } else {
-        _updateSettings(_settings!.copyWith(criticalThreshold: result));
+        _updateAlertSettings(_alertSettings!.copyWith(criticalThreshold: result));
       }
     }
   }
 
   Future<void> _showMinimumInterestDialog() async {
     final controller = TextEditingController(
-      text: _settings!.minimumInterestAmount.toStringAsFixed(2),
+      text: _alertSettings!.minimumInterestAmount.toStringAsFixed(2),
     );
 
     final result = await showDialog<double>(
@@ -369,7 +515,7 @@ class _KmhAlertSettingsScreenState extends State<KmhAlertSettingsScreen> {
           mainAxisSize: MainAxisSize.min,
           children: [
             const Text(
-              'Bu tutarın altındaki faizler için bildirim gönderilmeyecek',
+              'Bu tutarın altındaki faizler için bildirim gönderilmez',
               style: TextStyle(fontSize: 12),
             ),
             const SizedBox(height: 16),
@@ -407,7 +553,7 @@ class _KmhAlertSettingsScreenState extends State<KmhAlertSettingsScreen> {
     );
 
     if (result != null) {
-      _updateSettings(_settings!.copyWith(minimumInterestAmount: result));
+      _updateAlertSettings(_alertSettings!.copyWith(minimumInterestAmount: result));
     }
   }
 }

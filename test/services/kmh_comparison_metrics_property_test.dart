@@ -309,16 +309,15 @@ void main() {
             (w) => w.id == accountData['id'],
           );
 
-          // Calculate expected monthly interest using the calculator
           final expectedMonthlyInterest = calculator.estimateMonthlyInterest(
             balance: accountData['balance'],
-            annualRate: accountData['interestRate'],
+            monthlyRate: accountData['interestRate'],
           );
 
           // Calculate actual monthly interest
           final actualMonthlyInterest = calculator.estimateMonthlyInterest(
             balance: retrieved.balance,
-            annualRate: retrieved.interestRate!,
+            monthlyRate: retrieved.interestRate!,
           );
 
           // They should match
@@ -446,11 +445,11 @@ void main() {
           // 3. Monthly interest should be correctly calculated
           final expectedMonthlyInterest = calculator.estimateMonthlyInterest(
             balance: accountData['balance'],
-            annualRate: accountData['interestRate'],
+            monthlyRate: accountData['interestRate'],
           );
           final actualMonthlyInterest = calculator.estimateMonthlyInterest(
             balance: retrieved.balance,
-            annualRate: retrieved.interestRate!,
+            monthlyRate: retrieved.interestRate!,
           );
           expect(actualMonthlyInterest, closeTo(expectedMonthlyInterest, 0.01));
 
@@ -469,7 +468,7 @@ void main() {
             final higherDebt = retrieved.balance * 2;
             final higherInterest = calculator.estimateMonthlyInterest(
               balance: higherDebt,
-              annualRate: retrieved.interestRate!,
+              monthlyRate: retrieved.interestRate!,
             );
             expect(
               higherInterest,
@@ -610,7 +609,7 @@ void main() {
         );
         final zeroInterest = calculator.estimateMonthlyInterest(
           balance: zeroBalanceAccount.balance,
-          annualRate: zeroBalanceAccount.interestRate!,
+          monthlyRate: zeroBalanceAccount.interestRate!,
         );
         expect(
           zeroInterest,
@@ -631,7 +630,7 @@ void main() {
         );
         final maxInterest = calculator.estimateMonthlyInterest(
           balance: maxLimitAccount.balance,
-          annualRate: maxLimitAccount.interestRate!,
+          monthlyRate: maxLimitAccount.interestRate!,
         );
         expect(
           maxInterest,
@@ -652,7 +651,7 @@ void main() {
         );
         final positiveInterest = calculator.estimateMonthlyInterest(
           balance: positiveBalanceAccount.balance,
-          annualRate: positiveBalanceAccount.interestRate!,
+          monthlyRate: positiveBalanceAccount.interestRate!,
         );
         expect(
           positiveInterest,
@@ -746,7 +745,7 @@ void main() {
             'utilizationRate': account.utilizationRate,
             'monthlyInterest': calculator.estimateMonthlyInterest(
               balance: account.balance,
-              annualRate: account.interestRate!,
+              monthlyRate: account.interestRate!,
             ),
           };
         }
@@ -788,7 +787,7 @@ void main() {
             'utilizationRate': account.utilizationRate,
             'monthlyInterest': calculator.estimateMonthlyInterest(
               balance: account.balance,
-              annualRate: account.interestRate!,
+              monthlyRate: account.interestRate!,
             ),
           };
 

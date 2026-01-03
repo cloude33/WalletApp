@@ -16,7 +16,7 @@ class PaymentPlan extends HiveObject {
   double monthlyPayment;
 
   @HiveField(4)
-  double annualRate;
+  double monthlyRate;
 
   @HiveField(5)
   int durationMonths;
@@ -41,7 +41,7 @@ class PaymentPlan extends HiveObject {
     required this.walletId,
     required this.initialDebt,
     required this.monthlyPayment,
-    required this.annualRate,
+    required this.monthlyRate,
     required this.durationMonths,
     required this.totalInterest,
     required this.totalPayment,
@@ -55,7 +55,7 @@ class PaymentPlan extends HiveObject {
     String? walletId,
     double? initialDebt,
     double? monthlyPayment,
-    double? annualRate,
+    double? monthlyRate,
     int? durationMonths,
     double? totalInterest,
     double? totalPayment,
@@ -68,7 +68,7 @@ class PaymentPlan extends HiveObject {
       walletId: walletId ?? this.walletId,
       initialDebt: initialDebt ?? this.initialDebt,
       monthlyPayment: monthlyPayment ?? this.monthlyPayment,
-      annualRate: annualRate ?? this.annualRate,
+      monthlyRate: monthlyRate ?? this.monthlyRate,
       durationMonths: durationMonths ?? this.durationMonths,
       totalInterest: totalInterest ?? this.totalInterest,
       totalPayment: totalPayment ?? this.totalPayment,

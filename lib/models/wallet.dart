@@ -9,10 +9,14 @@ class Wallet {
   final int paymentDay;
   final int installment;
   final double creditLimit;
+  /// The interest rate for this wallet.
+  /// For KMH (Overdraft) accounts, this is interpreted as a monthly rate (e.g. 4.25).
   final double? interestRate;
   final DateTime? lastInterestDate;
   final double? accruedInterest;
   final String? accountNumber;
+  final String? bankName;
+  final String? iban;
   Wallet({
     required this.id,
     required this.name,
@@ -28,6 +32,8 @@ class Wallet {
     this.lastInterestDate,
     this.accruedInterest,
     this.accountNumber,
+    this.bankName,
+    this.iban,
   });
   bool get isKmhAccount => type == 'overdraft' || (type == 'bank' && creditLimit > 0);
   double get usedCredit => balance < 0 ? balance.abs() : 0.0;
@@ -48,6 +54,8 @@ class Wallet {
     'lastInterestDate': lastInterestDate?.toIso8601String(),
     'accruedInterest': accruedInterest,
     'accountNumber': accountNumber,
+    'bankName': bankName,
+    'iban': iban,
   };
   factory Wallet.fromJson(Map<String, dynamic> json) => Wallet(
     id: json['id'],
@@ -66,6 +74,8 @@ class Wallet {
         : null,
     accruedInterest: json['accruedInterest'],
     accountNumber: json['accountNumber'],
+    bankName: json['bankName'],
+    iban: json['iban'],
   );
   Wallet copyWith({
     String? id,
@@ -79,9 +89,17 @@ class Wallet {
     int? installment,
     double? creditLimit,
     double? interestRate,
+    bool updateInterestRate = false,
     DateTime? lastInterestDate,
+    bool updateLastInterestDate = false,
     double? accruedInterest,
+    bool updateAccruedInterest = false,
     String? accountNumber,
+    bool updateAccountNumber = false,
+    String? bankName,
+    bool updateBankName = false,
+    String? iban,
+    bool updateIban = false,
   }) {
     return Wallet(
       id: id ?? this.id,
@@ -94,10 +112,12 @@ class Wallet {
       paymentDay: paymentDay ?? this.paymentDay,
       installment: installment ?? this.installment,
       creditLimit: creditLimit ?? this.creditLimit,
-      interestRate: interestRate ?? this.interestRate,
-      lastInterestDate: lastInterestDate ?? this.lastInterestDate,
-      accruedInterest: accruedInterest ?? this.accruedInterest,
-      accountNumber: accountNumber ?? this.accountNumber,
+      interestRate: updateInterestRate ? interestRate : (interestRate ?? this.interestRate),
+      lastInterestDate: updateLastInterestDate ? lastInterestDate : (lastInterestDate ?? this.lastInterestDate),
+      accruedInterest: updateAccruedInterest ? accruedInterest : (accruedInterest ?? this.accruedInterest),
+      accountNumber: updateAccountNumber ? accountNumber : (accountNumber ?? this.accountNumber),
+      bankName: updateBankName ? bankName : (bankName ?? this.bankName),
+      iban: updateIban ? iban : (iban ?? this.iban),
     );
   }
 }

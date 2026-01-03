@@ -21,7 +21,7 @@ class PaymentPlanAdapter extends TypeAdapter<PaymentPlan> {
       walletId: fields[1] as String,
       initialDebt: fields[2] as double,
       monthlyPayment: fields[3] as double,
-      annualRate: fields[4] as double,
+      monthlyRate: fields[4] as double,
       durationMonths: fields[5] as int,
       totalInterest: fields[6] as double,
       totalPayment: fields[7] as double,
@@ -44,7 +44,7 @@ class PaymentPlanAdapter extends TypeAdapter<PaymentPlan> {
       ..writeByte(3)
       ..write(obj.monthlyPayment)
       ..writeByte(4)
-      ..write(obj.annualRate)
+      ..write(obj.monthlyRate)
       ..writeByte(5)
       ..write(obj.durationMonths)
       ..writeByte(6)

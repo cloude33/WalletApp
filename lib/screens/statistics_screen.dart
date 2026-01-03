@@ -64,7 +64,7 @@ class _StatisticsScreenState extends State<StatisticsScreen>
     _tabController.addListener(() {
       setState(() {});
     });
-    _tabController.index = 3;
+    _tabController.index = 0;
     _loadCategories();
   }
 
@@ -204,26 +204,8 @@ class _StatisticsScreenState extends State<StatisticsScreen>
               child: Column(
                 children: [
                   Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Row(
-                      children: [
-                        const SizedBox(width: 48),
-                        Expanded(
-                          child: Text(
-                            'İstatistikler',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              color: Theme.of(
-                                context,
-                              ).textTheme.bodyLarge?.color,
-                              fontSize: 20,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 48),
-                      ],
-                    ),
+                    padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                    child: _buildHeaderTimeFilter(),
                   ),
                   TabBar(
                     controller: _tabController,
@@ -237,10 +219,10 @@ class _StatisticsScreenState extends State<StatisticsScreen>
                       fontSize: 14,
                     ),
                     tabs: const [
-                      Tab(text: 'Nakit akışı'),
+                      Tab(text: 'Raporlar'),
                       Tab(text: 'Harcama'),
                       Tab(text: 'Kredi'),
-                      Tab(text: 'Raporlar'),
+                      Tab(text: 'Nakit Akışı'),
                       Tab(text: 'Varlıklar'),
                     ],
                   ),
@@ -248,24 +230,14 @@ class _StatisticsScreenState extends State<StatisticsScreen>
               ),
             ),
             Expanded(
-              child: Stack(
+              child: TabBarView(
+                controller: _tabController,
                 children: [
-                  TabBarView(
-                    controller: _tabController,
-                    children: [
-                      _buildCashFlowTab(),
-                      _buildSpendingTab(),
-                      _buildCreditTab(),
-                      _buildReportsView(),
-                      _buildAssetsTab(),
-                    ],
-                  ),
-                  Positioned(
-                    left: 20,
-                    right: 20,
-                    bottom: 20,
-                    child: _buildTimeFilter(),
-                  ),
+                  _buildReportsView(),
+                  _buildSpendingTab(),
+                  _buildCreditTab(),
+                  _buildCashFlowTab(),
+                  _buildAssetsTab(),
                 ],
               ),
             ),
@@ -2308,24 +2280,12 @@ class _StatisticsScreenState extends State<StatisticsScreen>
     );
   }
 
-  Widget _buildTimeFilter() {
-    return Container(
-      height: 50,
-      decoration: BoxDecoration(
-        color: Theme.of(context).cardColor,
-        borderRadius: BorderRadius.circular(25),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.1),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
+  Widget _buildHeaderTimeFilter() {
+    return SizedBox(
+      height: 40,
       child: Center(
         child: SingleChildScrollView(
           scrollDirection: Axis.horizontal,
-          padding: const EdgeInsets.symmetric(horizontal: 8),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             mainAxisAlignment: MainAxisAlignment.center,
@@ -2348,6 +2308,9 @@ class _StatisticsScreenState extends State<StatisticsScreen>
 
   Widget _buildFilterOption(String label) {
     final isSelected = _selectedTimeFilter == label;
+    // Dark mode kontrolü için context'i kullanıyoruz ama renkleri sabit tutabiliriz veya temaya göre ayarlayabiliriz.
+    // Şimdilik mevcut renk şemasını koruyorum: Seçiliyse Teal, değilse stroke.
+    
     return GestureDetector(
       onTap: () {
         if (label == 'Özel') {
@@ -2359,17 +2322,18 @@ class _StatisticsScreenState extends State<StatisticsScreen>
         }
       },
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
           color: isSelected ? const Color(0xFF00BFA5) : Colors.transparent,
           borderRadius: BorderRadius.circular(20),
+          border: isSelected ? null : Border.all(color: Colors.grey.withValues(alpha: 0.3)),
         ),
         child: Text(
           label,
           style: TextStyle(
-            color: isSelected ? Colors.white : const Color(0xFF00BFA5),
-            fontWeight: FontWeight.bold,
-            fontSize: 14,
+            color: isSelected ? Colors.white : Colors.grey,
+            fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+            fontSize: 13,
           ),
         ),
       ),

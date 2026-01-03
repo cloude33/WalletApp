@@ -35,7 +35,7 @@ class PaymentPlannerService {
     final calculation = _calculator.calculatePayoffTime(
       currentDebt: currentDebt,
       monthlyPayment: monthlyPayment,
-      annualRate: annualRate,
+      monthlyRate: annualRate,
     );
     if (!calculation.isPossible) {
       return null;
@@ -45,7 +45,7 @@ class PaymentPlannerService {
       walletId: account.id,
       initialDebt: currentDebt,
       monthlyPayment: monthlyPayment,
-      annualRate: annualRate,
+      monthlyRate: annualRate,
       durationMonths: calculation.months,
       totalInterest: calculation.totalInterest,
       totalPayment: calculation.totalPaid,
@@ -70,14 +70,14 @@ class PaymentPlannerService {
     final annualRate = account.interestRate ?? 24.0;
     final monthlyInterest = _calculator.estimateMonthlyInterest(
       balance: -currentDebt,
-      annualRate: annualRate,
+      monthlyRate: annualRate,
       days: 30,
     );
     final minPayment = monthlyInterest + (currentDebt * 0.05);
     final minCalc = _calculator.calculatePayoffTime(
       currentDebt: currentDebt,
       monthlyPayment: minPayment,
-      annualRate: annualRate,
+      monthlyRate: annualRate,
     );
 
     if (minCalc.isPossible) {
@@ -101,7 +101,7 @@ class PaymentPlannerService {
       final conservativeCalc = _calculator.calculatePayoffTime(
         currentDebt: currentDebt,
         monthlyPayment: conservativePayment,
-        annualRate: annualRate,
+        monthlyRate: annualRate,
       );
 
       if (conservativeCalc.isPossible) {
@@ -125,7 +125,7 @@ class PaymentPlannerService {
       final moderateCalc = _calculator.calculatePayoffTime(
         currentDebt: currentDebt,
         monthlyPayment: moderatePayment,
-        annualRate: annualRate,
+        monthlyRate: annualRate,
       );
 
       if (moderateCalc.isPossible) {
@@ -150,7 +150,7 @@ class PaymentPlannerService {
       final aggressiveCalc = _calculator.calculatePayoffTime(
         currentDebt: currentDebt,
         monthlyPayment: aggressivePayment,
-        annualRate: annualRate,
+        monthlyRate: annualRate,
       );
 
       if (aggressiveCalc.isPossible) {
@@ -184,7 +184,7 @@ class PaymentPlannerService {
       final calc = _calculator.calculatePayoffTime(
         currentDebt: currentDebt,
         monthlyPayment: midPayment,
-        annualRate: annualRate,
+        monthlyRate: annualRate,
       );
 
       if (!calc.isPossible) {
@@ -240,7 +240,7 @@ class PaymentPlannerService {
     final annualRate = account.interestRate ?? 24.0;
     final monthlyInterest = _calculator.estimateMonthlyInterest(
       balance: -currentDebt,
-      annualRate: annualRate,
+      monthlyRate: annualRate,
       days: 30,
     );
 
@@ -261,7 +261,7 @@ class PaymentPlannerService {
     final annualRate = account.interestRate ?? 24.0;
     final monthlyInterest = _calculator.estimateMonthlyInterest(
       balance: -currentDebt,
-      annualRate: annualRate,
+      monthlyRate: annualRate,
       days: 30,
     );
 

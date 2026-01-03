@@ -809,7 +809,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
               const SizedBox(height: 2),
               if (income > 0)
                 Text(
-                  '+${NumberFormat('#,##0', 'tr_TR').format(income)}',
+                  '+${NumberFormat('#,##0.00', 'tr_TR').format(income)}',
                   style: const TextStyle(
                     fontSize: 10,
                     color: Color(0xFF34C759),
@@ -820,7 +820,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                 ),
               if (expense > 0)
                 Text(
-                  '-${NumberFormat('#,##0', 'tr_TR').format(expense)}',
+                  '-${NumberFormat('#,##0.00', 'tr_TR').format(expense)}',
                   style: const TextStyle(
                     fontSize: 10,
                     color: Color(0xFFFF3B30),

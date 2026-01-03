@@ -1,35 +1,62 @@
 class KmhInterestCalculator {
+  
+  /// Calculates total daily cost including taxes (KKDF + BSMV)
+  /// Formula: (Principal * MonthlyRate * Days) / 3000 * (1 + TaxRates)
   double calculateDailyInterest({
     required double balance,
-    required double annualRate,
+    required double monthlyRate,
+    double kkdfRate = 0.15, // Default/Fallback
+    double bsmvRate = 0.15, // Default/Fallback
   }) {
     if (balance >= 0) return 0.0;
-    final dailyRate = annualRate / 365 / 100;
-    return balance.abs() * dailyRate;
+    
+    // Gross Interest = (Balance * Rate) / 3000
+    // 3000 comes from: Rate/100 (percentage) / 30 (days in month)
+    final grossInterest = (balance.abs() * monthlyRate) / 3000;
+    
+    final tax = grossInterest * (kkdfRate + bsmvRate);
+    return grossInterest + tax;
   }
+
+  /// Estimates monthly interest cost including taxes
   double estimateMonthlyInterest({
     required double balance,
-    required double annualRate,
+    required double monthlyRate,
     int days = 30,
+    double kkdfRate = 0.15,
+    double bsmvRate = 0.15,
   }) {
     if (balance >= 0) return 0.0;
-    final dailyInterest = calculateDailyInterest(
-      balance: balance,
-      annualRate: annualRate,
-    );
-    return dailyInterest * days;
+    
+    final grossInterest = (balance.abs() * monthlyRate * days) / 3000;
+    final tax = grossInterest * (kkdfRate + bsmvRate);
+    
+    return grossInterest + tax;
   }
+
+  /// Estimates annual interest cost including taxes
   double estimateAnnualInterest({
     required double balance,
-    required double annualRate,
+    required double monthlyRate,
+    double kkdfRate = 0.15,
+    double bsmvRate = 0.15,
   }) {
     if (balance >= 0) return 0.0;
-    return balance.abs() * (annualRate / 100);
+    return estimateMonthlyInterest(
+      balance: balance,
+      monthlyRate: monthlyRate,
+      days: 365,
+      kkdfRate: kkdfRate,
+      bsmvRate: bsmvRate,
+    );
   }
+
   PayoffCalculation calculatePayoffTime({
     required double currentDebt,
     required double monthlyPayment,
-    required double annualRate,
+    required double monthlyRate,
+    double kkdfRate = 0.15,
+    double bsmvRate = 0.15,
   }) {
     if (currentDebt <= 0) {
       return PayoffCalculation(
@@ -48,11 +75,16 @@ class KmhInterestCalculator {
         isPossible: false,
       );
     }
+
+    // Check if payment covers at least the interest
     final monthlyInterest = estimateMonthlyInterest(
       balance: -currentDebt,
-      annualRate: annualRate,
+      monthlyRate: monthlyRate,
       days: 30,
+      kkdfRate: kkdfRate,
+      bsmvRate: bsmvRate,
     );
+
     if (monthlyPayment <= monthlyInterest) {
       return PayoffCalculation(
         months: -1,
@@ -61,6 +93,7 @@ class KmhInterestCalculator {
         isPossible: false,
       );
     }
+
     double remainingDebt = currentDebt;
     double totalInterest = 0.0;
     int months = 0;
@@ -69,11 +102,15 @@ class KmhInterestCalculator {
     while (remainingDebt > 0.01 && months < maxMonths) {
       final interest = estimateMonthlyInterest(
         balance: -remainingDebt,
-        annualRate: annualRate,
+        monthlyRate: monthlyRate,
         days: 30,
+        kkdfRate: kkdfRate,
+        bsmvRate: bsmvRate,
       );
+
       remainingDebt += interest;
       totalInterest += interest;
+
       if (monthlyPayment >= remainingDebt) {
         remainingDebt = 0;
       } else {
@@ -82,6 +119,7 @@ class KmhInterestCalculator {
       
       months++;
     }
+
     if (months >= maxMonths) {
       return PayoffCalculation(
         months: -1,

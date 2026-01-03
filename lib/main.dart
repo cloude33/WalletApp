@@ -21,6 +21,7 @@ import 'models/limit_alert.dart';
 import 'services/kmh_box_service.dart';
 import 'models/kmh_transaction.dart';
 import 'models/kmh_transaction_type.dart';
+import 'services/notification_scheduler_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -51,6 +52,16 @@ void main() async {
   }
 
   await ThemeService().init();
+
+  // Bildirim servisini başlat ve izinleri iste
+  try {
+    final notificationService = NotificationSchedulerService();
+    await notificationService.initialize();
+    await notificationService.requestPermissions();
+    debugPrint('Notification service initialized');
+  } catch (e) {
+    debugPrint('Notification service init error: $e');
+  }
 
   // Unified Auth servisini başlat (Auth ve Firebase senkronizasyonu için)
   try {

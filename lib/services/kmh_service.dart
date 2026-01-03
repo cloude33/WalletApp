@@ -8,6 +8,7 @@ import '../repositories/kmh_repository.dart';
 import '../services/data_service.dart';
 import '../services/kmh_interest_calculator.dart';
 import '../services/kmh_alert_service.dart';
+import '../services/kmh_interest_settings_service.dart';
 import '../exceptions/error_codes.dart';
 import '../exceptions/kmh_exception.dart';
 import '../utils/kmh_validator.dart';
@@ -17,6 +18,7 @@ class KmhService {
   final DataService _dataService;
   final KmhInterestCalculator _calculator;
   final KmhAlertService _alertService;
+  final KmhInterestSettingsService _settingsService;
   final Uuid _uuid = const Uuid();
   final CacheManager _cache = CacheManager();
   static const Duration _summaryCacheDuration = Duration(minutes: 5);
@@ -27,10 +29,12 @@ class KmhService {
     DataService? dataService,
     KmhInterestCalculator? calculator,
     KmhAlertService? alertService,
+    KmhInterestSettingsService? settingsService,
   })  : _repository = repository ?? KmhRepository(),
         _dataService = dataService ?? DataService(),
         _calculator = calculator ?? KmhInterestCalculator(),
-        _alertService = alertService ?? KmhAlertService();
+        _alertService = alertService ?? KmhAlertService(),
+        _settingsService = settingsService ?? KmhInterestSettingsService();
   Future<Wallet> createKmhAccount({
     required String bankName,
     required double creditLimit,
@@ -235,9 +239,13 @@ class KmhService {
     if (wallet.balance >= 0) {
       return;
     }
+    
+    final settings = await _settingsService.getSettings();
     final interestAmount = _calculator.calculateDailyInterest(
       balance: wallet.balance,
-      annualRate: wallet.interestRate!,
+      monthlyRate: wallet.interestRate!,
+      kkdfRate: settings.kkdfRate / 100,
+      bsmvRate: settings.bsmvRate / 100,
     );
     if (interestAmount < 0.01) {
       return;
@@ -376,30 +384,38 @@ class KmhService {
         'Hesap bir KMH hesabı değil',
       );
     }
-    if (wallet.interestRate == null) {
-      throw KmhException.invalidInterestRate('Faiz oranı belirtilmemiş');
-    }
+    // If interest rate is missing, fallback to 0.0 to prevent crash and allow editing
+    final interestRate = wallet.interestRate ?? 0.0;
+    
+    final settings = await _settingsService.getSettings();
+
     final totalTransactions = await _repository.countByWalletId(walletId);
     final dailyInterest = _calculator.calculateDailyInterest(
       balance: wallet.balance,
-      annualRate: wallet.interestRate!,
+      monthlyRate: interestRate,
+      kkdfRate: settings.kkdfRate / 100,
+      bsmvRate: settings.bsmvRate / 100,
     );
 
     final monthlyInterest = _calculator.estimateMonthlyInterest(
       balance: wallet.balance,
-      annualRate: wallet.interestRate!,
+      monthlyRate: interestRate,
+      kkdfRate: settings.kkdfRate / 100,
+      bsmvRate: settings.bsmvRate / 100,
     );
 
     final annualInterest = _calculator.estimateAnnualInterest(
       balance: wallet.balance,
-      annualRate: wallet.interestRate!,
+      monthlyRate: interestRate,
+      kkdfRate: settings.kkdfRate / 100,
+      bsmvRate: settings.bsmvRate / 100,
     );
     final summary = KmhSummary(
       walletId: walletId,
       walletName: wallet.name,
       currentBalance: wallet.balance,
       creditLimit: wallet.creditLimit,
-      interestRate: wallet.interestRate!,
+      interestRate: interestRate,
       usedCredit: wallet.usedCredit,
       availableCredit: wallet.availableCredit,
       utilizationRate: wallet.utilizationRate,

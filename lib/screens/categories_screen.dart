@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../models/category.dart';
 import '../models/transaction.dart';
+import '../models/credit_card_transaction.dart';
 import '../services/data_service.dart';
+import '../services/credit_card_service.dart';
 import 'add_category_screen.dart';
 import 'edit_category_screen.dart';
 
@@ -15,9 +17,11 @@ class CategoriesScreen extends StatefulWidget {
 
 class _CategoriesScreenState extends State<CategoriesScreen> {
   final DataService _dataService = DataService();
+  final CreditCardService _creditCardService = CreditCardService();
   final TextEditingController _searchController = TextEditingController();
   List<Category> _categories = [];
   List<Transaction> _transactions = [];
+  List<CreditCardTransaction> _creditCardTransactions = [];
   bool _loading = true;
   bool _showIncome = false;
   String _searchQuery = '';
@@ -32,9 +36,18 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
   Future<void> _loadCategories() async {
     final categories = (await _dataService.getCategories()).cast<Category>();
     final transactions = await _dataService.getTransactions();
+    
+    final cards = await _creditCardService.getActiveCards();
+    final ccTransactions = <CreditCardTransaction>[];
+    for (var card in cards) {
+      final txs = await _creditCardService.getCardTransactions(card.id);
+      ccTransactions.addAll(txs);
+    }
+
     setState(() {
       _categories = categories;
       _transactions = transactions;
+      _creditCardTransactions = ccTransactions;
       _loading = false;
     });
   }
@@ -48,8 +61,12 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
   Map<String, int> _getCategoryUsageCount() {
     final usageMap = <String, int>{};
     for (var transaction in _transactions) {
-      usageMap[transaction.category] =
-          (usageMap[transaction.category] ?? 0) + 1;
+      final key = transaction.category.trim().toLowerCase();
+      usageMap[key] = (usageMap[key] ?? 0) + 1;
+    }
+    for (var transaction in _creditCardTransactions) {
+      final key = transaction.category.trim().toLowerCase();
+      usageMap[key] = (usageMap[key] ?? 0) + 1;
     }
     return usageMap;
   }
@@ -57,8 +74,12 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
   Map<String, double> _getCategoryTotalAmount() {
     final amountMap = <String, double>{};
     for (var transaction in _transactions) {
-      amountMap[transaction.category] =
-          (amountMap[transaction.category] ?? 0) + transaction.amount;
+      final key = transaction.category.trim().toLowerCase();
+      amountMap[key] = (amountMap[key] ?? 0) + transaction.amount;
+    }
+    for (var transaction in _creditCardTransactions) {
+      final key = transaction.category.trim().toLowerCase();
+      amountMap[key] = (amountMap[key] ?? 0) + transaction.amount;
     }
     return amountMap;
   }
@@ -387,8 +408,9 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
       itemCount: filteredCategories.length,
       itemBuilder: (context, index) {
         final category = filteredCategories[index];
-        final count = usageCount[category.name] ?? 0;
-        final amount = totalAmount[category.name] ?? 0;
+        final normalizedName = category.name.trim().toLowerCase();
+        final count = usageCount[normalizedName] ?? 0;
+        final amount = totalAmount[normalizedName] ?? 0;
 
         return Container(
           key: ValueKey(category.id),
@@ -445,7 +467,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                               ).textTheme.bodyLarge?.color,
                             ),
                           ),
-                          if (_showStats && count > 0) ...[
+                          if (_showStats) ...[
                             const SizedBox(height: 4),
                             Text(
                               '$count işlem • ₺${NumberFormat('#,##0', 'tr_TR').format(amount)}',
@@ -473,7 +495,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                   ],
                 ),
               ),
-              if (_showStats && count > 0)
+              if (_showStats)
                 Container(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 15,

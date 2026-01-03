@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:uuid/uuid.dart';
 import '../models/wallet.dart';
 import '../services/data_service.dart';
+
 class DecimalInputFormatter extends TextInputFormatter {
   @override
   TextEditingValue formatEditUpdate(
@@ -56,8 +57,9 @@ class DecimalInputFormatter extends TextInputFormatter {
 
 class AddWalletScreen extends StatefulWidget {
   final Function(Wallet)? onWalletAdded;
+  final String? initialType; // 'cash', 'bank', 'overdraft'
 
-  const AddWalletScreen({super.key, this.onWalletAdded});
+  const AddWalletScreen({super.key, this.onWalletAdded, this.initialType});
 
   @override
   State<AddWalletScreen> createState() => _AddWalletScreenState();
@@ -65,26 +67,25 @@ class AddWalletScreen extends StatefulWidget {
 
 class _AddWalletScreenState extends State<AddWalletScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _nameController = TextEditingController();
-  final _balanceController = TextEditingController();
-  final _limitController = TextEditingController();
+  late TextEditingController _nameController;
+  late TextEditingController _balanceController;
+  late TextEditingController _limitController;
+  late TextEditingController _interestRateController; // Yeni eklendi
   final _nameFocusNode = FocusNode();
 
-  String _selectedType = 'cash';
-  String _selectedColor = '#5E5CE6';
+  late String _selectedType;
+  late String _selectedColor;
   bool _showBankOptions = false;
   String _selectedBank = '';
-  String _selectedOverdraftBank = '';
 
+  // Genişletilmiş Renk Paleti (30 Renk)
   final List<String> _colors = [
-    '#5E5CE6',
-    '#FF2D55',
-    '#34C759',
-    '#007AFF',
-    '#AF52DE',
-    '#FF9500',
-    '#FFCC00',
-    '#FF3B30',
+    '#007AFF', '#34C759', '#FF9500', '#FF3B30', '#AF52DE', 
+    '#5856D6', '#FF2D55', '#5AC8FA', '#FFCC00', '#8E8E93',
+    '#1ABC9C', '#2ECC71', '#3498DB', '#9B59B6', '#F1C40F',
+    '#E67E22', '#E74C3C', '#95A5A6', '#34495E', '#16A085',
+    '#27AE60', '#2980B9', '#8E44AD', '#F39C12', '#D35400',
+    '#C0392B', '#7F8C8D', '#2C3E50', '#000000', '#5D4037',
   ];
 
   final List<String> _turkishBanks = [
@@ -114,18 +115,40 @@ class _AddWalletScreenState extends State<AddWalletScreen> {
   @override
   void initState() {
     super.initState();
-    _nameController.text = 'Nakit';
+    _selectedType = widget.initialType ?? 'cash';
+    
+    // Başlangıç adını tipe göre ayarla
+    String initialName = 'Nakit';
+    if (_selectedType == 'bank') {
+      initialName = 'Banka Hesabı';
+    } else if (_selectedType == 'overdraft') {
+      initialName = 'KMH Hesabı';
+    }
+    
+    _nameController = TextEditingController(text: initialName);
+    _balanceController = TextEditingController();
+    _limitController = TextEditingController();
+    _interestRateController = TextEditingController(); // Yeni eklendi
+    _selectedColor = _colors[0]; // Varsayılan renk
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _balanceController.dispose();
+    _limitController.dispose();
+    _interestRateController.dispose(); // Yeni eklendi
+    _nameFocusNode.dispose();
+    super.dispose();
   }
 
   Future<void> _saveWallet() async {
     if (_formKey.currentState!.validate()) {
       String walletName = _nameController.text.trim();
-      if (_selectedType == 'bank' && _selectedBank.isNotEmpty) {
+      if ((_selectedType == 'bank' || _selectedType == 'overdraft') && _showBankOptions && _selectedBank.isNotEmpty) {
         walletName = _selectedBank;
-      } else if (_selectedType == 'overdraft' &&
-          _selectedOverdraftBank.isNotEmpty) {
-        walletName = _selectedOverdraftBank;
       }
+      
       double initialBalance = 0.0;
       if (_balanceController.text.isNotEmpty) {
         String cleanBalance = _balanceController.text
@@ -136,12 +159,19 @@ class _AddWalletScreenState extends State<AddWalletScreen> {
           initialBalance = -initialBalance.abs();
         }
       }
+      
       double limit = 0.0;
       if (_selectedType == 'overdraft' && _limitController.text.isNotEmpty) {
         String cleanLimit = _limitController.text
             .replaceAll('.', '')
             .replaceAll(',', '.');
         limit = double.tryParse(cleanLimit) ?? 0.0;
+      }
+
+      double? interestRate;
+      if (_selectedType == 'overdraft' && _interestRateController.text.isNotEmpty) {
+         String cleanRate = _interestRateController.text.replaceAll(',', '.');
+         interestRate = double.tryParse(cleanRate);
       }
 
       final wallet = Wallet(
@@ -152,6 +182,8 @@ class _AddWalletScreenState extends State<AddWalletScreen> {
         color: '0xFF${_selectedColor.substring(1)}',
         icon: _selectedType,
         creditLimit: _selectedType == 'overdraft' ? limit : 0.0,
+        interestRate: interestRate, // Yeni eklendi
+        bankName: (_selectedType == 'bank' || _selectedType == 'overdraft') && _showBankOptions ? _selectedBank : null, // Bank name kaydet
       );
 
       final dataService = DataService();
@@ -170,502 +202,53 @@ class _AddWalletScreenState extends State<AddWalletScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: SafeArea(
-        child: Column(
-          children: [
-            _buildHeader(),
-            Expanded(
-              child: SingleChildScrollView(
-                child: Padding(
-                  padding: const EdgeInsets.all(20),
-                  child: Form(
-                    key: _formKey,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'Cüzdan Adı',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        if (_selectedType == 'bank' && _showBankOptions)
-                          Column(
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 12,
-                                ),
-                                decoration: BoxDecoration(
-                                  border: Border.all(
-                                    color: Colors.grey.shade300,
-                                  ),
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: DropdownButtonHideUnderline(
-                                  child: DropdownButton<String>(
-                                    value: _selectedBank.isEmpty
-                                        ? null
-                                        : _selectedBank,
-                                    isExpanded: true,
-                                    icon: const Icon(
-                                      Icons.arrow_drop_down,
-                                      color: Colors.grey,
-                                    ),
-                                    hint: const Text('Bir banka seçin'),
-                                    items: _turkishBanks
-                                        .map(
-                                          (bank) => DropdownMenuItem(
-                                            value: bank,
-                                            child: Text(
-                                              bank,
-                                              style: const TextStyle(
-                                                fontSize: 16,
-                                              ),
-                                            ),
-                                          ),
-                                        )
-                                        .toList(),
-                                    onChanged: (value) => setState(
-                                      () => _selectedBank = value ?? '',
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(height: 10),
-                              GestureDetector(
-                                onTap: () => setState(() {
-                                  _selectedBank = '';
-                                  _nameController.text = 'Banka Hesabı';
-                                }),
-                                child: const Text(
-                                  'Özel isim kullanmak istiyorum',
-                                  style: TextStyle(
-                                    color: Color(0xFF5E5CE6),
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          )
-                        else if (_selectedType == 'overdraft')
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 12,
-                                ),
-                                decoration: BoxDecoration(
-                                  border: Border.all(
-                                    color: Colors.grey.shade300,
-                                  ),
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: DropdownButtonHideUnderline(
-                                  child: DropdownButton<String>(
-                                    value: _selectedOverdraftBank.isEmpty
-                                        ? null
-                                        : _selectedOverdraftBank,
-                                    isExpanded: true,
-                                    icon: const Icon(
-                                      Icons.arrow_drop_down,
-                                      color: Colors.grey,
-                                    ),
-                                    hint: const Text('Bir banka seçin'),
-                                    items: _turkishBanks
-                                        .map(
-                                          (bank) => DropdownMenuItem(
-                                            value: bank,
-                                            child: Text(
-                                              bank,
-                                              style: const TextStyle(
-                                                fontSize: 16,
-                                              ),
-                                            ),
-                                          ),
-                                        )
-                                        .toList(),
-                                    onChanged: (value) => setState(
-                                      () =>
-                                          _selectedOverdraftBank = value ?? '',
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(height: 10),
-                              GestureDetector(
-                                onTap: () => setState(() {
-                                  _selectedOverdraftBank = '';
-                                  _nameController.text = 'KMH Hesabı';
-                                }),
-                                child: const Text(
-                                  'Özel isim kullanmak istiyorum',
-                                  style: TextStyle(
-                                    color: Color(0xFF5E5CE6),
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          )
-                        else
-                          TextFormField(
-                            controller: _nameController,
-                            focusNode: _nameFocusNode,
-                            decoration: InputDecoration(
-                              hintText: 'Örn: Nakit, Ziraat Bankası',
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                                borderSide: BorderSide(
-                                  color: Colors.grey.shade300,
-                                ),
-                              ),
-                              focusedBorder: const OutlineInputBorder(
-                                borderRadius: BorderRadius.all(
-                                  Radius.circular(12),
-                                ),
-                                borderSide: BorderSide(
-                                  color: Color(0xFF5E5CE6),
-                                  width: 2,
-                                ),
-                              ),
-                            ),
-                            validator: (value) {
-                              if (_selectedType == 'bank' &&
-                                  !_showBankOptions) {
-                                if (value == null || value.isEmpty) {
-                                  return 'Lütfen cüzdan adı girin';
-                                }
-                              } else if (_selectedType == 'overdraft' &&
-                                  _selectedOverdraftBank.isEmpty) {
-                                if (value == null || value.isEmpty) {
-                                  return 'Lütfen cüzdan adı girin veya banka seçin';
-                                }
-                              } else if (_selectedType == 'cash') {
-                                if (value == null || value.isEmpty) {
-                                  return 'Lütfen cüzdan adı girin';
-                                }
-                              }
-                              return null;
-                            },
-                          ),
-                        if (_selectedType == 'bank' && !_showBankOptions)
-                          Column(
-                            children: [
-                              const SizedBox(height: 10),
-                              GestureDetector(
-                                onTap: () =>
-                                    setState(() => _showBankOptions = true),
-                                child: const Text(
-                                  'Türk bankalarından seçmek istiyorum',
-                                  style: TextStyle(
-                                    color: Color(0xFF5E5CE6),
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        const SizedBox(height: 24),
-                        Text(
-                          (_selectedType == 'overdraft')
-                              ? 'Mevcut Borç'
-                              : 'Başlangıç Bakiyesi',
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        TextFormField(
-                          controller: _balanceController,
-                          keyboardType: const TextInputType.numberWithOptions(
-                            decimal: true,
-                          ),
-                          inputFormatters: [DecimalInputFormatter()],
-                          decoration: InputDecoration(
-                            prefixText: '₺ ',
-                            hintText: '0',
-                            helperText: (_selectedType == 'overdraft')
-                                ? 'Borcunuzu pozitif girin, otomatik olarak eksiye çevrilecektir.'
-                                : null,
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              borderSide: BorderSide(
-                                color: Colors.grey.shade300,
-                              ),
-                            ),
-                            focusedBorder: const OutlineInputBorder(
-                              borderRadius: BorderRadius.all(
-                                Radius.circular(12),
-                              ),
-                              borderSide: BorderSide(
-                                color: Color(0xFF5E5CE6),
-                                width: 2,
-                              ),
-                            ),
-                          ),
-                          validator: (value) {
-                            if (value != null && value.isNotEmpty) {
-                              String cleanValue = value
-                                  .replaceAll('.', '')
-                                  .replaceAll(',', '.');
-                              if (double.tryParse(cleanValue) == null) {
-                                return 'Geçerli bir sayı girin';
-                              }
-                            }
-                            return null;
-                          },
-                          onTap: () {
-                            if (_balanceController.text == '0') {
-                              _balanceController.clear();
-                            }
-                          },
-                        ),
-
-                        if (_selectedType == 'overdraft') ...[
-                          const SizedBox(height: 24),
-                          const Text(
-                            'Limit',
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 16,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          TextFormField(
-                            controller: _limitController,
-                            keyboardType: const TextInputType.numberWithOptions(
-                              decimal: true,
-                            ),
-                            inputFormatters: [DecimalInputFormatter()],
-                            decoration: InputDecoration(
-                              prefixText: '₺ ',
-                              hintText: '0',
-                              helperText: 'Toplam limitinizi girin',
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                                borderSide: BorderSide(
-                                  color: Colors.grey.shade300,
-                                ),
-                              ),
-                              focusedBorder: const OutlineInputBorder(
-                                borderRadius: BorderRadius.all(
-                                  Radius.circular(12),
-                                ),
-                                borderSide: BorderSide(
-                                  color: Color(0xFF5E5CE6),
-                                  width: 2,
-                                ),
-                              ),
-                            ),
-                            onTap: () {
-                              if (_limitController.text == '0') {
-                                _limitController.clear();
-                              }
-                            },
-                          ),
-                        ],
-                        const SizedBox(height: 24),
-                        const Text(
-                          'Cüzdan Tipi',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16,
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        Row(
-                          children: [
-                            _buildModernTypeButton(
-                              'Nakit',
-                              'cash',
-                              Icons.account_balance_wallet,
-                            ),
-                            const SizedBox(width: 12),
-                            _buildModernTypeButton(
-                              'Banka',
-                              'bank',
-                              Icons.account_balance,
-                            ),
-                            const SizedBox(width: 12),
-                            _buildModernTypeButton(
-                              'KMH Hesabı',
-                              'overdraft',
-                              Icons.account_balance,
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 24),
-                        const Text(
-                          'Renk Seçin',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16,
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        Wrap(
-                          spacing: 12,
-                          runSpacing: 12,
-                          children: _colors.map((color) {
-                            return GestureDetector(
-                              onTap: () =>
-                                  setState(() => _selectedColor = color),
-                              child: Container(
-                                width: 50,
-                                height: 50,
-                                decoration: BoxDecoration(
-                                  color: Color(
-                                    int.parse('0xFF${color.substring(1)}'),
-                                  ),
-                                  shape: BoxShape.circle,
-                                  border: Border.all(
-                                    color: _selectedColor == color
-                                        ? Colors.black
-                                        : Colors.transparent,
-                                    width: 2,
-                                  ),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: Colors.grey.withValues(alpha: 0.2),
-                                      spreadRadius: 1,
-                                      blurRadius: 4,
-                                      offset: const Offset(0, 2),
-                                    ),
-                                  ],
-                                ),
-                                child: _selectedColor == color
-                                    ? const Icon(
-                                        Icons.check,
-                                        color: Colors.white,
-                                        size: 28,
-                                      )
-                                    : null,
-                              ),
-                            );
-                          }).toList(),
-                        ),
-                        const SizedBox(height: 32),
-                        SizedBox(
-                          width: double.infinity,
-                          child: ElevatedButton(
-                            onPressed: _saveWallet,
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFF5E5CE6),
-                              padding: const EdgeInsets.symmetric(vertical: 16),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              elevation: 2,
-                            ),
-                            child: const Text(
-                              'Cüzdan Oluştur',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ],
+      backgroundColor: const Color(0xFFF2F2F7), // iOS Grouped Background
+      appBar: AppBar(
+        title: const Text('Yeni Cüzdan'),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        centerTitle: true,
+        leading: IconButton(
+          icon: const Icon(Icons.close, color: Color(0xFF007AFF)),
+          onPressed: () => Navigator.pop(context),
         ),
-      ),
-    );
-  }
-
-  Widget _buildHeader() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
-      decoration: BoxDecoration(
-        color: Theme.of(context).appBarTheme.backgroundColor,
-        boxShadow: const [
-          BoxShadow(color: Colors.black12, blurRadius: 4, offset: Offset(0, 2)),
-        ],
-      ),
-      child: Row(
-        children: [
-          GestureDetector(
-            onTap: () => Navigator.pop(context),
-            child: const Icon(Icons.arrow_back, color: Color(0xFF5E5CE6)),
-          ),
-          const Expanded(
-            child: Text(
-              'Yeni Cüzdan',
-              textAlign: TextAlign.center,
+        actions: [
+          TextButton(
+            onPressed: _saveWallet,
+            child: const Text(
+              'Ekle',
               style: TextStyle(
-                fontSize: 20,
                 fontWeight: FontWeight.bold,
-                color: Color(0xFF1C1C1E),
+                fontSize: 17,
+                color: Color(0xFF007AFF),
               ),
             ),
           ),
-          const SizedBox(width: 24),
         ],
       ),
-    );
-  }
-
-  Widget _buildModernTypeButton(String label, String type, IconData icon) {
-    bool isSelected = _selectedType == type;
-    return Expanded(
-      child: GestureDetector(
-        onTap: () {
-          setState(() {
-            _selectedType = type;
-            if (type == 'cash') {
-              _nameController.text = 'Nakit';
-              _showBankOptions = false;
-              _selectedBank = '';
-            } else if (type == 'bank') {
-              _nameController.text = 'Banka Hesabı';
-              _showBankOptions = true;
-              _selectedBank = '';
-            } else if (type == 'overdraft') {
-              _nameController.text = 'KMH Hesabı';
-              _selectedOverdraftBank = '';
-            }
-          });
-        },
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 16),
-          decoration: BoxDecoration(
-            color: isSelected ? const Color(0xFF5E5CE6) : Colors.white,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: isSelected
-                  ? const Color(0xFF5E5CE6)
-                  : Colors.grey.shade300,
-              width: 1.5,
-            ),
-          ),
-          child: Column(
+      body: SafeArea(
+        child: Form(
+          key: _formKey,
+          child: ListView(
+            padding: const EdgeInsets.symmetric(vertical: 20),
             children: [
-              Icon(
-                icon,
-                color: isSelected ? Colors.white : const Color(0xFF5E5CE6),
-                size: 24,
-              ),
-              const SizedBox(height: 8),
-              Text(
-                label,
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 14,
-                  color: isSelected ? Colors.white : Colors.grey.shade700,
-                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-                ),
-              ),
+              _buildSectionHeader('TÜR'),
+              _buildTypeSelector(),
+              const SizedBox(height: 24),
+              _buildSectionHeader('KİMLİK'),
+              _buildInfoSection(),
+              const SizedBox(height: 24),
+              _buildSectionHeader('BAKİYE'),
+              _buildBalanceSection(),
+              if (_selectedType == 'overdraft') ...[
+                 const SizedBox(height: 24),
+                _buildSectionHeader('KMH DETAYLARI'), // Limit ve Faiz
+                _buildKmhDetailsSection(),
+              ],
+              const SizedBox(height: 24),
+              _buildSectionHeader('GÖRÜNÜM'),
+              _buildColorPicker(),
+              const SizedBox(height: 40),
             ],
           ),
         ),
@@ -673,12 +256,296 @@ class _AddWalletScreenState extends State<AddWalletScreen> {
     );
   }
 
-  @override
-  void dispose() {
-    _nameController.dispose();
-    _balanceController.dispose();
-    _limitController.dispose();
-    _nameFocusNode.dispose();
-    super.dispose();
+  Widget _buildSectionHeader(String title) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+      child: Text(
+        title,
+        style: TextStyle(
+          fontSize: 13,
+          fontWeight: FontWeight.w500,
+          color: Colors.grey[600],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildInfoSection() {
+    // Banka veya KMH seçili ise banka listesi seçeneği göster
+    bool supportsBankSelection = _selectedType == 'bank' || _selectedType == 'overdraft';
+
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Column(
+        children: [
+          if (supportsBankSelection && _showBankOptions) ...[
+            _buildListTile(
+              child: DropdownButtonHideUnderline(
+                child: DropdownButton<String>(
+                  value: _selectedBank.isEmpty ? null : _selectedBank,
+                  isExpanded: true,
+                  hint: const Text('Banka Seçin'),
+                  items: _turkishBanks.map((bank) => DropdownMenuItem(
+                    value: bank,
+                    child: Text(bank),
+                  )).toList(),
+                  onChanged: (value) => setState(() => _selectedBank = value ?? ''),
+                ),
+              ),
+            ),
+            const Divider(height: 1, indent: 16),
+            GestureDetector(
+              onTap: () => setState(() {
+                _selectedBank = '';
+                _nameController.text = _selectedType == 'overdraft' ? 'KMH Hesabı' : 'Banka Hesabı';
+                _showBankOptions = false;
+              }),
+              child: Container(
+                padding: const EdgeInsets.all(16),
+                width: double.infinity,
+                child: const Text('Özel isim kullanmak istiyorum', style: TextStyle(color: Color(0xFF007AFF))),
+              ),
+            ),
+          ],
+          
+          if (!supportsBankSelection || !_showBankOptions)
+            _buildInputRow(
+              label: 'Cüzdan Adı',
+              controller: _nameController,
+              placeholder: 'Örn: Nakit',
+              validator: (value) => value == null || value.isEmpty ? 'İsim gerekli' : null,
+            ),
+
+           if (supportsBankSelection && !_showBankOptions) ...[
+              const Divider(height: 1, indent: 16),
+              GestureDetector(
+                onTap: () => setState(() => _showBankOptions = true),
+                child: Container(
+                  padding: const EdgeInsets.all(16),
+                  width: double.infinity,
+                  child: const Text('Listeden banka seç', style: TextStyle(color: Color(0xFF007AFF))),
+                ),
+              ),
+           ],
+        ],
+      ),
+    );
+  }
+  
+  Widget _buildBalanceSection() {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: _buildInputRow(
+        label: _selectedType == 'overdraft' ? 'Mevcut Borç' : 'Bakiye',
+        controller: _balanceController,
+        placeholder: '0,00',
+        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+        inputFormatters: [DecimalInputFormatter()],
+        prefix: '₺ ',
+      ),
+    );
+  }
+
+  // Yeni metod: KMH Detayları (Limit ve Faiz)
+  Widget _buildKmhDetailsSection() {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Column(
+        children: [
+          _buildInputRow(
+            label: 'KMH Limiti',
+            controller: _limitController,
+            placeholder: '0,00',
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            inputFormatters: [DecimalInputFormatter()],
+            prefix: '₺ ',
+          ),
+          const Divider(height: 1, indent: 16),
+          _buildInputRow(
+            label: 'Faiz Oranı (Aylık)',
+            controller: _interestRateController,
+            placeholder: '0,00', // Örn: 5.66
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            prefix: '% ',
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInputRow({
+    required String label,
+    required TextEditingController controller,
+    String? placeholder,
+    TextInputType keyboardType = TextInputType.text,
+    List<TextInputFormatter>? inputFormatters,
+    String? Function(String?)? validator,
+    String? prefix,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      child: Row(
+        children: [
+          SizedBox(
+            width: 130, // Biraz daha geniş
+            child: Text(
+              label,
+              style: const TextStyle(fontSize: 16, color: Colors.black),
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: TextFormField(
+              controller: controller,
+              decoration: InputDecoration(
+                hintText: placeholder,
+                border: InputBorder.none,
+                hintStyle: TextStyle(color: Colors.grey[400]),
+                prefixText: prefix,
+              ),
+              textAlign: TextAlign.right,
+              keyboardType: keyboardType,
+              inputFormatters: inputFormatters,
+              validator: validator,
+              style: const TextStyle(fontSize: 16, color: Color(0xFF007AFF)),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildListTile({required Widget child}) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      child: child,
+    );
+  }
+
+  Widget _buildTypeSelector() {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16),
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: const Color(0xFFE5E5EA),
+        borderRadius: BorderRadius.circular(8.91),
+      ),
+      child: Row(
+        children: [
+          _buildTypeSegment('Nakit', 'cash'),
+          _buildTypeSegment('Banka', 'bank'),
+          _buildTypeSegment('KMH', 'overdraft'),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTypeSegment(String title, String type) {
+    final isSelected = _selectedType == type;
+    return Expanded(
+      child: GestureDetector(
+        onTap: () {
+          setState(() {
+            _selectedType = type;
+            _showBankOptions = false; // Tip değişince banka seçimini sıfırla
+            if (type == 'cash') {
+              _nameController.text = 'Nakit';
+            } else if (type == 'bank') {
+              _nameController.text = 'Banka Hesabı';
+              // Banka için varsayılan olarak banka listesini açalım mı? Hayır, kullanıcı seçsin.
+            } else if (type == 'overdraft') {
+              _nameController.text = 'KMH Hesabı';
+              // KMH için de banka listesini açmaya gerek yok
+            }
+          });
+        },
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 6),
+          decoration: BoxDecoration(
+            color: isSelected ? Colors.white : Colors.transparent,
+            borderRadius: BorderRadius.circular(6.93),
+            boxShadow: isSelected
+                ? [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.12),
+                      blurRadius: 8,
+                      offset: const Offset(0, 3),
+                    ),
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.04),
+                      blurRadius: 1,
+                      offset: const Offset(0, 3),
+                    ),
+                  ]
+                : null,
+          ),
+          child: Text(
+            title,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+              color: Colors.black,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildColorPicker() {
+    return SizedBox(
+      height: 60,
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        itemCount: _colors.length,
+        itemBuilder: (context, index) {
+          final colorCode = _colors[index];
+          final color = Color(int.parse('0xFF${colorCode.substring(1)}'));
+          final isSelected = _selectedColor == colorCode;
+
+          return GestureDetector(
+            onTap: () => setState(() => _selectedColor = colorCode),
+            child: Container(
+              width: 44,
+              height: 44,
+              margin: const EdgeInsets.only(right: 12),
+              decoration: BoxDecoration(
+                color: color,
+                shape: BoxShape.circle,
+                border: isSelected
+                    ? Border.all(color: Colors.white, width: 3)
+                    : null,
+                boxShadow: isSelected
+                    ? [
+                        BoxShadow(
+                          color: color.withValues(alpha: 0.5),
+                          blurRadius: 8,
+                          spreadRadius: 2,
+                        )
+                      ]
+                    : null,
+              ),
+              child: isSelected
+                  ? const Icon(Icons.check, color: Colors.white, size: 24)
+                  : null,
+            ),
+          );
+        },
+      ),
+    );
   }
 }

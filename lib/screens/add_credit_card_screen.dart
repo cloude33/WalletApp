@@ -85,6 +85,16 @@ class _AddCreditCardScreenState extends State<AddCreditCardScreen> {
     Colors.indigo,
     Colors.amber,
     Colors.cyan,
+    Colors.deepOrange,
+    Colors.brown,
+    Colors.blueGrey,
+    Colors.deepPurpleAccent,
+    Colors.amberAccent,
+    Colors.lime,
+    Colors.lightBlue,
+    Colors.lightGreen,
+    Colors.yellow.shade700,
+    Colors.grey.shade800,
   ];
 
   @override
