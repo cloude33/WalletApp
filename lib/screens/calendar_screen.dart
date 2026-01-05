@@ -243,16 +243,17 @@ class _CalendarScreenState extends State<CalendarScreen> {
     final dayExpense = _getDayExpense(_selectedDate);
 
     return Container(
-      color: Theme.of(context).scaffoldBackgroundColor,
+      color: Theme.of(context).brightness == Brightness.dark
+          ? Theme.of(context).scaffoldBackgroundColor
+          : const Color(0xFFFCF8F8),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
             padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: const Color(0xFF5E5CE6).withValues(alpha: 0.1),
+            decoration: const BoxDecoration(
               border: Border(
-                bottom: BorderSide(color: const Color(0xFFE5E5EA)),
+                bottom: BorderSide(color: Color(0xFFE5E5EA)),
               ),
             ),
             child: Column(
@@ -394,7 +395,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
 
   Widget _buildTransactionItem(Transaction transaction) {
     final category = _categories.firstWhere(
-      (c) => c.name == transaction.category,
+      (c) => c.name.toLowerCase() == transaction.category.toLowerCase(),
       orElse: () =>
           _categories.isNotEmpty ? _categories.first : defaultCategories.first,
     );
@@ -467,6 +468,27 @@ class _CalendarScreenState extends State<CalendarScreen> {
     final color = const Color(0xFFFF3B30);
     final isInstallment = transaction.installmentCount > 1;
 
+    // Try to find the category in the loaded categories list
+    Category? category;
+    try {
+      category = _categories.firstWhere(
+        (c) => c.name.toLowerCase() == transaction.category.toLowerCase(),
+      );
+    } catch (_) {
+      // Category not found
+    }
+
+    Color categoryColor;
+    IconData iconData;
+    
+    if (category != null) {
+        categoryColor = category.color;
+        iconData = category.icon;
+    } else {
+        categoryColor = card?.color ?? Colors.blue;
+        iconData = Icons.credit_card;
+    }
+
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.all(12),
@@ -482,12 +504,12 @@ class _CalendarScreenState extends State<CalendarScreen> {
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: (card?.color ?? Colors.blue).withValues(alpha: 0.1),
+              color: categoryColor.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Icon(
-              Icons.credit_card,
-              color: card?.color ?? Colors.blue,
+              iconData,
+              color: categoryColor,
               size: 20,
             ),
           ),

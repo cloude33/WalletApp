@@ -12,7 +12,10 @@ import 'package:parion/models/wallet.dart';
 import '../../test_setup.dart';
 import '../../test_helpers.dart';
 
+
+
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
   setupCommonTestMocks();
 
   group('Enhanced Backup System Integration Tests', () {

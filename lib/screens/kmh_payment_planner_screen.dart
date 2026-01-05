@@ -32,7 +32,7 @@ class _KmhPaymentPlannerScreenState extends State<KmhPaymentPlannerScreen> {
   bool _isCalculating = false;
   double _currentDebt = 0;
   double _monthlyInterest = 0;
-  double _annualRate = 24.0;
+  double _monthlyRate = 5.0;
   List<PaymentScenario> _scenarios = [];
   PaymentScenario? _customScenario;
   PaymentScenario? _selectedScenario;
@@ -56,10 +56,10 @@ class _KmhPaymentPlannerScreenState extends State<KmhPaymentPlannerScreen> {
 
     try {
       _currentDebt = widget.account.usedCredit;
-      _annualRate = widget.account.interestRate ?? 24.0;
+      _monthlyRate = widget.account.interestRate ?? 5.0;
       _monthlyInterest = _calculator.estimateMonthlyInterest(
         balance: -_currentDebt,
-        annualRate: _annualRate,
+        monthlyRate: _monthlyRate,
         days: 30,
       );
       _scenarios = _plannerService.generatePaymentScenarios(
@@ -311,7 +311,7 @@ class _KmhPaymentPlannerScreenState extends State<KmhPaymentPlannerScreen> {
               style: TextStyle(fontSize: 14, color: Colors.grey[600]),
             ),
             Text(
-              'Yıllık Faiz Oranı: %${_annualRate.toStringAsFixed(2)}',
+              'Aylık Faiz Oranı: %${_monthlyRate.toStringAsFixed(2)}',
               style: TextStyle(fontSize: 14, color: Colors.grey[600]),
             ),
           ],

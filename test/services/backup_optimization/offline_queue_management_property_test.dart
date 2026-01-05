@@ -408,13 +408,16 @@ class MockGoogleDriveService implements GoogleDriveService {
   Future<void> signOut() async {}
 
   @override
+  void setTestMode(bool value) {}
+
+  @override
   Future<List<drive.File>> listBackups() async => [];
 
   @override
   Future<File?> downloadBackup(String fileId, String localPath) async => null;
 
   @override
-  Future<bool> deleteBackup(String fileId) async => true;
+  Future<void> deleteBackup(String fileId) async {}
 }
 
 /// Mock Network Monitor for testing

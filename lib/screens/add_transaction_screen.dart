@@ -342,6 +342,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
     }
 
     return Scaffold(
+      backgroundColor: Colors.white,
       body: SafeArea(
         child: Column(
           children: [
@@ -349,7 +350,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
             Expanded(
               child: SingleChildScrollView(
                 child: Padding(
-                  padding: const EdgeInsets.all(20),
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -378,80 +379,46 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
 
   Widget _buildHeader() {
     return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Theme.of(context).cardColor,
-        borderRadius: const BorderRadius.only(
-          bottomLeft: Radius.circular(30),
-          bottomRight: Radius.circular(30),
-        ),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        border: Border(bottom: BorderSide(color: Color(0xFFEEEEEE), width: 1)),
       ),
-      child: Column(
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              IconButton(
-                icon: FaIcon(FontAwesomeIcons.arrowLeft, color: Colors.black, size: 20),
-                onPressed: () => Navigator.pop(context),
-              ),
-              Text(
-                _isIncome ? 'Gelir' : 'Gider',
-                style: const TextStyle(
-                  color: Colors.black,
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              TextButton(
-                onPressed: _saveTransaction,
-                child: const Text(
-                  'KAYDET',
-                  style: TextStyle(
-                    color: Color(0xFF5E5CE6),
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-            ],
+          IconButton(
+            icon: const FaIcon(FontAwesomeIcons.arrowLeft, color: Colors.black, size: 20),
+            onPressed: () => Navigator.pop(context),
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(),
+            style: IconButton.styleFrom(tapTargetSize: MaterialTapTargetSize.shrinkWrap),
           ),
-          const SizedBox(height: 10),
-          Row(
-            children: [
-              _buildTypeButton('Gelir', true),
-              _buildTypeButton('Gider', false),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildTypeButton(String label, bool isIncome) {
-    bool isSelected = _isIncome == isIncome;
-    return Expanded(
-      child: GestureDetector(
-        onTap: () {
-          setState(() {
-            _isIncome = isIncome;
-          });
-        },
-        child: Container(
-          margin: const EdgeInsets.symmetric(horizontal: 5),
-          padding: const EdgeInsets.symmetric(vertical: 12),
-          decoration: BoxDecoration(
-            color: isSelected ? Colors.red : Colors.transparent,
-            borderRadius: BorderRadius.circular(10),
-          ),
-          child: Text(
-            label,
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              color: isSelected ? Colors.white : Colors.grey,
-              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+          Text(
+            _isIncome ? 'Gelir' : 'Gider',
+            style: const TextStyle(
+              color: Colors.black,
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
             ),
           ),
-        ),
+          TextButton(
+            onPressed: _saveTransaction,
+            style: TextButton.styleFrom(
+              padding: EdgeInsets.zero,
+              minimumSize: Size.zero,
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            ),
+            child: const Text(
+              'KAYDET',
+              style: TextStyle(
+                color: Color(0xFF5E5CE6),
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -467,7 +434,11 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
           keyboardType: TextInputType.numberWithOptions(decimal: true),
           decoration: InputDecoration(
             hintText: '0,00',
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+            border: OutlineInputBorder(borderRadius: BorderRadius.zero),
+            enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.zero, borderSide: BorderSide(color: Colors.grey.shade300)),
+            focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.zero, borderSide: BorderSide(color: Color(0xFF5E5CE6))),
+            filled: true,
+            fillColor: Colors.white,
           ),
           onChanged: (value) {
             if (value.isEmpty) return;
@@ -574,7 +545,11 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
           onChanged: _onDescriptionChanged,
           decoration: InputDecoration(
             hintText: 'Örn: Market alışverişi',
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+            border: OutlineInputBorder(borderRadius: BorderRadius.zero),
+            enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.zero, borderSide: BorderSide(color: Colors.grey.shade300)),
+            focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.zero, borderSide: BorderSide(color: Color(0xFF5E5CE6))),
+            filled: true,
+            fillColor: Colors.white,
             suffixIcon: _suggestion != null
                 ? IconButton(
                     icon: FaIcon(FontAwesomeIcons.lightbulb, color: Colors.amber, size: 16),
@@ -659,7 +634,8 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
           padding: const EdgeInsets.symmetric(horizontal: 12),
           decoration: BoxDecoration(
             border: Border.all(color: Colors.grey.shade300),
-            borderRadius: BorderRadius.circular(10),
+            borderRadius: BorderRadius.zero,
+            color: Colors.white,
           ),
           child: DropdownButtonHideUnderline(
             child: DropdownButton<String>(
@@ -730,7 +706,11 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
         DropdownButtonFormField<String>(
           initialValue: _selectedWalletId,
           decoration: InputDecoration(
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+            border: OutlineInputBorder(borderRadius: BorderRadius.zero),
+            enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.zero, borderSide: BorderSide(color: Colors.grey.shade300)),
+            focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.zero, borderSide: BorderSide(color: Color(0xFF5E5CE6))),
+            filled: true,
+            fillColor: Colors.white,
           ),
           items: widget.wallets
               .map(
@@ -780,12 +760,10 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                 color: Theme.of(context).brightness == Brightness.dark
                     ? Colors.grey.shade800
                     : Colors.grey.shade100,
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.zero,
                 border: Border.all(
-                  color: Theme.of(context).brightness == Brightness.dark
-                      ? Colors.grey.shade700
-                      : Colors.grey.shade300,
-                  width: 2,
+                  color: Colors.grey.shade300,
+                  width: 1,
                   style: BorderStyle.solid,
                 ),
               ),
@@ -858,7 +836,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
       child: Stack(
         children: [
           ClipRRect(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.zero,
             child: Image.memory(
               base64Decode(imagePath),
               width: 120,
@@ -1024,7 +1002,8 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             decoration: BoxDecoration(
               border: Border.all(color: Colors.grey.shade300),
-              borderRadius: BorderRadius.circular(10),
+              borderRadius: BorderRadius.zero,
+              color: Colors.white,
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,

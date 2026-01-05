@@ -9,6 +9,13 @@ class GoogleDriveService {
   factory GoogleDriveService() => _instance;
   GoogleDriveService._internal();
 
+  bool _isTestMode = false;
+  
+  @visibleForTesting
+  void setTestMode(bool value) {
+    _isTestMode = value;
+  }
+
   final GoogleSignIn _googleSignIn = GoogleSignIn(
     scopes: [drive.DriveApi.driveAppdataScope],
   );
@@ -16,10 +23,12 @@ class GoogleDriveService {
   drive.DriveApi? _driveApi;
 
   Future<bool> isAuthenticated() async {
+    if (_isTestMode) return true;
     return await _googleSignIn.isSignedIn();
   }
 
   Future<void> signIn() async {
+    if (_isTestMode) return;
     try {
       _driveApi = null;
 
@@ -86,6 +95,11 @@ class GoogleDriveService {
     String? description,
     Map<String, String>? properties,
   }) async {
+    if (_isTestMode) {
+      return drive.File()
+        ..id = 'test_file_id'
+        ..name = fileName;
+    }
     if (_driveApi == null) await signIn();
     if (_driveApi == null) throw Exception('Google Drive API not initialized');
 
@@ -115,6 +129,7 @@ class GoogleDriveService {
   }
 
   Future<List<drive.File>> listBackups() async {
+    if (_isTestMode) return [];
     if (_driveApi == null) await signIn();
     if (_driveApi == null) throw Exception('Google Drive API not initialized');
 
@@ -134,6 +149,11 @@ class GoogleDriveService {
   }
 
   Future<File?> downloadBackup(String fileId, String savePath) async {
+    if (_isTestMode) {
+       final file = File(savePath);
+       await file.writeAsString('test backup content');
+       return file;
+    }
     if (_driveApi == null) await signIn();
     if (_driveApi == null) throw Exception('Google Drive API not initialized');
 
@@ -159,6 +179,7 @@ class GoogleDriveService {
   }
 
   Future<void> deleteBackup(String fileId) async {
+    if (_isTestMode) return;
     if (_driveApi == null) await signIn();
     if (_driveApi == null) throw Exception('Google Drive API not initialized');
 

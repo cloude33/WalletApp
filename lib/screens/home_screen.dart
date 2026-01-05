@@ -2,6 +2,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' hide Category;
+import 'package:intl/intl.dart';
 import 'dart:convert';
 import 'dart:async';
 
@@ -23,6 +24,7 @@ import 'manage_goals_screen.dart';
 import 'calendar_screen.dart';
 import 'statistics_screen.dart';
 import 'settings_screen.dart';
+import '../l10n/app_localizations.dart';
 import 'add_bill_screen.dart';
 import '../services/credit_card_service.dart';
 import '../services/transaction_filter_service.dart';
@@ -35,7 +37,10 @@ import 'kmh_list_screen.dart';
 import '../services/kmh_alert_service.dart';
 import '../models/kmh_alert.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:lucide_icons/lucide_icons.dart';
+
+import '../widgets/custom_bottom_nav_bar.dart';
+import '../widgets/inactivity_monitor_widget.dart';
+import '../widgets/simple_auth_debug_widget.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -254,6 +259,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           }
         },
         child: Scaffold(
+          backgroundColor: const Color(0xFFFCF8F8),
           appBar: _selectedIndex == 0
               ? AppBar(
                   automaticallyImplyLeading: false,
@@ -318,136 +324,15 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                   creditCardTransactions: _creditCardTransactions,
                 )
               : const SettingsScreen(),
-          bottomNavigationBar: Container(
-            decoration: BoxDecoration(
-              color: Theme.of(context).bottomNavigationBarTheme.backgroundColor,
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.05),
-                  blurRadius: 10,
-                  offset: const Offset(0, -5),
-                ),
-              ],
-            ),
-            child: SafeArea(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 8),
-                child: BottomNavigationBar(
-                  currentIndex: _selectedIndex,
-                  onTap: (index) => setState(() => _selectedIndex = index),
-                  type: BottomNavigationBarType.fixed,
-                  backgroundColor: Colors.transparent,
-                  selectedItemColor: const Color(0xFF00BFA5),
-                  unselectedItemColor: const Color(0xFF8E8E93),
-                  selectedFontSize: 11,
-                  unselectedFontSize: 11,
-                  selectedLabelStyle: const TextStyle(
-                    fontWeight: FontWeight.w600,
-                  ),
-                  elevation: 0,
-                  items: [
-                    BottomNavigationBarItem(
-                      icon: Icon(
-                        LucideIcons.home,
-                        size: 20,
-                        color: const Color(0xFF8E8E93),
-                      ),
-                      activeIcon: Container(
-                        padding: const EdgeInsets.all(4),
-                        decoration: BoxDecoration(
-                          gradient: const LinearGradient(
-                            colors: [Color(0xFF10B981), Color(0xFF059669)],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                          ),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Icon(
-                          LucideIcons.home,
-                          size: 16,
-                          color: Colors.white,
-                        ),
-                      ),
-                      label: 'Ana Sayfa',
-                    ),
-                    BottomNavigationBarItem(
-                      icon: Icon(
-                        LucideIcons.creditCard,
-                        size: 20,
-                        color: const Color(0xFF8E8E93),
-                      ),
-                      activeIcon: Container(
-                        padding: const EdgeInsets.all(4),
-                        decoration: BoxDecoration(
-                          gradient: const LinearGradient(
-                            colors: [Color(0xFF6366F1), Color(0xFF8B5CF6)],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                          ),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Icon(
-                          LucideIcons.creditCard,
-                          size: 16,
-                          color: Colors.white,
-                        ),
-                      ),
-                      label: 'Kredi Kartları',
-                    ),
-                    BottomNavigationBarItem(
-                      icon: Icon(
-                        LucideIcons.pieChart,
-                        size: 20,
-                        color: const Color(0xFF8E8E93),
-                      ),
-                      activeIcon: Container(
-                        padding: const EdgeInsets.all(4),
-                        decoration: BoxDecoration(
-                          gradient: const LinearGradient(
-                            colors: [Color(0xFFF59E0B), Color(0xFFD97706)],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                          ),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Icon(
-                          LucideIcons.pieChart,
-                          size: 16,
-                          color: Colors.white,
-                        ),
-                      ),
-                      label: 'İstatistik',
-                    ),
-                    BottomNavigationBarItem(
-                      icon: Icon(
-                        LucideIcons.settings,
-                        size: 20,
-                        color: const Color(0xFF8E8E93),
-                      ),
-                      activeIcon: Container(
-                        padding: const EdgeInsets.all(4),
-                        decoration: BoxDecoration(
-                          gradient: const LinearGradient(
-                            colors: [Color(0xFF6B7280), Color(0xFF4B5563)],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                          ),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Icon(
-                          LucideIcons.settings,
-                          size: 16,
-                          color: Colors.white,
-                        ),
-                      ),
-                      label: 'Ayarlar',
-                    ),
-                  ],
-                ),
-              ),
-            ),
+          bottomNavigationBar: CustomBottomNavBar(
+            currentIndex: _selectedIndex,
+            onTap: (index) => setState(() {
+              _selectedIndex = index;
+              _showFabMenu = false;
+            }),
           ),
           floatingActionButton: _selectedIndex == 0 ? _buildFabMenu() : null,
+          floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
         ),
       ),
     );
@@ -515,6 +400,11 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const SizedBox(height: 10),
+              // Debug mode'da auth debug widgets göster
+              if (kDebugMode) ...[
+                const SimpleAuthDebugWidget(),
+                const InactivityMonitorWidget(),
+              ],
               const SizedBox(height: 20),
               _buildSummaryCard(),
               const SizedBox(height: 20),
@@ -587,7 +477,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'İşlemler',
+                AppLocalizations.of(context)!.transactions,
                 style: TextStyle(
                   fontSize: 22,
                   fontWeight: FontWeight.bold,
@@ -638,18 +528,45 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           ],
           const SizedBox(height: 12),
           ...groupedTransactions.entries.map((entry) {
+            double dailyExpenseTotal = 0;
+            for (var item in entry.value) {
+              if (item['type'] == 'normal') {
+                final t = item['data'] as Transaction;
+                if (t.type == 'expense') {
+                  dailyExpenseTotal += t.amount;
+                }
+              } else if (item['type'] == 'credit_card') {
+                final t = item['data'] as CreditCardTransaction;
+                dailyExpenseTotal += t.amount;
+              }
+            }
+
             return Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Padding(
                   padding: const EdgeInsets.only(top: 16, bottom: 8),
-                  child: Text(
-                    _getDateHeader(entry.key),
-                    style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: Color(0xFF8E8E93),
-                    ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        _getDateHeader(entry.key),
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.black,
+                        ),
+                      ),
+                      if (dailyExpenseTotal > 0)
+                        Text(
+                          CurrencyHelper.formatAmount(dailyExpenseTotal, _currentUser),
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF1C1C1E),
+                          ),
+                        ),
+                    ],
                   ),
                 ),
                 ...entry.value.map((item) {
@@ -686,25 +603,11 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     final yesterday = today.subtract(const Duration(days: 1));
 
     if (date == today) {
-      return 'Bugün';
+      return AppLocalizations.of(context)!.today;
     } else if (date == yesterday) {
-      return 'Dün';
+      return AppLocalizations.of(context)!.yesterday;
     } else {
-      final months = [
-        'Ocak',
-        'Şubat',
-        'Mart',
-        'Nisan',
-        'Mayıs',
-        'Haziran',
-        'Temmuz',
-        'Ağustos',
-        'Eylül',
-        'Ekim',
-        'Kasım',
-        'Aralık',
-      ];
-      return '${date.day} ${months[date.month - 1]} ${date.year}';
+      return DateFormat('d MMMM y', Localizations.localeOf(context).toString()).format(date);
     }
   }
 
@@ -729,18 +632,34 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         ? const Color(0xFF34C759)
         : const Color(0xFFFF3B30);
 
-    Color categoryColor = AppIcons.getCategoryColor(transaction.category);
+    // Try to find the category in the loaded categories list
+    Category? category;
+    try {
+      category = _categories.firstWhere(
+        (c) => c.name.toLowerCase() == transaction.category.toLowerCase(),
+      );
+    } catch (_) {
+      // Category not found
+    }
+
+    Color categoryColor;
     Widget iconWidget;
 
-    if (categoryColor == Colors.grey) {
-      categoryColor = incomeExpenseColor;
-      iconWidget = AppIcons.getCategoryIcon(
-        transaction.category,
-        size: 24,
-        color: categoryColor,
-      );
+    if (category != null) {
+      categoryColor = category.color;
+      iconWidget = Icon(category.icon, size: 24, color: categoryColor);
     } else {
-      iconWidget = AppIcons.getCategoryIcon(transaction.category, size: 24);
+      categoryColor = AppIcons.getCategoryColor(transaction.category);
+      if (categoryColor == Colors.grey) {
+        categoryColor = incomeExpenseColor;
+        iconWidget = AppIcons.getCategoryIcon(
+          transaction.category,
+          size: 24,
+          color: categoryColor,
+        );
+      } else {
+        iconWidget = AppIcons.getCategoryIcon(transaction.category, size: 24);
+      }
     }
 
     return GestureDetector(
@@ -763,136 +682,135 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         }
       },
       child: Container(
-        margin: const EdgeInsets.only(bottom: 12),
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: Theme.of(context).cardColor,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: incomeExpenseColor.withValues(alpha: 0.25),
-            width: 1.5,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.04),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
-          ],
+        margin: EdgeInsets.zero,
+        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 12),
+        decoration: const BoxDecoration(
+          color: Colors.transparent,
         ),
-        child: Row(
+        child: Column(
           children: [
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: categoryColor.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: iconWidget,
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    transaction.description,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: Color(0xFF1C1C1E),
-                    ),
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: categoryColor.withValues(alpha: 0.1),
+                    shape: BoxShape.circle,
                   ),
-                  const SizedBox(height: 4),
-                  Row(
+                  child: iconWidget,
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Flexible(
-                        child: Text(
-                          wallet.name,
-                          style: const TextStyle(
-                            fontSize: 13,
-                            color: Color(0xFF8E8E93),
-                          ),
-                          overflow: TextOverflow.ellipsis,
+                      Text(
+                        transaction.description,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: Color(0xFF1C1C1E),
                         ),
                       ),
-                      if (transaction.installments != null) ...[
-                        const Text(
-                          ' • ',
-                          style: TextStyle(color: Color(0xFF8E8E93)),
-                        ),
-                        Text(
-                          '${transaction.currentInstallment}/${transaction.installments} Taksit',
-                          style: const TextStyle(
-                            fontSize: 13,
-                            color: Color(0xFF8E8E93),
+                      const SizedBox(height: 4),
+                      Row(
+                        children: [
+                          Flexible(
+                            child: Text(
+                              wallet.name,
+                              style: const TextStyle(
+                                fontSize: 13,
+                                color: Color(0xFF212121), // Siyaha yakın çok koyu gri
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
                           ),
-                        ),
-                      ],
+                          if (transaction.installments != null) ...[
+                            const Text(
+                              ' • ',
+                              style: TextStyle(color: Color(0xFF212121)),
+                            ),
+                            Text(
+                              '${transaction.currentInstallment}/${transaction.installments} Taksit',
+                              style: const TextStyle(
+                                fontSize: 13,
+                                color: Color(0xFF212121),
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
                     ],
                   ),
-                ],
-              ),
-            ),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Text(
-                  '${isIncome ? '+' : '-'}${CurrencyHelper.formatAmount(transaction.amount, _currentUser)}',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: incomeExpenseColor,
-                  ),
                 ),
-                if (transaction.images != null &&
-                    transaction.images!.isNotEmpty) ...[
-                  const SizedBox(height: 8),
-                  GestureDetector(
-                    onTap: () {
-                      _showImagePreview(context, transaction.images!);
-                    },
-                    child: Container(
-                      width: 40,
-                      height: 40,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: Colors.grey.shade300),
-                        image: DecorationImage(
-                          image: MemoryImage(
-                            base64Decode(transaction.images!.first),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text(
+                      '${isIncome ? '+' : '-'}${CurrencyHelper.formatAmount(transaction.amount, _currentUser)}',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: incomeExpenseColor,
+                      ),
+                    ),
+                    if (transaction.images != null &&
+                        transaction.images!.isNotEmpty) ...[
+                      const SizedBox(height: 8),
+                      GestureDetector(
+                        onTap: () {
+                          _showImagePreview(context, transaction.images!);
+                        },
+                        child: Container(
+                          width: 40,
+                          height: 40,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: Colors.grey.shade300),
+                            image: DecorationImage(
+                              image: MemoryImage(
+                                base64Decode(transaction.images!.first),
+                              ),
+                              fit: BoxFit.cover,
+                            ),
                           ),
-                          fit: BoxFit.cover,
+                          child: transaction.images!.length > 1
+                              ? Container(
+                                  alignment: Alignment.bottomRight,
+                                  padding: const EdgeInsets.all(2),
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 4,
+                                      vertical: 2,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: Colors.black
+                                          .withValues(alpha: 0.7),
+                                      borderRadius: BorderRadius.circular(4),
+                                    ),
+                                    child: Text(
+                                      '+${transaction.images!.length - 1}',
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                                )
+                              : null,
                         ),
                       ),
-                      child: transaction.images!.length > 1
-                          ? Container(
-                              alignment: Alignment.bottomRight,
-                              padding: const EdgeInsets.all(2),
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 4,
-                                  vertical: 2,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: Colors.black.withValues(alpha: 0.7),
-                                  borderRadius: BorderRadius.circular(4),
-                                ),
-                                child: Text(
-                                  '+${transaction.images!.length - 1}',
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ),
-                            )
-                          : null,
-                    ),
-                  ),
-                ],
+                    ],
+                  ],
+                ),
               ],
+            ),
+            const SizedBox(height: 12),
+            Divider(
+              height: 1,
+              indent: 64, // Ikon genişliği + boşluk kadar içeriden başla
+              color: Colors.grey.withValues(alpha: 0.5), // Daha koyu çizgi
             ),
           ],
         ),
@@ -904,6 +822,30 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     final card = _creditCards[transaction.cardId];
     final color = const Color(0xFFFF3B30);
     final isInstallment = transaction.installmentCount > 1;
+
+    // Try to find the category in the loaded categories list
+    Category? category;
+    try {
+      category = _categories.firstWhere(
+        (c) => c.name.toLowerCase() == transaction.category.toLowerCase(),
+      );
+    } catch (_) {
+      // Category not found
+    }
+
+    Color categoryColor;
+    Widget iconWidget;
+
+    if (category != null) {
+      categoryColor = category.color;
+      iconWidget = Icon(category.icon, size: 24, color: categoryColor);
+    } else {
+      categoryColor = AppIcons.getCategoryColor(transaction.category);
+      if (categoryColor == Colors.grey) {
+         categoryColor = card?.color ?? Colors.blue;
+      }
+      iconWidget = AppIcons.getCategoryIcon(transaction.category, size: 24, color: categoryColor);
+    }
 
     return GestureDetector(
       onTap: () async {
@@ -923,159 +865,149 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         }
       },
       child: Container(
-        margin: const EdgeInsets.only(bottom: 12),
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: Theme.of(context).cardColor,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: card?.color ?? Colors.blue, width: 1.5),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.05),
-              blurRadius: 10,
-              offset: const Offset(0, 2),
-            ),
-          ],
+        margin: EdgeInsets.zero,
+        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 12),
+        decoration: const BoxDecoration(
+          color: Colors.transparent,
         ),
-        child: Row(
+        child: Column(
           children: [
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: (card?.color ?? Colors.blue).withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: FaIcon(
-                AppIcons.creditCard,
-                color: card?.color ?? Colors.blue,
-                size: 24,
-              ),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    transaction.description,
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: Theme.of(context).textTheme.bodyLarge?.color,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Row(
-                    children: [
-                      if (card != null) ...[
-                        Flexible(
-                          child: Text(
-                            '${card.bankName} •••• ${card.last4Digits}',
-                            style: TextStyle(
-                              fontSize: 13,
-                              color: Theme.of(
-                                context,
-                              ).textTheme.bodySmall?.color,
-                            ),
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                        if (isInstallment) ...[
-                          Text(
-                            ' • ',
-                            style: TextStyle(
-                              color: Theme.of(
-                                context,
-                              ).textTheme.bodySmall?.color,
-                            ),
-                          ),
-                          Text(
-                            '${transaction.installmentsPaid}/${transaction.installmentCount} Taksit',
-                            style: TextStyle(
-                              fontSize: 13,
-                              color: Theme.of(
-                                context,
-                              ).textTheme.bodySmall?.color,
-                            ),
-                          ),
-                        ],
-                      ] else ...[
-                        Flexible(
-                          child: Text(
-                            transaction.category,
-                            style: TextStyle(
-                              fontSize: 13,
-                              color: Theme.of(
-                                context,
-                              ).textTheme.bodySmall?.color,
-                            ),
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                      ],
-                    ],
-                  ),
-                ],
-              ),
-            ),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
+            Row(
               children: [
-                Text(
-                  '-${CurrencyHelper.formatAmount(transaction.amount, _currentUser)}',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: color,
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: categoryColor.withValues(alpha: 0.1),
+                    shape: BoxShape.circle,
                   ),
+                  child: iconWidget,
                 ),
-                if (transaction.images.isNotEmpty) ...[
-                  const SizedBox(height: 8),
-                  GestureDetector(
-                    onTap: () {
-                      _showImagePreview(context, transaction.images);
-                    },
-                    child: Container(
-                      width: 40,
-                      height: 40,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: Colors.grey.shade300),
-                        image: DecorationImage(
-                          image: MemoryImage(
-                            base64Decode(transaction.images.first),
-                          ),
-                          fit: BoxFit.cover,
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        transaction.description,
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: Theme.of(context).textTheme.bodyLarge?.color,
                         ),
                       ),
-                      child: transaction.images.length > 1
-                          ? Container(
-                              alignment: Alignment.bottomRight,
-                              padding: const EdgeInsets.all(2),
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 4,
-                                  vertical: 2,
+                      const SizedBox(height: 4),
+                      Row(
+                        children: [
+                          if (card != null) ...[
+                            Flexible(
+                              child: Text(
+                                '${card.bankName} •••• ${card.last4Digits}',
+                                style: const TextStyle(
+                                  fontSize: 13,
+                                  color: Color(0xFF212121), // Siyaha yakın çok koyu gri
                                 ),
-                                decoration: BoxDecoration(
-                                  color: Colors.black.withValues(alpha: 0.7),
-                                  borderRadius: BorderRadius.circular(4),
-                                ),
-                                child: Text(
-                                  '+${transaction.images.length - 1}',
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.bold,
-                                  ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            if (isInstallment) ...[
+                              const Text(
+                                ' • ',
+                                style: TextStyle(
+                                  color: Color(0xFF212121),
                                 ),
                               ),
-                            )
-                          : null,
-                    ),
+                              Text(
+                                '${transaction.installmentsPaid}/${transaction.installmentCount} Taksit',
+                                style: const TextStyle(
+                                  fontSize: 13,
+                                  color: Color(0xFF212121),
+                                ),
+                              ),
+                            ],
+                          ] else ...[
+                            Flexible(
+                              child: Text(
+                                transaction.category,
+                                style: const TextStyle(
+                                  fontSize: 13,
+                                  color: Color(0xFF212121),
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ],
                   ),
-                ],
+                ),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text(
+                      '-${CurrencyHelper.formatAmount(transaction.amount, _currentUser)}',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: color,
+                      ),
+                    ),
+                    if (transaction.images.isNotEmpty) ...[
+                      const SizedBox(height: 8),
+                      GestureDetector(
+                        onTap: () {
+                          _showImagePreview(context, transaction.images);
+                        },
+                        child: Container(
+                          width: 40,
+                          height: 40,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: Colors.grey.shade300),
+                            image: DecorationImage(
+                              image: MemoryImage(
+                                base64Decode(transaction.images.first),
+                              ),
+                              fit: BoxFit.cover,
+                            ),
+                          ),
+                          child: transaction.images.length > 1
+                              ? Container(
+                                  alignment: Alignment.bottomRight,
+                                  padding: const EdgeInsets.all(2),
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 4,
+                                      vertical: 2,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: Colors.black
+                                          .withValues(alpha: 0.7),
+                                      borderRadius: BorderRadius.circular(4),
+                                    ),
+                                    child: Text(
+                                      '+${transaction.images.length - 1}',
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                                )
+                              : null,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
               ],
+            ),
+            const SizedBox(height: 12),
+            Divider(
+              height: 1,
+              indent: 64, // Ikon genişliği + boşluk kadar içeriden başla
+              color: Colors.grey.withValues(alpha: 0.5), // Daha koyu çizgi
             ),
           ],
         ),
@@ -1171,7 +1103,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                 decoration: BoxDecoration(
                   color: _currentPage == index
                       ? const Color(0xFF00BFA5)
-                      : const Color(0xFF00BFA5).withValues(alpha: 0.3),
+                      : Color(0xFF00BFA5).withValues(alpha: 0.3),
                   borderRadius: BorderRadius.circular(4),
                 ),
               ),
@@ -1193,6 +1125,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       decoration: BoxDecoration(
         color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: Colors.grey.withValues(alpha: 0.15), width: 1.5),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.05),
@@ -1211,16 +1144,14 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                   top: Radius.circular(24),
                 ),
                 color: netBalance >= 0
-                    ? const Color(0xFF34C759).withValues(alpha: 0.1)
-                    : const Color(0xFFFF3B30).withValues(alpha: 0.1),
+                    ? const Color(0xFF2E7D32) // Dark Green
+                    : const Color(0xFFC62828), // Dark Red
               ),
               child: Row(
                 children: [
                   FaIcon(
                     AppIcons.income,
-                    color: netBalance >= 0
-                        ? const Color(0xFF34C759)
-                        : const Color(0xFFFF3B30),
+                    color: Colors.white,
                     size: 24,
                   ),
                   const SizedBox(width: 12),
@@ -1231,9 +1162,9 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                       children: [
                         Text(
                           '$monthName $year ${netBalance >= 0 ? 'Net Kazanç' : 'Net Kayıp'}',
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 13,
-                            color: Color(0xFF8E8E93),
+                            color: Colors.white.withValues(alpha: 0.9),
                             fontWeight: FontWeight.w500,
                           ),
                         ),
@@ -1243,12 +1174,10 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                             netBalance.abs(),
                             _currentUser,
                           ),
-                          style: TextStyle(
+                          style: const TextStyle(
                             fontSize: 20,
                             fontWeight: FontWeight.bold,
-                            color: netBalance >= 0
-                                ? const Color(0xFF34C759)
-                                : const Color(0xFFFF3B30),
+                            color: Colors.white,
                           ),
                         ),
                       ],
@@ -1267,14 +1196,14 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                   'Gelir',
                   monthlyIncome,
                   AppIcons.income,
-                  const Color(0xFF34C759),
+                  const Color(0xFF29CC2F),
                 ),
                 Container(width: 1, height: 40, color: const Color(0xFFE5E5EA)),
                 _buildDetailedStat(
                   'Gider',
                   monthlyExpense,
                   AppIcons.expense,
-                  const Color(0xFFFF3B30),
+                  const Color(0xFFEB372A),
                 ),
               ],
             ),
@@ -1294,6 +1223,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       decoration: BoxDecoration(
         color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: Colors.grey.withValues(alpha: 0.15), width: 1.5),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.05),
@@ -1307,26 +1237,26 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           Expanded(
             child: Container(
               padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                borderRadius: const BorderRadius.vertical(
+              decoration: const BoxDecoration(
+                borderRadius: BorderRadius.vertical(
                   top: Radius.circular(24),
                 ),
-                color: const Color(0xFFFF3B30).withValues(alpha: 0.1),
+                color: Color(0xFFC62828), // Dark Red
               ),
               child: Row(
                 children: [
-                  FaIcon(AppIcons.wallet, color: Color(0xFFFF3B30), size: 24),
+                  const FaIcon(AppIcons.wallet, color: Colors.white, size: 24),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Text(
+                        Text(
                           'Toplam Borçlar',
                           style: TextStyle(
                             fontSize: 13,
-                            color: Color(0xFF8E8E93),
+                            color: Colors.white.withValues(alpha: 0.9),
                             fontWeight: FontWeight.w500,
                           ),
                         ),
@@ -1336,7 +1266,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                           style: const TextStyle(
                             fontSize: 20,
                             fontWeight: FontWeight.bold,
-                            color: Color(0xFFFF3B30),
+                            color: Colors.white,
                           ),
                         ),
                       ],
@@ -1396,7 +1326,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          FaIcon(icon, color: const Color(0xFFFF3B30), size: 18),
+          FaIcon(icon, color: const Color(0xFFEB372A), size: 18),
           const SizedBox(height: 6),
           Text(
             label,
@@ -1412,7 +1342,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           Text(
             CurrencyHelper.formatAmount(amount, _currentUser),
             style: const TextStyle(
-              color: Color(0xFFFF3B30),
+              color: Color(0xFFEB372A),
               fontSize: 13,
               fontWeight: FontWeight.bold,
             ),
@@ -1835,7 +1765,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           ),
           const SizedBox(height: 12),
           _buildFabMenuItem(
-            label: 'Gelir Ekle',
+            label: AppLocalizations.of(context)!.addIncome,
             icon: AppIcons.income,
             color: const Color(0xFF4CAF50),
             onTap: () async {
@@ -1857,7 +1787,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           ),
           const SizedBox(height: 12),
           _buildFabMenuItem(
-            label: 'Fatura Ekle',
+            label: AppLocalizations.of(context)!.addBill,
             icon: AppIcons.receipt,
             color: const Color(0xFFFF9800),
             onTap: () async {
@@ -1871,7 +1801,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           ),
           const SizedBox(height: 12),
           _buildFabMenuItem(
-            label: 'Cüzdan Ekle',
+            label: AppLocalizations.of(context)!.addWallet,
             icon: AppIcons.wallet,
             color: const Color(0xFF2196F3),
             onTap: () async {
@@ -1892,9 +1822,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
             setState(() {
               _showFabMenu = !_showFabMenu;
               _fabMenuTimer?.cancel();
-
               if (_showFabMenu) {
-                // 5 saniye sonra otomatik kapat
                 _fabMenuTimer = Timer(const Duration(seconds: 5), () {
                   if (mounted && _showFabMenu) {
                     setState(() => _showFabMenu = false);
@@ -1903,7 +1831,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
               }
             });
           },
-          backgroundColor: const Color(0xFF00BFA5),
+          backgroundColor: const Color(0xFFE91E63), // Pembe renk
           child: AnimatedRotation(
             turns: _showFabMenu ? 0.125 : 0,
             duration: const Duration(milliseconds: 200),

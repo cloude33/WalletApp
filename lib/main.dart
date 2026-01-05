@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_localizations/flutter_localizations.dart';
+
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
+import 'l10n/app_localizations.dart';
 import 'services/theme_service.dart';
+import 'services/language_service.dart';
 import 'services/auto_backup_service.dart';
 import 'services/unified_auth_service.dart';
 import 'screens/welcome_screen.dart';
@@ -22,6 +24,7 @@ import 'services/kmh_box_service.dart';
 import 'models/kmh_transaction.dart';
 import 'models/kmh_transaction_type.dart';
 import 'services/notification_scheduler_service.dart';
+import 'services/bill_payment_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -79,20 +82,22 @@ void main() async {
     debugPrint('Auto backup service init error: $e');
   }
 
-  runApp(const MoneyApp());
+  runApp(const ParionApp());
 }
 
-class MoneyApp extends StatefulWidget {
-  const MoneyApp({super.key});
+class ParionApp extends StatefulWidget {
+  const ParionApp({super.key});
 
   @override
-  State<MoneyApp> createState() => _MoneyAppState();
+  State<ParionApp> createState() => _ParionAppState();
 }
 
-class _MoneyAppState extends State<MoneyApp> with WidgetsBindingObserver {
+class _ParionAppState extends State<ParionApp> with WidgetsBindingObserver {
   final UnifiedAuthService _unifiedAuthService = UnifiedAuthService();
   final ThemeService _themeService = ThemeService();
+  final LanguageService _languageService = LanguageService();
   final AutoBackupService _autoBackupService = AutoBackupService();
+  final BillPaymentService _billPaymentService = BillPaymentService();
   final GlobalKey<NavigatorState> _navigatorKey = GlobalKey<NavigatorState>();
 
   ThemeMode _themeMode = ThemeMode.system;
@@ -123,6 +128,10 @@ class _MoneyAppState extends State<MoneyApp> with WidgetsBindingObserver {
       }
     });
     _themeService.addListener(_onThemeChanged);
+    _languageService.addListener(_onLanguageChanged);
+    
+    // Uygulama açılışında vadesi gelen faturaları kontrol et
+    _billPaymentService.checkAndProcessDuePayments();
   }
 
   Future<void> _loadTheme() async {
@@ -139,6 +148,10 @@ class _MoneyAppState extends State<MoneyApp> with WidgetsBindingObserver {
     _loadTheme();
   }
 
+  void _onLanguageChanged() {
+    setState(() {});
+  }
+
   // _checkAuthenticationStatus kaldırıldı, UnifiedAuthService stream'i kullanılıyor
 
   @override
@@ -151,6 +164,8 @@ class _MoneyAppState extends State<MoneyApp> with WidgetsBindingObserver {
         _unifiedAuthService.onAppForeground();
         // Uygulama ön plana geldiğinde otomatik yedekleme kontrolü yap
         _autoBackupService.checkAndPerformBackupIfNeeded();
+        // Vadesi gelen faturaları kontrol et
+        _billPaymentService.checkAndProcessDuePayments();
         break;
       case AppLifecycleState.paused:
       case AppLifecycleState.inactive:
@@ -170,25 +185,40 @@ class _MoneyAppState extends State<MoneyApp> with WidgetsBindingObserver {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Parion',
-      debugShowCheckedModeBanner: false,
-      themeMode: _themeMode,
-      theme: ThemeService.lightTheme,
-      darkTheme: ThemeService.darkTheme,
-      locale: const Locale('tr', 'TR'),
-      localizationsDelegates: const [
-        GlobalMaterialLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
-        GlobalCupertinoLocalizations.delegate,
-      ],
-      supportedLocales: const [Locale('tr', 'TR')],
-      navigatorKey: _navigatorKey,
-      home: _getInitialScreen(),
-      routes: {
-        '/login': (context) => const LoginScreen(),
-      },
+    return GestureDetector(
+      onTap: _recordUserActivity,
+      onPanDown: (_) => _recordUserActivity(),
+      onScaleStart: (_) => _recordUserActivity(),
+      behavior: HitTestBehavior.translucent,
+      child: Listener(
+        onPointerDown: (_) => _recordUserActivity(),
+        onPointerMove: (_) => _recordUserActivity(),
+        onPointerUp: (_) => _recordUserActivity(),
+        child: MaterialApp(
+          title: 'Parion',
+          debugShowCheckedModeBanner: false,
+          themeMode: _themeMode,
+          theme: ThemeService.lightTheme,
+          darkTheme: ThemeService.darkTheme,
+          locale: _languageService.locale,
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          navigatorKey: _navigatorKey,
+          home: _getInitialScreen(),
+          routes: {
+            '/login': (context) => const LoginScreen(),
+          },
+        ),
+      ),
     );
+  }
+
+  /// Kullanıcı aktivitesini kaydeder
+  void _recordUserActivity() {
+    if (_authState.canUseApp) {
+      // Session manager'a aktivite bildir
+      _unifiedAuthService.recordActivity();
+    }
   }
 
   Widget _getInitialScreen() {
@@ -202,6 +232,7 @@ class _MoneyAppState extends State<MoneyApp> with WidgetsBindingObserver {
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     _themeService.removeListener(_onThemeChanged);
+    _languageService.removeListener(_onLanguageChanged);
     _unifiedAuthService.dispose();
     _autoBackupService.dispose();
     super.dispose();

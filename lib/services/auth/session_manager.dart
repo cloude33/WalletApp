@@ -187,7 +187,7 @@ class SessionManager {
 
   /// Uygulama arka plana geçtiğinde çağrılır
   /// 
-  /// Arka plan kilitleme timer'ını başlatır.
+  /// Background timer management is delegated to UnifiedAuthService to avoid conflicts.
   /// 
   /// Implements Requirement 6.1: Arka plana geçtiğinde oturum zamanlayıcısını başlatmalı
   Future<void> onAppBackground() async {
@@ -198,20 +198,15 @@ class SessionManager {
       
       if (!_currentSessionState.isActive) return;
       
-      final config = await _getSecurityConfig();
+      // Cancel any existing background timer to avoid conflicts with UnifiedAuthService
+      _backgroundLockTimer?.cancel();
+      _backgroundLockTimer = null;
       
-      if (config.sessionConfig.enableBackgroundLock) {
-        _backgroundLockTimer?.cancel();
-        _backgroundLockTimer = Timer(config.sessionConfig.backgroundLockDelay, () {
-          _onBackgroundLockTimeout();
-        });
-        
-        debugPrint('Background lock timer started: ${config.sessionConfig.backgroundLockDelay}');
-      }
-      
-      // Oturum durumunu güncelle
+      // Update session state to reflect background mode
       _currentSessionState = _currentSessionState.enterBackground();
       _sessionStateController.add(_currentSessionState);
+      
+      debugPrint('SessionManager: Background handling delegated to UnifiedAuthService');
       
     } catch (e) {
       debugPrint('App background handling error: $e');
@@ -220,7 +215,7 @@ class SessionManager {
 
   /// Uygulama ön plana geçtiğinde çağrılır
   /// 
-  /// Arka plan kilitleme timer'ını iptal eder ve oturum durumunu kontrol eder.
+  /// Background timer management is delegated to UnifiedAuthService to avoid conflicts.
   /// 
   /// Implements Requirement 6.3: Tekrar açıldığında kimlik doğrulama gerektirmeli
   Future<void> onAppForeground() async {
@@ -229,29 +224,20 @@ class SessionManager {
       
       _appLifecycleState = AppLifecycleState.resumed;
       
-      // Arka plan timer'ını iptal et
+      // Cancel any existing background timer to avoid conflicts
       _backgroundLockTimer?.cancel();
+      _backgroundLockTimer = null;
       
       if (!_currentSessionState.isActive) return;
       
-      // Oturum süresi kontrolü
-      final config = await _getSecurityConfig();
-      final timeSinceLastActivity = DateTime.now().difference(_lastActivityTime);
+      // Update session state to reflect foreground mode
+      _currentSessionState = _currentSessionState.enterForeground();
+      _sessionStateController.add(_currentSessionState);
       
-      if (timeSinceLastActivity > config.sessionTimeout) {
-        // Oturum süresi dolmuş - sonlandır
-        await stopSession();
-        debugPrint('Session expired during background, terminated');
-      } else {
-        // Oturum aktif - durumu güncelle
-        _currentSessionState = _currentSessionState.enterForeground();
-        _sessionStateController.add(_currentSessionState);
-        
-        // Timer'ı yenile
-        await _refreshSessionTimer();
-        
-        debugPrint('App returned to foreground, session active');
-      }
+      // Refresh session timer
+      await _refreshSessionTimer();
+      
+      debugPrint('SessionManager: Foreground handling delegated to UnifiedAuthService');
       
     } catch (e) {
       debugPrint('App foreground handling error: $e');

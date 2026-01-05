@@ -321,15 +321,79 @@ class UnifiedAuthService {
     return await _isBiometricEnabledForUser();
   }
 
+  /// Record user activity to extend session
+  Future<void> recordActivity() async {
+    try {
+      if (isAuthenticated) {
+        await _localAuth.recordActivity();
+      }
+    } catch (e) {
+      debugPrint('❌ Record activity error: $e');
+    }
+  }
+
   /// Handle app background
   Future<void> onAppBackground() async {
-    await _localAuth.onAppBackground();
+    try {
+      if (isAuthenticated) {
+        // Store background timestamp
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setInt('background_timestamp', DateTime.now().millisecondsSinceEpoch);
+        
+        await _localAuth.onAppBackground();
+        debugPrint('🌙 App went to background - timestamp stored, auth services notified');
+      }
+    } catch (e) {
+      debugPrint('❌ Background handling error: $e');
+    }
   }
 
   /// Handle app foreground
   Future<void> onAppForeground() async {
-    await _localAuth.onAppForeground();
-    await _updateState();
+    try {
+      if (_firebaseAuth.currentUser != null) {
+        // Check background duration
+        final prefs = await SharedPreferences.getInstance();
+        final backgroundTimestamp = prefs.getInt('background_timestamp');
+        
+        if (backgroundTimestamp != null) {
+          final backgroundTime = DateTime.fromMillisecondsSinceEpoch(backgroundTimestamp);
+          final elapsedTime = DateTime.now().difference(backgroundTime);
+          
+          debugPrint('📱 App returned from background after ${elapsedTime.inSeconds} seconds');
+          
+          // Get security config to check background lock settings
+          final config = await _localAuth.getSecurityConfig();
+          
+          // Check if background time exceeded threshold
+          if (config.sessionConfig.enableBackgroundLock && 
+              elapsedTime >= config.sessionConfig.backgroundLockDelay) {
+            debugPrint('🔒 Background time exceeded threshold - signing out');
+            await signOut();
+            return;
+          }
+          
+          // Check if session timeout exceeded during background
+          final sessionActive = await _localAuth.isAuthenticated();
+          if (!sessionActive) {
+            debugPrint('🔒 Session expired during background - signing out');
+            await signOut();
+            return;
+          }
+          
+          // Clear background timestamp
+          await prefs.remove('background_timestamp');
+        }
+        
+        // Notify other services about foreground
+        await _localAuth.onAppForeground();
+        await _updateState();
+        
+        debugPrint('✅ App foreground handling completed successfully');
+      }
+    } catch (e) {
+      debugPrint('❌ Foreground handling error: $e');
+    }
   }
 
   /// Dispose the service

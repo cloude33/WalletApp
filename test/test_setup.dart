@@ -11,6 +11,7 @@ import 'package:parion/models/recurring_transaction.dart';
 import 'package:parion/models/recurrence_frequency.dart';
 import 'package:parion/services/credit_card_box_service.dart';
 import 'package:parion/services/data_service.dart';
+import 'package:parion/services/google_drive_service.dart';
 import 'package:parion/services/kmh_box_service.dart';
 import 'package:parion/repositories/recurring_transaction_repository.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -37,6 +38,9 @@ class TestSetup {
 
     // Setup platform channel mocks
     _setupPlatformChannelMocks();
+
+    // Enable test mode for Google Drive Service
+    GoogleDriveService().setTestMode(true);
 
     // Initialize SharedPreferences for global access
     SharedPreferences.setMockInitialValues({});
@@ -195,6 +199,34 @@ class TestSetup {
               default:
                 return null;
             }
+          },
+        );
+
+    // Mock google_sign_in
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(
+          const MethodChannel('plugins.flutter.io/google_sign_in'),
+          (MethodCall methodCall) async {
+            if (methodCall.method == 'init') {
+              return null;
+            } else if (methodCall.method == 'signIn' || 
+                       methodCall.method == 'signInSilently') {
+              return {
+                'displayName': 'Test User',
+                'email': 'test@example.com',
+                'id': '123456789',
+                'photoUrl': null,
+                'idToken': 'mock_token',
+              };
+            } else if (methodCall.method == 'getTokens') {
+              return {
+                'idToken': 'mock_id_token',
+                'accessToken': 'mock_access_token',
+              };
+            } else if (methodCall.method == 'signOut' || methodCall.method == 'disconnect') {
+              return null;
+            }
+            return null; 
           },
         );
   }

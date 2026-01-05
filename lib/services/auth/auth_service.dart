@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import '../../models/security/security_models.dart';
 import 'secure_storage_service.dart';
 import 'biometric_service.dart';
+import 'session_manager.dart';
 
 class AuthService {
   static final AuthService _instance = AuthService._internal();
@@ -12,6 +13,7 @@ class AuthService {
 
   final AuthSecureStorageService _storage = AuthSecureStorageService();
   final BiometricService _biometricService = BiometricServiceImpl();
+  final SessionManager _sessionManager = SessionManager();
 
   // Oturum yönetimi için stream controller
   final StreamController<AuthState> _authStateController =
@@ -51,6 +53,7 @@ class AuthService {
     try {
       // Alt servisleri başlat
       await _storage.initialize();
+      await _sessionManager.initialize();
 
       // Mevcut oturum durumunu yükle
       await _loadStoredAuthState();
@@ -246,34 +249,45 @@ class AuthService {
     }
   }
 
+  /// Kullanıcı aktivitesini kaydeder
+  ///
+  /// Oturum timer'ını yeniler ve son aktivite zamanını günceller.
+  Future<void> recordActivity() async {
+    try {
+      await _ensureInitialized();
+
+      if (!_currentAuthState.isAuthenticated || _currentSession == null) return;
+
+      // SessionManager'a aktivite bildir
+      await _sessionManager.recordActivity();
+
+      // Son aktivite zamanını güncelle
+      _currentSession = _currentSession!.updateActivity();
+      _currentAuthState = _currentAuthState.updateActivity();
+
+      // Durumu kaydet
+      await _saveAuthState();
+
+      debugPrint('User activity recorded, session manager notified');
+    } catch (e) {
+      debugPrint('Record activity error: $e');
+    }
+  }
+
   /// Uygulama arka plana geçtiğinde çağrılır
   ///
-  /// Arka plan kilitleme timer'ını başlatır ve timestamp kaydeder.
+  /// Background handling is delegated to UnifiedAuthService to avoid timer conflicts.
   Future<void> onAppBackground() async {
     try {
       await _ensureInitialized();
 
       if (!_currentAuthState.isAuthenticated) return;
 
-      // Arka plana geçiş zamanını kaydet
-      _backgroundTimestamp = DateTime.now();
-      await _storage.storeBackgroundTimestamp(_backgroundTimestamp!);
-      debugPrint('App went to background at: $_backgroundTimestamp');
+      // Cancel any existing background timer to avoid conflicts
+      _backgroundLockTimer?.cancel();
+      _backgroundLockTimer = null;
 
-      final config = await _getSecurityConfig();
-
-      if (config.sessionConfig.enableBackgroundLock) {
-        _backgroundLockTimer?.cancel();
-        _backgroundLockTimer = Timer(
-          config.sessionConfig.backgroundLockDelay,
-          () {
-            debugPrint('Background lock timer expired, logging out');
-            logout();
-          },
-        );
-
-        debugPrint('Background lock timer started');
-      }
+      debugPrint('AuthService: Background handling delegated to UnifiedAuthService');
     } catch (e) {
       debugPrint('App background handling error: $e');
     }
@@ -281,37 +295,16 @@ class AuthService {
 
   /// Uygulama ön plana geçtiğinde çağrılır
   ///
-  /// Arka plan süresini kontrol eder ve gerekirse logout yapar.
+  /// Background handling is delegated to UnifiedAuthService to avoid conflicts.
   Future<void> onAppForeground() async {
     try {
       await _ensureInitialized();
       
-      // Timer'ı iptal et
+      // Cancel any existing background timer to avoid conflicts
       _backgroundLockTimer?.cancel();
+      _backgroundLockTimer = null;
       
-      // Arka planda geçen süreyi kontrol et
-      final backgroundTimestamp = _backgroundTimestamp ?? await _storage.getBackgroundTimestamp();
-      
-      if (backgroundTimestamp != null) {
-        final now = DateTime.now();
-        final elapsedTime = now.difference(backgroundTimestamp);
-        final config = await _getSecurityConfig();
-        
-        debugPrint('App returned from background. Elapsed time: ${elapsedTime.inSeconds} seconds');
-        
-        // Eğer arka planda kilitleme etkinse ve süre threshold'u aşmışsa logout yap
-        if (config.sessionConfig.enableBackgroundLock && 
-            elapsedTime >= config.sessionConfig.backgroundLockDelay) {
-          debugPrint('Background time (${elapsedTime.inSeconds}s) exceeded threshold (${config.sessionConfig.backgroundLockDelay.inSeconds}s), logging out');
-          await logout();
-          return;
-        }
-        
-        // Threshold içindeyse veya devre dışıysa timestamp'i temizle
-        _backgroundTimestamp = null;
-        await _storage.clearBackgroundTimestamp();
-        debugPrint('Background lock timer cancelled or not needed, session maintained');
-      }
+      debugPrint('AuthService: Foreground handling delegated to UnifiedAuthService');
     } catch (e) {
       debugPrint('App foreground handling error: $e');
     }

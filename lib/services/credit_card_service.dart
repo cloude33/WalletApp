@@ -131,7 +131,28 @@ class CreditCardService {
     await _transactionRepo.delete(transactionId);
   }
   Future<List<CreditCardTransaction>> getCardTransactions(String cardId) async {
-    return await _transactionRepo.findByCardId(cardId);
+    // Sadece son ekstre kesim tarihinden sonraki işlemleri göster
+    // Veya bekleyen ekstre dönemindeki işlemleri
+    final allTransactions = await _transactionRepo.findByCardId(cardId);
+    final card = await _cardRepo.findById(cardId);
+    if (card == null) return allTransactions;
+
+    DateTime? lastStatementDate;
+    final statements = await _statementRepo.findByCardId(cardId);
+    if (statements.isNotEmpty) {
+      statements.sort((a, b) => b.periodEnd.compareTo(a.periodEnd));
+      lastStatementDate = statements.first.periodEnd;
+    }
+
+    if (lastStatementDate != null) {
+      return allTransactions.where((t) => t.transactionDate.isAfter(lastStatementDate!)).toList();
+    }
+
+    return allTransactions;
+  }
+  
+  Future<List<CreditCardTransaction>> getTransactionsByPeriod(String cardId, DateTime start, DateTime end) async {
+     return await _transactionRepo.findByDateRange(cardId, start, end);
   }
   Future<List<CreditCardTransaction>> getActiveInstallments(
     String cardId,

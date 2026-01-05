@@ -2749,8 +2749,9 @@ class _StatisticsScreenState extends State<StatisticsScreen>
                               FutureBuilder(
                                 future: _dataService.getCurrentUser(),
                                 builder: (context, snapshot) {
-                                  if (!snapshot.hasData)
+                                  if (!snapshot.hasData) {
                                     return const SizedBox();
+                                  }
                                   return Text(
                                     CurrencyHelper.formatAmountCompact(
                                       entry.value,

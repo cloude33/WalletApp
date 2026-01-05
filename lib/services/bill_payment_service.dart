@@ -4,6 +4,8 @@ import 'package:uuid/uuid.dart';
 import '../models/bill_payment.dart';
 import '../models/transaction.dart';
 import 'bill_template_service.dart';
+import 'credit_card_service.dart';
+import '../models/credit_card_transaction.dart';
 import 'data_service.dart';
 class BillPaymentService {
   static const String _storageKey = 'bill_payments';
@@ -47,6 +49,33 @@ class BillPaymentService {
       return p.periodStart.isAfter(start.subtract(const Duration(days: 1))) &&
           p.periodEnd.isBefore(end.add(const Duration(days: 1)));
     }).toList();
+  }
+
+  Future<void> checkAndProcessDuePayments() async {
+    final payments = await getPendingPayments();
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+
+    for (final payment in payments) {
+      final due = DateTime(payment.dueDate.year, payment.dueDate.month, payment.dueDate.day);
+      
+      // Vadesi gelmiş veya geçmiş ödemeler
+      if (due.isBefore(today) || due.isAtSameMomentAs(today)) {
+        // Şablonu kontrol et - otomatik ödeme için cüzdan tanımlı mı?
+        final template = await _templateService.getTemplate(payment.templateId);
+        
+        if (template != null && template.walletId != null) {
+          try {
+            await markAsPaid(
+              paymentId: payment.id, 
+              walletId: template.walletId!
+            );
+          } catch (e) {
+            // Hata durumunda sessizce devam et
+          }
+        }
+      }
+    }
   }
   Future<BillPayment> addPayment({
     required String templateId,
@@ -141,19 +170,44 @@ class BillPaymentService {
       final template = await _templateService.getTemplate(payment.templateId);
       
       if (template != null) {
-        final dataService = DataService();
-        final transaction = Transaction(
-          id: _uuid.v4(),
-          description: '${template.name} Fatura Ödemesi',
-          amount: payment.amount,
-          type: 'expense',
-          category: template.categoryDisplayName,
-          date: DateTime.now(),
-          walletId: walletId,
-        );
+        // Kredi kartı kontrolü
+        final isCreditCard = walletId.startsWith('cc_');
         
-        await dataService.addTransaction(transaction);
-        newTransactionId = transaction.id;
+        if (isCreditCard) {
+          // Kredi kartı işlemi oluştur
+          final cardId = walletId.replaceFirst('cc_', '');
+          final creditCardService = CreditCardService();
+          
+          final ccTransaction = CreditCardTransaction(
+            id: _uuid.v4(),
+            cardId: cardId,
+            amount: payment.amount,
+            description: '${template.name} Fatura Ödemesi',
+            transactionDate: DateTime.now(),
+            category: template.categoryDisplayName,
+            installmentCount: 1,
+            installmentsPaid: 0,
+            createdAt: DateTime.now(),
+          );
+          
+          await creditCardService.addTransaction(ccTransaction);
+          newTransactionId = ccTransaction.id;
+        } else {
+          // Normal cüzdan işlemi oluştur
+          final dataService = DataService();
+          final transaction = Transaction(
+            id: _uuid.v4(),
+            description: '${template.name} Fatura Ödemesi',
+            amount: payment.amount,
+            type: 'expense',
+            category: template.categoryDisplayName,
+            date: DateTime.now(),
+            walletId: walletId,
+          );
+          
+          await dataService.addTransaction(transaction);
+          newTransactionId = transaction.id;
+        }
       }
     }
 

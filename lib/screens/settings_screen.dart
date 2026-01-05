@@ -1,6 +1,7 @@
 // ignore_for_file: deprecated_member_use, use_build_context_synchronously
 
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:intl/intl.dart';
@@ -13,6 +14,8 @@ import '../services/theme_service.dart';
 import '../services/notification_service.dart';
 import '../services/auth_service.dart';
 import '../services/app_lock_service.dart';
+import '../services/language_service.dart';
+import '../l10n/app_localizations.dart';
 import 'currency_settings_screen.dart';
 import 'user_selection_screen.dart';
 import 'debt_list_screen.dart';
@@ -25,11 +28,12 @@ import 'notification_settings_screen.dart';
 import 'recurring_transaction_list_screen.dart';
 import 'change_password_screen.dart';
 import 'cloud_backup_screen.dart';
-import 'firebase_test_screen.dart';
+
 import '../services/recurring_transaction_service.dart';
 import '../repositories/recurring_transaction_repository.dart';
 import '../widgets/export_dialog.dart';
 import '../widgets/theme_toggle_button.dart';
+import '../widgets/debug_background_lock_widget.dart';
 
 
 class SettingsScreen extends StatefulWidget {
@@ -312,9 +316,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
       ),
       child: Row(
         children: [
-          const Expanded(
+          Expanded(
             child: Text(
-              'Ayarlar',
+              AppLocalizations.of(context)!.settings,
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 20,
@@ -379,9 +383,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
         Center(
           child: TextButton(
             onPressed: _changeProfilePicture,
-            child: const Text(
-              'Profil Resmini Değiştir',
-              style: TextStyle(
+            child: Text(
+              AppLocalizations.of(context)!.profile, // Profil Resmini Değiştir yerine Profil kullanalım veya arb ekleyip
+              style: const TextStyle(
                 color: Color(0xFF00BFA5),
                 fontWeight: FontWeight.w600,
               ),
@@ -390,11 +394,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
         ),
         const SizedBox(height: 20),
 
-        _buildSection('Hesap', [
+        _buildSection(AppLocalizations.of(context)!.accountSection, [
           _buildEditableSettingItem(
             icon: Icons.person_outline,
-            title: 'Profil',
-            subtitle: _currentUser?.name ?? 'Kullanıcı',
+            title: AppLocalizations.of(context)!.profile,
+            subtitle: _currentUser?.name ?? AppLocalizations.of(context)!.userDefault,
             isEditing: _isEditingProfile,
             controller: _nameController,
             onSave: _saveProfile,
@@ -403,8 +407,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
           _buildEditableSettingItem(
             icon: Icons.email_outlined,
-            title: 'E-posta',
-            subtitle: _currentUser?.email ?? 'Belirtilmemiş',
+            title: AppLocalizations.of(context)!.email,
+            subtitle: _currentUser?.email ?? AppLocalizations.of(context)!.notSpecified,
             isEditing: _isEditingEmail,
             controller: _emailController,
             onSave: _saveEmail,
@@ -414,8 +418,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
           if (_authMethod == null)
             _buildSettingItem(
               icon: Icons.lock_outline,
-              title: 'Şifre Değiştir',
-              subtitle: 'Giriş şifrenizi güncelleyin',
+              title: AppLocalizations.of(context)!.changePassword,
+              subtitle: AppLocalizations.of(context)!.updatePasswordDesc,
               trailing: const Icon(
                 Icons.arrow_forward_ios,
                 size: 16,
@@ -432,11 +436,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
         ]),
         const SizedBox(height: 20),
-        _buildSection('Genel', [
+        _buildSection(AppLocalizations.of(context)!.generalSection, [
           _buildSettingItem(
             icon: Icons.account_balance_wallet,
-            title: 'Cüzdanlarım',
-            subtitle: 'Cüzdanlarınızı ve hesaplarınızı yönetin',
+            title: AppLocalizations.of(context)!.myWallets,
+            subtitle: AppLocalizations.of(context)!.manageWalletsDesc,
             iconColor: Colors.blue,
             trailing: const Icon(
               Icons.arrow_forward_ios,
@@ -454,8 +458,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
           _buildSettingItem(
             icon: Icons.receipt_long,
-            title: 'Faturalarım',
-            subtitle: 'Fatura şablonlarınızı yönetin',
+            title: AppLocalizations.of(context)!.myBills,
+            subtitle: AppLocalizations.of(context)!.manageBillsDesc,
             iconColor: Colors.orange,
             trailing: const Icon(
               Icons.arrow_forward_ios,
@@ -474,8 +478,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
           _buildSettingItem(
             icon: Icons.category_outlined,
-            title: 'Kategoriler',
-            subtitle: 'Gelir ve gider kategorilerini yönetin',
+            title: AppLocalizations.of(context)!.categories,
+            subtitle: AppLocalizations.of(context)!.manageCategoriesDesc,
             iconColor: Colors.purple,
             trailing: const Icon(
               Icons.arrow_forward_ios,
@@ -493,8 +497,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
           _buildSettingItem(
             icon: Icons.account_balance,
-            title: 'Borç/Alacak Takibi',
-            subtitle: 'Borç ve alacaklarınızı takip edin',
+            title: AppLocalizations.of(context)!.debts,
+            subtitle: AppLocalizations.of(context)!.trackDebtsDesc,
             iconColor: Colors.red,
             trailing: const Icon(
               Icons.arrow_forward_ios,
@@ -510,8 +514,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
           _buildSettingItem(
             icon: Icons.repeat,
-            title: 'Tekrarlayan İşlemler',
-            subtitle: 'Otomatik işlemlerinizi yönetin',
+            title: AppLocalizations.of(context)!.recurringTransactions,
+            subtitle: AppLocalizations.of(context)!.manageRecurringDesc,
             iconColor: Colors.teal,
             trailing: const Icon(
               Icons.arrow_forward_ios,
@@ -541,8 +545,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
           _buildSettingItem(
             icon: Icons.notifications_outlined,
-            title: 'Bildirimler',
-            subtitle: 'Hatırlatmalar ve uyarılar',
+            title: AppLocalizations.of(context)!.notifications,
+            subtitle: AppLocalizations.of(context)!.notificationsDesc,
             iconColor: Colors.orange,
             trailing: const Icon(
               Icons.arrow_forward_ios,
@@ -560,7 +564,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
           _buildSettingItem(
             icon: Icons.currency_exchange,
-            title: 'Para Birimi',
+            title: AppLocalizations.of(context)!.currency,
             subtitle:
                 '${_currentUser?.currencySymbol ?? '₺'} ${_currentUser?.currencyCode ?? 'TRY'}',
             iconColor: Colors.green,
@@ -581,54 +585,30 @@ class _SettingsScreenState extends State<SettingsScreen> {
               }
             },
           ),
-        ]),
-        const SizedBox(height: 20),
-        _buildSection('Veri Yönetimi', [
           _buildSettingItem(
-            icon: Icons.file_download_outlined,
-            title: 'Export',
-            subtitle: 'Verileri dışa aktar',
-            iconColor: Colors.indigo,
+            icon: Icons.language,
+            title: AppLocalizations.of(context)!.language,
+            subtitle: Localizations.localeOf(context).languageCode == 'tr' 
+                ? 'Türkçe' 
+                : 'English',
+            iconColor: Colors.teal,
             trailing: const Icon(
               Icons.arrow_forward_ios,
               size: 16,
               color: Color(0xFF8E8E93),
             ),
             onTap: () async {
-              await showDialog(
-                context: context,
-                builder: (context) => const ExportDialog(),
-              );
+              await _showLanguageDialog();
+              setState(() {});
             },
           ),
-          _buildSettingItem(
-            icon: Icons.backup_outlined,
-            title: 'Yedekle',
-            subtitle: 'Verilerinizi yedekleyin',
-            iconColor: Colors.blue,
-            trailing: const Icon(
-              Icons.arrow_forward_ios,
-              size: 16,
-              color: Color(0xFF8E8E93),
-            ),
-            onTap: _handleBackup,
-          ),
-          _buildSettingItem(
-            icon: Icons.restore_outlined,
-            title: 'Geri Yükle',
-            subtitle: 'Yedekten geri yükleyin',
-            iconColor: Colors.green,
-            trailing: const Icon(
-              Icons.arrow_forward_ios,
-              size: 16,
-              color: Color(0xFF8E8E93),
-            ),
-            onTap: _handleRestore,
-          ),
+        ]),
+        const SizedBox(height: 20),
+        _buildSection(AppLocalizations.of(context)!.dataSection, [
           _buildSettingItem(
             icon: Icons.cloud_outlined,
-            title: 'Bulut Yedekleme',
-            subtitle: 'Firebase bulut yedekleme',
+            title: AppLocalizations.of(context)!.cloudBackup,
+            subtitle: AppLocalizations.of(context)!.cloudBackupDesc,
             iconColor: Colors.blueAccent,
             trailing: const Icon(
               Icons.arrow_forward_ios,
@@ -645,32 +625,54 @@ class _SettingsScreenState extends State<SettingsScreen> {
             },
           ),
           _buildSettingItem(
-            icon: Icons.bug_report_outlined,
-            title: 'Firebase Test',
-            subtitle: 'Firebase bağlantısını test et',
-            iconColor: Colors.brown,
+            icon: Icons.backup_outlined,
+            title: AppLocalizations.of(context)!.backup,
+            subtitle: AppLocalizations.of(context)!.backupDesc,
+            iconColor: Colors.blue,
             trailing: const Icon(
               Icons.arrow_forward_ios,
               size: 16,
               color: Color(0xFF8E8E93),
             ),
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const FirebaseTestScreen(),
-                ),
+            onTap: _handleBackup,
+          ),
+          _buildSettingItem(
+            icon: Icons.restore_outlined,
+            title: AppLocalizations.of(context)!.restore,
+            subtitle: AppLocalizations.of(context)!.restoreDesc,
+            iconColor: Colors.green,
+            trailing: const Icon(
+              Icons.arrow_forward_ios,
+              size: 16,
+              color: Color(0xFF8E8E93),
+            ),
+            onTap: _handleRestore,
+          ),
+          _buildSettingItem(
+            icon: Icons.file_download_outlined,
+            title: AppLocalizations.of(context)!.export,
+            subtitle: AppLocalizations.of(context)!.exportDesc,
+            iconColor: Colors.indigo,
+            trailing: const Icon(
+              Icons.arrow_forward_ios,
+              size: 16,
+              color: Color(0xFF8E8E93),
+            ),
+            onTap: () async {
+              await showDialog(
+                context: context,
+                builder: (context) => const ExportDialog(),
               );
             },
           ),
         ]),
         const SizedBox(height: 20),
-        _buildSection('Güvenlik', [
+        _buildSection(AppLocalizations.of(context)!.securitySection, [
           _buildSettingItem(
             icon: Icons.lock_clock,
-            title: 'Otomatik Kilit',
+            title: AppLocalizations.of(context)!.autoLock,
             subtitle:
-                'Uygulama ${AppLockService().getLockTimeout()} dakika sonra kilitlenir',
+                '${AppLocalizations.of(context)!.autoLock} ${AppLockService().getLockTimeout()} dk',
             iconColor: Colors.red,
             trailing: const Icon(
               Icons.arrow_forward_ios,
@@ -684,8 +686,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
           if (_isBiometricAvailable)
             _buildSettingItem(
               icon: Icons.fingerprint,
-              title: 'Biyometrik Kimlik Doğrulama',
-              subtitle: 'Parmak izi ile kilidi aç',
+              title: AppLocalizations.of(context)!.biometricAuth,
+              subtitle: AppLocalizations.of(context)!.biometricDesc,
               iconColor: Colors.blue,
               trailing: FutureBuilder<bool>(
                 future: AuthService().isBiometricEnabled(),
@@ -703,11 +705,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
         ]),
         const SizedBox(height: 20),
-        _buildSection('Diğer', [
+        _buildSection(AppLocalizations.of(context)!.otherSection, [
           _buildSettingItem(
             icon: Icons.help_outline,
-            title: 'Yardım',
-            subtitle: 'SSS ve destek',
+            title: AppLocalizations.of(context)!.help,
+            subtitle: AppLocalizations.of(context)!.faqDesc,
             iconColor: Colors.cyan,
             trailing: const Icon(
               Icons.arrow_forward_ios,
@@ -723,7 +725,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
           _buildSettingItem(
             icon: Icons.info_outline,
-            title: 'Hakkında',
+            title: AppLocalizations.of(context)!.about,
             subtitle: 'Versiyon 1.0.0',
             iconColor: Colors.blueGrey,
             trailing: const Icon(
@@ -740,11 +742,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
         ]),
         const SizedBox(height: 20),
-        _buildSection('Hesap', [
+        _buildSection(AppLocalizations.of(context)!.accountSection, [
           _buildSettingItem(
             icon: Icons.logout,
-            title: 'Çıkış Yap',
-            subtitle: 'Hesaptan çık',
+            title: AppLocalizations.of(context)!.logout,
+            subtitle: AppLocalizations.of(context)!.logoutDesc,
             titleColor: const Color(0xFFFF3B30),
             onTap: () async {
               await Navigator.pushReplacement(
@@ -757,15 +759,23 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
         ]),
         const SizedBox(height: 20),
-        _buildSection('Tehlikeli Bölge', [
+        _buildSection(AppLocalizations.of(context)!.dangerZone, [
           _buildSettingItem(
             icon: Icons.delete_forever,
-            title: 'Uygulamayı Sıfırla',
-            subtitle: 'Tüm verileri sil ve baştan başla',
+            title: AppLocalizations.of(context)!.resetApp,
+            subtitle: AppLocalizations.of(context)!.resetAppDesc,
             titleColor: const Color(0xFFFF3B30),
             onTap: _resetApp,
           ),
         ]),
+        const SizedBox(height: 20),
+        // Debug widget (sadece debug modda göster)
+        if (kDebugMode) ...[
+          _buildSection('DEBUG', [
+            const DebugBackgroundLockWidget(),
+          ]),
+          const SizedBox(height: 20),
+        ],
       ],
     );
   }
@@ -1270,5 +1280,58 @@ class _SettingsScreenState extends State<SettingsScreen> {
         );
       }
     }
+  }
+
+  Future<void> _showLanguageDialog() async {
+    final languageService = LanguageService();
+    
+    await showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Text(
+                  AppLocalizations.of(context)!.selectLanguage,
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+              ListTile(
+                leading: const Text('🇹🇷', style: TextStyle(fontSize: 24)),
+                title: const Text('Türkçe'),
+                trailing: languageService.locale.languageCode == 'tr'
+                    ? const Icon(Icons.check, color: Colors.blue)
+                    : null,
+                onTap: () async {
+                  await languageService.setLocale(const Locale('tr'));
+                  if (mounted) Navigator.pop(context);
+                },
+              ),
+              ListTile(
+                leading: const Text('🇺🇸', style: TextStyle(fontSize: 24)),
+                title: const Text('English'),
+                trailing: languageService.locale.languageCode == 'en'
+                    ? const Icon(Icons.check, color: Colors.blue)
+                    : null,
+                onTap: () async {
+                  await languageService.setLocale(const Locale('en'));
+                  if (mounted) Navigator.pop(context);
+                },
+              ),
+              const SizedBox(height: 16),
+            ],
+          ),
+        );
+      },
+    );
   }
 }

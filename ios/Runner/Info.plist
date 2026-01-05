@@ -106,9 +106,9 @@
 				<string>public.data</string>
 			</array>
 			<key>UTTypeDescription</key>
-			<string>Money App Backup File</string>
+			<string>Parion Backup File</string>
 			<key>UTTypeIdentifier</key>
-			<string>com.moneyapp.backup</string>
+			<string>com.parion.backup</string>
 			<key>UTTypeTagSpecification</key>
 			<dict>
 				<key>public.filename-extension</key>

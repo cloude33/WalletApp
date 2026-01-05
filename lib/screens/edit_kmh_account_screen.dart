@@ -52,7 +52,7 @@ class _EditKmhAccountScreenState extends State<EditKmhAccountScreen> {
     super.initState();
     _nameController = TextEditingController(text: widget.account.name);
     _creditLimitController = TextEditingController(
-      text: widget.account.creditLimit?.toString() ?? '0',
+      text: widget.account.creditLimit.toString(),
     );
     _interestRateController = TextEditingController(
       text: widget.account.interestRate?.toString().replaceAll('.', ',') ?? '',

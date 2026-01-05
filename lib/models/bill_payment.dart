@@ -75,8 +75,13 @@ class BillPayment {
   }
 
   bool get isPaid => status == BillPaymentStatus.paid;
-  bool get isOverdue =>
-      status != BillPaymentStatus.paid && DateTime.now().isAfter(dueDate);
+  bool get isOverdue {
+    if (status == BillPaymentStatus.paid) return false;
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final due = DateTime(dueDate.year, dueDate.month, dueDate.day);
+    return today.isAfter(due);
+  }
   bool get isPending => status == BillPaymentStatus.pending && !isOverdue;
 
   int get daysUntilDue => dueDate.difference(DateTime.now()).inDays;

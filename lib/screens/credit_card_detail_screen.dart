@@ -14,6 +14,10 @@ import 'payment_planner_screen.dart';
 import 'payment_history_screen.dart';
 import 'reward_points_screen.dart';
 import 'installment_detail_screen.dart';
+import '../models/bill_payment.dart';
+import '../models/bill_template.dart';
+import '../services/bill_payment_service.dart';
+import '../services/bill_template_service.dart';
 
 class CreditCardDetailScreen extends StatefulWidget {
   final CreditCard card;
@@ -29,6 +33,8 @@ class _CreditCardDetailScreenState extends State<CreditCardDetailScreen> {
   final RewardPointsService _rewardService = RewardPointsService();
   final CashAdvanceService _cashAdvanceService = CashAdvanceService();
   final DeferredInstallmentService _deferredService = DeferredInstallmentService();
+  final BillPaymentService _billPaymentService = BillPaymentService();
+  final BillTemplateService _billTemplateService = BillTemplateService();
   final NumberFormat _currencyFormat = NumberFormat.currency(
     locale: 'tr_TR',
     symbol: '₺',
@@ -40,13 +46,16 @@ class _CreditCardDetailScreenState extends State<CreditCardDetailScreen> {
   double _utilization = 0;
   DateTime? _nextStatementDate;
   DateTime? _nextDueDate;
-  List<CreditCardTransaction> _recentTransactions = [];
+  DateTime _selectedDate = DateTime.now();
+  List<CreditCardTransaction> _periodTransactions = [];
   List<CreditCardTransaction> _activeInstallments = [];
   Map<String, dynamic>? _rewardSummary;
   Map<String, dynamic>? _cashAdvanceSummary;
   double _periodDebt = 0;
   double _totalDebt = 0;
   List<CreditCardTransaction> _deferredInstallments = [];
+  List<BillPayment> _scheduledBills = [];
+  Map<String, BillTemplate> _billTemplates = {};
 
   @override
   void initState() {
@@ -87,21 +96,66 @@ class _CreditCardDetailScreenState extends State<CreditCardDetailScreen> {
       } catch (e) {
         deferredInstallments = [];
       }
+
+      // Load scheduled bills
+      List<BillPayment> scheduledBills = [];
+      Map<String, BillTemplate> billTemplateMap = {};
+      try {
+        final allPayments = await _billPaymentService.getPayments();
+        final allTemplates = await _billTemplateService.getTemplates();
+        
+        final myTemplateIds = allTemplates
+            .where((t) => t.walletId == widget.card.id)
+            .map((t) => t.id)
+            .toSet();
+            
+        scheduledBills = allPayments
+            .where((p) => myTemplateIds.contains(p.templateId) && p.isPending)
+            .toList();
+            
+        scheduledBills.sort((a, b) => a.dueDate.compareTo(b.dueDate));
+        
+        billTemplateMap = {for (var t in allTemplates) t.id: t};
+      } catch (e) {
+        debugPrint('Error loading scheduled bills: $e');
+      }
+
       final periodDebt = details['currentDebt'] as double;
       final totalDebt = details['currentDebt'] as double;
+
+      // Calculate period start and end based on statement day
+      final now = _selectedDate;
+      var statementDay = widget.card.statementDay;
+      if (statementDay > 28) statementDay = 28; // Basic handling for now
+      
+      // Determine the statement date for the selected month
+      final periodEnd = DateTime(now.year, now.month, statementDay);
+      final periodStart = DateTime(now.year, now.month - 1, statementDay);
+      
+      // Filter transactions for this period
+      final periodTransactions = transactions.where((t) {
+        return t.transactionDate.isAfter(periodStart) && 
+               t.transactionDate.isBefore(periodEnd.add(const Duration(days: 1)));
+      }).toList();
+
+      periodTransactions.sort(
+        (a, b) => b.transactionDate.compareTo(a.transactionDate),
+      );
 
       setState(() {
         _availableCredit = details['availableCredit'] as double;
         _utilization = details['utilization'] as double;
         _nextStatementDate = details['nextStatementDate'] as DateTime;
         _nextDueDate = details['nextDueDate'] as DateTime;
-        _recentTransactions = recentTransactions;
+        _periodTransactions = periodTransactions;
         _activeInstallments = installments;
         _rewardSummary = rewardSummary;
         _cashAdvanceSummary = cashAdvanceSummary;
         _periodDebt = periodDebt;
         _totalDebt = totalDebt;
         _deferredInstallments = deferredInstallments;
+        _scheduledBills = scheduledBills;
+        _billTemplates = billTemplateMap;
         _isLoading = false;
       });
     } catch (e) {
@@ -112,6 +166,13 @@ class _CreditCardDetailScreenState extends State<CreditCardDetailScreen> {
         ).showSnackBar(SnackBar(content: Text('Hata: $e')));
       }
     }
+  }
+
+  void _changePeriod(int months) {
+    setState(() {
+      _selectedDate = DateTime(_selectedDate.year, _selectedDate.month + months, _selectedDate.day);
+      _loadCardDetails();
+    });
   }
 
   @override
@@ -134,6 +195,8 @@ class _CreditCardDetailScreenState extends State<CreditCardDetailScreen> {
               child: ListView(
                 padding: const EdgeInsets.all(16),
                 children: [
+                  _buildPeriodSelector(),
+                  const SizedBox(height: 8),
                   _buildCardHeader(),
                   const SizedBox(height: 16),
                   _buildDebtSummary(),
@@ -156,10 +219,48 @@ class _CreditCardDetailScreenState extends State<CreditCardDetailScreen> {
                     _buildDeferredInstallmentsSection(),
                   if (_deferredInstallments.isNotEmpty)
                     const SizedBox(height: 24),
-                  _buildRecentTransactionsSection(),
+                  if (_scheduledBills.isNotEmpty)
+                     _buildScheduledBillsSection(),
+                  if (_scheduledBills.isNotEmpty)
+                     const SizedBox(height: 24),
+                  _buildPeriodTransactionsSection(),
                 ],
               ),
             ),
+    );
+  }
+
+  Widget _buildPeriodSelector() {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            IconButton(
+              icon: const Icon(Icons.arrow_back_ios),
+              onPressed: () => _changePeriod(-1),
+              tooltip: 'Önceki Ay',
+            ),
+            Text(
+              DateFormat('MMMM yyyy', 'tr_TR').format(_selectedDate),
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            IconButton(
+              icon: const Icon(Icons.arrow_forward_ios),
+              onPressed: 
+                  DateTime(_selectedDate.year, _selectedDate.month)
+                      .isBefore(DateTime(DateTime.now().year, DateTime.now().month))
+                  ? () => _changePeriod(1)
+                  : null,
+              tooltip: 'Sonraki Ay',
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -898,8 +999,58 @@ class _CreditCardDetailScreenState extends State<CreditCardDetailScreen> {
   }
 
 
+  Widget _buildScheduledBillsSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Planlanmış Faturalar',
+          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 8),
+        Card(
+          child: ListView.separated(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: _scheduledBills.length,
+            separatorBuilder: (context, index) => const Divider(height: 1),
+            itemBuilder: (context, index) {
+              final bill = _scheduledBills[index];
+              return _buildBillPaymentItem(bill);
+            },
+          ),
+        ),
+      ],
+    );
+  }
 
-  Widget _buildRecentTransactionsSection() {
+  Widget _buildBillPaymentItem(BillPayment bill) {
+    final template = _billTemplates[bill.templateId];
+    final title = template?.name ?? 'Fatura';
+    final category = template?.categoryDisplayName ?? 'Diğer';
+
+    return ListTile(
+      leading: CircleAvatar(
+        backgroundColor: Colors.blue.shade50,
+        child: const Icon(Icons.receipt_long, color: Colors.blue, size: 20),
+      ),
+      title: Text(
+        title,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+      ),
+      subtitle: Text(
+        '${DateFormat('dd MMM yyyy', 'tr_TR').format(bill.dueDate)} • $category\n${bill.statusDisplayName}',
+        style: const TextStyle(fontSize: 12),
+      ),
+      trailing: Text(
+        _currencyFormat.format(bill.amount),
+        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+      ),
+    );
+  }
+
+  Widget _buildPeriodTransactionsSection() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -907,7 +1058,7 @@ class _CreditCardDetailScreenState extends State<CreditCardDetailScreen> {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             const Text(
-              'Son İşlemler',
+              'Dönem İçi İşlemler',
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             TextButton(
@@ -917,7 +1068,7 @@ class _CreditCardDetailScreenState extends State<CreditCardDetailScreen> {
           ],
         ),
         const SizedBox(height: 8),
-        _recentTransactions.isEmpty
+        _periodTransactions.isEmpty
             ? Card(
                 child: Padding(
                   padding: const EdgeInsets.all(32),
@@ -931,7 +1082,7 @@ class _CreditCardDetailScreenState extends State<CreditCardDetailScreen> {
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          'Henüz işlem yok',
+                          'Bu dönemde işlem yok',
                           style: TextStyle(color: Colors.grey[600]),
                         ),
                       ],
@@ -943,11 +1094,11 @@ class _CreditCardDetailScreenState extends State<CreditCardDetailScreen> {
                 child: ListView.separated(
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
-                  itemCount: _recentTransactions.length,
+                  itemCount: _periodTransactions.length,
                   separatorBuilder: (context, index) =>
                       const Divider(height: 1),
                   itemBuilder: (context, index) {
-                    final transaction = _recentTransactions[index];
+                    final transaction = _periodTransactions[index];
                     return _buildTransactionItem(transaction);
                   },
                 ),
