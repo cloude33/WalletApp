@@ -171,16 +171,26 @@ class BillPaymentService {
       
       if (template != null) {
         // Kredi kartı kontrolü
-        final isCreditCard = walletId.startsWith('cc_');
+        bool isCreditCard = walletId.startsWith('cc_');
+        String processedCardId = isCreditCard ? walletId.replaceFirst('cc_', '') : walletId;
+
+        // Eğer prefix yoksa bile ID ile kredi kartı var mı diye kontrol et
+        if (!isCreditCard) {
+           final creditCardService = CreditCardService();
+           final card = await creditCardService.getCard(walletId);
+           if (card != null) {
+             isCreditCard = true;
+             processedCardId = walletId;
+           }
+        }
         
         if (isCreditCard) {
           // Kredi kartı işlemi oluştur
-          final cardId = walletId.replaceFirst('cc_', '');
           final creditCardService = CreditCardService();
           
           final ccTransaction = CreditCardTransaction(
             id: _uuid.v4(),
-            cardId: cardId,
+            cardId: processedCardId,
             amount: payment.amount,
             description: '${template.name} Fatura Ödemesi',
             transactionDate: DateTime.now(),
